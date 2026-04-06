@@ -67,7 +67,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(mappedUser));
 
       return mappedUser;
-    } catch (error: any) {
+    }
+    catch (error: any) {
       throw new Error(error.message || "Registration failed");
     }
   }, [authService]);

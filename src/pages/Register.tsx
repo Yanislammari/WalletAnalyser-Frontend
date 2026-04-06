@@ -1,20 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
 import { toast } from "sonner";
+import { FaCheck, FaTimes, FaSpinner } from "react-icons/fa";
 import Background from "../components/Background";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/regex";
 import { useAuth } from "../providers/AuthProvider";
+import AuthService from "../services/AuthService";
 
 const Register: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
   const { register } = useAuth();
+  const authService = AuthService.getInstance();
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState<boolean>(false);
+  const [isEmailAvailable, setIsEmailAvailable] = useState<boolean | null>(null);
+  const DEBOUNCE_DELAY = 600;
 
-  const getErrorMessage = (backendMessage: string): string => {
+  useEffect(() => {
+    if (!EMAIL_REGEX.test(email)) {
+      setIsEmailAvailable(null);
+      return;
+    }
+
+    const delay = setTimeout(async () => {
+      setIsCheckingEmail(true);
+      try {
+        const res = await authService.checkEmailAvailability(email);
+        setIsEmailAvailable(res.available);
+      }
+      catch {
+        setIsEmailAvailable(null);
+      }
+      finally {
+        setIsCheckingEmail(false);
+      }
+    }, DEBOUNCE_DELAY);
+
+    return () => clearTimeout(delay);
+  }, [email]);
+
+  const getBackendErrorMessage = (backendMessage: string): string => {
     switch (backendMessage) {
       case "Email already exists":
         return "An account with this email already exists.";
@@ -39,19 +68,29 @@ const Register: React.FC = () => {
       return;
     }
 
+    if (isEmailAvailable === false) {
+      toast.error("Email is already taken.");
+      return;
+    }
+
     setLoading(true);
     try {
-      register({firstName, lastName, email, password});
+      await register({ firstName, lastName, email, password });
       toast.success("Account created successfully!");
       navigate("/home");
     }
     catch (error: any) {
-      const message = getErrorMessage(error.message);
-      toast.error(message);
+      toast.error(getBackendErrorMessage(error.message));
     }
     finally {
       setLoading(false);
     }
+  };
+
+  const getBorderColor = () => {
+    if (isEmailAvailable === true) return "border-green-500 focus:ring-green-500";
+    if (isEmailAvailable === false) return "border-red-500 focus:ring-red-500";
+    return "border-gray-300 focus:ring-purple-500";
   };
 
   return (
@@ -63,29 +102,62 @@ const Register: React.FC = () => {
           </h1>
         </div>
         <div className="flex flex-col gap-4">
-        <div className="flex gap-4">
-          <input
-            type="text"
-            placeholder="First Name"
-            className="w-1/2 px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="Last Name"
-            className="w-1/2 px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-          />
-        </div>
-          <input
-            type="email"
-            placeholder="Email"
-            className="px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <div className="flex gap-4">
+            <input
+              type="text"
+              placeholder="First Name"
+              className="w-1/2 px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Last Name"
+              className="w-1/2 px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col w-full">
+            <div
+              className={`flex items-center w-full px-4 py-3 rounded-xl bg-white/90 border ${getBorderColor()} 
+                focus-within:ring-2 focus-within:ring-offset-1 ${
+                  isEmailAvailable === true
+                    ? "focus-within:ring-green-500"
+                    : isEmailAvailable === false
+                    ? "focus-within:ring-red-500"
+                    : "focus-within:ring-purple-500"
+                } transition-colors duration-200`}
+            >
+              <input
+                type="email"
+                placeholder="Email"
+                className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-400"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <div className="ml-2 flex-shrink-0">
+                {isCheckingEmail ? (
+                  <FaSpinner className="w-5 h-5 animate-spin text-gray-400" />
+                ) : isEmailAvailable === true ? (
+                  <FaCheck className="w-5 h-5 text-green-500" />
+                ) : isEmailAvailable === false ? (
+                  <FaTimes className="w-5 h-5 text-red-500" />
+                ) : null}
+              </div>
+            </div>
+            {isEmailAvailable !== null && !isCheckingEmail && (
+              <p
+                className={`text-sm font-semibold mt-1 ${
+                  isEmailAvailable ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                {isEmailAvailable
+                  ? "Email is available."
+                  : "Email is already taken."}
+              </p>
+            )}
+          </div>
           <input
             type="password"
             placeholder="Password"
@@ -95,10 +167,16 @@ const Register: React.FC = () => {
           />
           <button
             onClick={handleRegister}
-            className={`btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             disabled={loading}
           >
-            {loading ? <span className="loading loading-spinner loading-sm"></span> : "Register"}
+            {loading ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              "Register"
+            )}
           </button>
           <div className="flex items-center gap-3 my-2">
             <div className="flex-1 h-px bg-gray-300" />

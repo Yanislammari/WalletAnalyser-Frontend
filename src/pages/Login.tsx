@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
 import { toast } from "sonner";
 import Background from "../components/Background";
-import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/regex";
 import { useAuth } from "../providers/AuthProvider";
 
 const Login: React.FC = () => {
@@ -40,16 +39,6 @@ const Login: React.FC = () => {
     }
     if (!password) {
       toast.error("Password is required.");
-      return;
-    }
-    if (!EMAIL_REGEX.test(email)) {
-      toast.error("Invalid email format.");
-      return;
-    }
-    if (!PASSWORD_REGEX.test(password)) {
-      toast.error(
-        "Password must be 8+ chars, include upper, lower, number & special char."
-      );
       return;
     }
 

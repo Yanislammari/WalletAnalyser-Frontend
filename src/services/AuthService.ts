@@ -30,6 +30,12 @@ class AuthService extends BaseService {
       body: JSON.stringify(payload),
     });
   }
+
+  public async checkEmailAvailability(email: string): Promise<{ available: boolean }> {
+    return this.request<{ available: boolean }>(`/auth/check-email?email=${encodeURIComponent(email)}`, {
+      method: "POST",
+    });
+  }
 }
 
 export default AuthService;
