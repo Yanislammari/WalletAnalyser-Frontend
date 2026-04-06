@@ -1,11 +1,14 @@
-import React from "react";
+import type React from "react";
+import { Toaster } from "sonner";
+import AppRoutes from "./AppRoutes";
 
 const App: React.FC = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black text-zinc-50">
-      <h1 className="text-4xl font-bold">PA : WalletAnalyser Frontend</h1>
+    <div>
+      <Toaster position="bottom-left" theme="dark" richColors />
+      <AppRoutes />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
