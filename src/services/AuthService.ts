@@ -31,6 +31,13 @@ class AuthService extends BaseService {
     });
   }
 
+  public async authWithGoogle(token: string): Promise<AuthResponse> {
+    return this.request<AuthResponse>("/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  }
+
   public async checkEmailAvailability(email: string): Promise<{ available: boolean }> {
     return this.request<{ available: boolean }>(`/auth/check-email?email=${encodeURIComponent(email)}`, {
       method: "POST",

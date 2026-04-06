@@ -1,21 +1,28 @@
-import type React from "react";
+import React from "react";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { toast } from "sonner";
 import Background from "../components/Background";
+import { useAuth } from "../providers/AuthProvider";
 
-const Start: React.FC = () => {
+const Main: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
+  const { loginWithGoogle } = useAuth();
 
   const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
-    const idToken: string | undefined = credentialResponse.credential;
-
+    const idToken = credentialResponse.credential;
     if (!idToken) {
       toast.error("No Google token received.");
       return;
     }
 
-    toast.success("Google auth ready (UI only)");
+    try {
+      await loginWithGoogle(idToken);
+      navigate("/home");
+    }
+    catch {
+      toast.error("Error logging in with Google.");
+    }
   };
 
   return (
@@ -36,6 +43,7 @@ const Start: React.FC = () => {
           >
             Sign In
           </button>
+
           <button
             onClick={() => navigate("/register")}
             className="btn btn-outline w-full rounded-xl normal-case text-base border-gray-300 text-gray-700 hover:bg-gray-100"
@@ -76,4 +84,4 @@ const Start: React.FC = () => {
   );
 }
 
-export default Start;
+export default Main;

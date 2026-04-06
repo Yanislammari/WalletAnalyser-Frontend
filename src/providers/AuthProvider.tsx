@@ -10,6 +10,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<User>;
+  loginWithGoogle: (idToken: string) => Promise<User>;
   logout: () => void;
 }
 
@@ -24,7 +25,7 @@ const mapUserResponseToUser = (userResponse: UserResponse): User => ({
   userType: userResponse.userType,
   subscribe: false,
   createdAt: new Date(userResponse.createdAt),
-  updatedAt: new Date(userResponse.updatedAt),  
+  updatedAt: new Date(userResponse.updatedAt),
 });
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,21 +38,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const authService = AuthService.getInstance();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-
   const isAuthenticated = !!token;
 
   const login = useCallback(async (email: string, password: string) => {
     try {
-      const payload = { email, password };
-      const response = await authService.login(payload);
+      const response = await authService.login({ email, password });
+      const mappedUser = mapUserResponseToUser(response.user);
 
       setToken(response.token);
-      setUser(mapUserResponseToUser(response.user));
+      setUser(mappedUser);
 
       localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(mapUserResponseToUser(response.user)));
-    }
-    catch (error: any) {
+      localStorage.setItem("user", JSON.stringify(mappedUser));
+    } catch (error: any) {
       throw new Error(error.message || "Login failed");
     }
   }, [authService]);
@@ -63,13 +62,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       setToken(response.token);
       setUser(mappedUser);
+
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(mappedUser));
 
       return mappedUser;
-    }
-    catch (error: any) {
+    } catch (error: any) {
       throw new Error(error.message || "Registration failed");
+    }
+  }, [authService]);
+
+  const loginWithGoogle = useCallback(async (idToken: string) => {
+    try {
+      const response = await authService.authWithGoogle(idToken);
+      const mappedUser = mapUserResponseToUser(response.user);
+
+      setToken(response.token);
+      setUser(mappedUser);
+
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(mappedUser));
+
+      return mappedUser;
+    } catch (error: any) {
+      throw new Error(error.message || "Google login failed");
     }
   }, [authService]);
 
@@ -81,7 +97,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, login, register, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );
