@@ -1,9 +1,11 @@
 import type React from "react";
+import FeatureCard from "./FeatureCard";
+import type { Feature } from "../models/entities/Feature";
 
-const features = [
+const features: Feature[] = [
   {
     title: "CSV & Excel import",
-    desc: "Upload any brokerage export. Download our pre-formatted template, map your columns, and you're live in seconds.",
+    description: "Upload any brokerage export. Download our pre-formatted template, map your columns, and you're live in seconds.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -15,7 +17,7 @@ const features = [
   },
   {
     title: "Portfolio overview",
-    desc: "Real-time positions, P&L in euros and percent, exposure heatmaps by country and sector.",
+    description: "Real-time positions, P&L in euros and percent, exposure heatmaps by country and sector.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -27,7 +29,7 @@ const features = [
   },
   {
     title: "Benchmark comparison",
-    desc: "Stack your returns against any index. Sharpe, CAGR, TWR, volatility — side by side, across any time horizon.",
+    description: "Stack your returns against any index. Sharpe, CAGR, TWR, volatility — side by side, across any time horizon.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -36,7 +38,7 @@ const features = [
   },
   {
     title: "Historical analysis",
-    desc: "Drill into past gains by country, sector, or position. Filter, sort, and understand what drove your returns.",
+    description: "Drill into past gains by country, sector, or position. Filter, sort, and understand what drove your returns.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <circle cx="12" cy="12" r="10" />
@@ -46,7 +48,7 @@ const features = [
   },
   {
     title: "Advanced metrics",
-    desc: "XIRR, Sortino, log returns, drawdown data — every metric that serious long-term investors track.",
+    description: "XIRR, Sortino, log returns, drawdown data — every metric that serious long-term investors track.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <line x1="18" y1="20" x2="18" y2="10" />
@@ -57,7 +59,7 @@ const features = [
   },
   {
     title: "AI clustering",
-    desc: "K-means analysis matches your portfolio to a reference archetype. Know your investing style at a glance.",
+    description: "K-means analysis matches your portfolio to a reference archetype. Know your investing style at a glance.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <circle cx="12" cy="5" r="2" />
@@ -94,20 +96,7 @@ const FeatureSection: React.FC = () => {
         </div>
         <div className="grid md:grid-cols-3 gap-4">
           {features.map((feature, index) => (
-            <div
-              key={index}
-              className="group relative bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] hover:border-purple-500/40 rounded-2xl p-6 transition-all duration-200"
-            >
-              {/* Glow on hover */}
-              <div className="absolute inset-0 rounded-2xl bg-purple-600/0 group-hover:bg-purple-600/5 transition-all duration-300" />
-              <div className="relative z-10">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-5">
-                  {feature.icon}
-                </div>
-                <h3 className="text-white font-semibold text-[15px] mb-2">{feature.title}</h3>
-                <p className="text-white/50 text-sm leading-relaxed">{feature.desc}</p>
-              </div>
-            </div>
+            <FeatureCard key={index} feature={feature} />
           ))}
         </div>
       </div>
