@@ -1,7 +1,9 @@
 import type React from "react";
 import McLineChart from "./McLineChart";
+import type { CompareRow } from "../models/entities/CompareRow";
+import CompareRowMetrics from "./CompareRowMetrics";
 
-const compareRows = [
+const compareRows: CompareRow[] = [
   { label: "Total gain", yours: "+31.4%", bench: "+24.1%", positive: true },
   { label: "CAGR", yours: "8.2%", bench: "7.1%", positive: true },
   { label: "Volatility", yours: "11.2%", bench: "14.8%", positive: true },
@@ -32,11 +34,7 @@ const MetricContainer: React.FC = () => {
           <span className="w-20 text-right">S&P 500</span>
         </div>
         {compareRows.map((row) => (
-          <div key={row.label} className="flex items-center py-2 border-b border-white/[0.04]">
-            <span className="flex-1 text-[13px] text-white/50">{row.label}</span>
-            <span className="w-20 text-right text-[13px] font-semibold text-emerald-400">{row.yours}</span>
-            <span className="w-20 text-right text-[13px] text-white/30">{row.bench}</span>
-          </div>
+          <CompareRowMetrics key={row.label} row={row} />
         ))}
       </div>
     </div>
