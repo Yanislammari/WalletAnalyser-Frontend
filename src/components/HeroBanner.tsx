@@ -1,8 +1,11 @@
 import type React from "react";
 import LpNavbar from "./LpNavbar";
 import DashboardMockup from "./DashboardMockup";
+import { useNavigate, type NavigateFunction } from "react-router";
 
 const HeroBanner: React.FC = () => {
+  const navigate: NavigateFunction = useNavigate();
+
   return (
     <section className="relative min-h-screen flex flex-col overflow-hidden bg-white">
       <div className="absolute -top-[20%] -right-[10%] w-[900px] h-[900px] rounded-full bg-gradient-to-br from-purple-500/30 via-indigo-500/20 to-transparent blur-[120px] pointer-events-none" />
@@ -33,10 +36,10 @@ const HeroBanner: React.FC = () => {
           Import your portfolio, track performance, compare against benchmarks — and understand every metric that matters.
         </p>
         <div className="flex gap-3 flex-wrap justify-center mb-20">
-          <button className="px-7 py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-all hover:-translate-y-0.5 shadow-lg shadow-purple-200">
+          <button onClick={() => navigate("/main")} className="px-7 py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-all hover:-translate-y-0.5 shadow-lg shadow-purple-200 cursor-pointer">
             Start for free
           </button>
-          <button className="px-7 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:border-gray-300 hover:bg-gray-50 transition-colors">
+          <button className="px-7 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
             See a demo
           </button>
         </div>
