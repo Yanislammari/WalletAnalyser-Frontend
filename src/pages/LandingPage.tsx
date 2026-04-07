@@ -1,16 +1,7 @@
 import React, { useState } from "react";
 import HeroBanner from "../components/HeroBanner";
 import FeatureSection from "../components/FeatureSection";
-
-const metrics = ["CAGR", "TWR", "XIRR", "Sharpe ratio", "Sortino ratio", "Volatility", "Log returns", "Drawdown", "Max drawdown", "MWRR"];
-
-const compareRows = [
-  { label: "Total gain", yours: "+31.4%", bench: "+24.1%", positive: true },
-  { label: "CAGR", yours: "8.2%", bench: "7.1%", positive: true },
-  { label: "Volatility", yours: "11.2%", bench: "14.8%", positive: true },
-  { label: "Sharpe ratio", yours: "1.43", bench: "0.91", positive: true },
-  { label: "Max drawdown", yours: "-14.3%", bench: "-19.7%", positive: true },
-];
+import MetricSection from "../components/MetricSection";
 
 const pricingPlans = [
   {
@@ -98,96 +89,7 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
       <HeroBanner />
       <FeatureSection />
-
-      {/* ── METRICS ──────────────────────────────────────────── */}
-      <section id="metrics" className="relative bg-[#0d0a1a] py-28 px-6 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <svg className="absolute top-0 left-0 h-full w-[50%]" viewBox="0 0 500 1000" preserveAspectRatio="none">
-            <path d="M500,0 Q100,500 300,1000 L0,1000 L0,0 Z" fill="rgba(139,92,246,0.05)" />
-          </svg>
-        </div>
-
-        <div className="relative z-10 max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            {/* Left */}
-            <div>
-              <p className="text-purple-400 text-xs font-semibold uppercase tracking-[0.15em] mb-4">Metrics</p>
-              <h2 className="text-4xl font-bold text-white leading-tight mb-5 tracking-tight">
-                The numbers serious<br />investors track
-              </h2>
-              <p className="text-white/50 text-[15px] leading-relaxed mb-10">
-                Go beyond simple returns. WalletAnalyser surfaces the metrics that tell you how your portfolio is performing — and why.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {metrics.map((m) => (
-                  <span
-                    key={m}
-                    className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.1] text-white/70 text-[13px] font-medium"
-                  >
-                    {m}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Right — comparison card */}
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 overflow-hidden relative">
-              {/* subtle top gradient line */}
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
-
-              <div className="flex justify-between items-center mb-5">
-                <p className="text-white/40 text-[11px] uppercase tracking-widest">Portfolio vs S&P 500</p>
-                <div className="flex gap-3">
-                  <span className="flex items-center gap-1.5 text-[11px] text-purple-400">
-                    <span className="w-2 h-2 rounded-sm bg-purple-500 inline-block" />Yours
-                  </span>
-                  <span className="flex items-center gap-1.5 text-[11px] text-white/30">
-                    <span className="w-2 h-2 rounded-sm bg-white/20 inline-block" />S&P 500
-                  </span>
-                </div>
-              </div>
-
-              {/* Mini line chart comparing two portfolios */}
-              <svg viewBox="0 0 400 100" className="w-full h-24 mb-5" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="yourGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                {/* benchmark line */}
-                <polyline
-                  points="0,85 50,78 100,82 150,65 200,72 250,58 300,63 350,50 400,42"
-                  fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeDasharray="4 3"
-                  strokeLinejoin="round" strokeLinecap="round"
-                />
-                {/* yours */}
-                <path d="M0,100 L0,85 50,72 100,78 150,58 200,62 250,45 300,50 350,35 400,20 L400,100 Z" fill="url(#yourGrad)" />
-                <polyline
-                  points="0,85 50,72 100,78 150,58 200,62 250,45 300,50 350,35 400,20"
-                  fill="none" stroke="#7c3aed" strokeWidth="2.5"
-                  strokeLinejoin="round" strokeLinecap="round"
-                />
-              </svg>
-
-              <div className="space-y-1">
-                <div className="flex text-[11px] text-white/30 uppercase tracking-widest pb-2 border-b border-white/[0.06]">
-                  <span className="flex-1">Metric</span>
-                  <span className="w-20 text-right text-purple-400/80">Yours</span>
-                  <span className="w-20 text-right">S&P 500</span>
-                </div>
-                {compareRows.map((r) => (
-                  <div key={r.label} className="flex items-center py-2 border-b border-white/[0.04]">
-                    <span className="flex-1 text-[13px] text-white/50">{r.label}</span>
-                    <span className="w-20 text-right text-[13px] font-semibold text-emerald-400">{r.yours}</span>
-                    <span className="w-20 text-right text-[13px] text-white/30">{r.bench}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <MetricSection />
 
       {/* ── GAMIFICATION strip ───────────────────────────────── */}
       <section className="relative bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 py-20 px-6 overflow-hidden">
