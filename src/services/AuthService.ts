@@ -50,6 +50,20 @@ class AuthService extends BaseService {
       body: JSON.stringify({ email }),
     });
   }
+
+  public async verifyToken(token: string): Promise<boolean> {
+    return this.request<boolean>("/auth/verify-token", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  public async resetPassword(token: string, newPassword: string): Promise<void> {
+    await this.request("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, newPassword }),
+    });
+  }
 }
 
 export default AuthService;
