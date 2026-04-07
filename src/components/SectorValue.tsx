@@ -1,8 +1,8 @@
 import type React from "react";
-import type { SectorStat } from "../models/entities/SectorStat";
+import type { SectorStatUI } from "../models/UI/SectorStatUI";
 
 interface SectorValueProps {
-  sector: SectorStat;
+  sector: SectorStatUI;
 }
 
 const SectorValue: React.FC<SectorValueProps> = (props: SectorValueProps) => {

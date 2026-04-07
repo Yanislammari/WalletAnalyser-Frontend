@@ -1,4 +1,4 @@
-export interface DmStat {
+export interface DmStatUI {
   label: string;
   value: string;
   delta: string;

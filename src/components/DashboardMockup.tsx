@@ -3,9 +3,9 @@ import DmLineChart from "./DmLineChart";
 import SectorBreakdown from "./SectorBreakdown";
 import MetricStrip from "./MetricStrip";
 import DmStatCard from "./DmStatCard";
-import type { DmStat } from "../models/entities/DmStat";
+import type { DmStatUI } from "../models/UI/DmStatUI";
 
-const dashboardMockupStats: DmStat[] = [
+const dashboardMockupStats: DmStatUI[] = [
   { label: "Portfolio value", value: "€47,320", delta: "+12.4%", up: true },
   { label: "Total gain", value: "€5,180", delta: "+€420 this month", up: true },
   { label: "Sharpe ratio", value: "1.43", delta: "vs 0.91 S&P", up: true },

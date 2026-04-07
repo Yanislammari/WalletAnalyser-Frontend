@@ -1,9 +1,9 @@
 import type React from "react";
 import McLineChart from "./McLineChart";
-import type { CompareRow } from "../models/entities/CompareRow";
+import type { CompareRowUI } from "../models/UI/CompareRowUI";
 import CompareRowMetrics from "./CompareRowMetrics";
 
-const compareRows: CompareRow[] = [
+const compareRows: CompareRowUI[] = [
   { label: "Total gain", yours: "+31.4%", bench: "+24.1%", positive: true },
   { label: "CAGR", yours: "8.2%", bench: "7.1%", positive: true },
   { label: "Volatility", yours: "11.2%", bench: "14.8%", positive: true },

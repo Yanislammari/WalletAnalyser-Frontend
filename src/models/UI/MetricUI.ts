@@ -1,4 +1,4 @@
-export interface Metric {
+export interface MetricUI {
   key: string;
   value: string;
 }

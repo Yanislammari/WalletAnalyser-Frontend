@@ -1,4 +1,4 @@
-export interface CompareRow {
+export interface CompareRowUI {
   label: string;
   yours: string;
   bench: string;

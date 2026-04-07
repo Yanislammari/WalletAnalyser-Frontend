@@ -1,8 +1,8 @@
 import type React from "react";
-import type { DmStat } from "../models/entities/DmStat";
+import type { DmStatUI } from "../models/UI/DmStatUI";
 
 interface DmStatProps {
-  stat: DmStat;
+  stat: DmStatUI;
 }
 
 const DmStatCard: React.FC<DmStatProps> = (props: DmStatProps) => {

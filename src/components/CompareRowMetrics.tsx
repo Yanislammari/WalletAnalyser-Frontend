@@ -1,8 +1,8 @@
 import type React from "react";
-import type { CompareRow } from "../models/entities/CompareRow";
+import type { CompareRowUI } from "../models/UI/CompareRowUI";
 
 interface CompareRowMetricsProps {
-  row: CompareRow;
+  row: CompareRowUI;
 }
 
 const CompareRowMetrics: React.FC<CompareRowMetricsProps> = (props: CompareRowMetricsProps) => {

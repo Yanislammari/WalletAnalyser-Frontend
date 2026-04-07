@@ -1,8 +1,8 @@
 import type React from "react";
-import type { Metric } from "../models/entities/Metric";
+import type { MetricUI } from "../models/UI/MetricUI";
 
 interface MetricItemProps {
-  metric: Metric;
+  metric: MetricUI;
 }
 
 const MetricItem: React.FC<MetricItemProps> = (props: MetricItemProps) => {

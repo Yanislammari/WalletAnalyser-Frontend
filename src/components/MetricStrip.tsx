@@ -1,8 +1,8 @@
 import type React from "react";
 import MetricItem from "./MetricItem";
-import type { Metric } from "../models/entities/Metric";
+import type { MetricUI } from "../models/UI/MetricUI";
 
-const metrics: Metric[] = [
+const metrics: MetricUI[] = [
   { key: "TWR", value: "+14.7%" },
   { key: "CAGR", value: "8.2%" },
   { key: "Sortino", value: "1.87" },

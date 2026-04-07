@@ -1,8 +1,8 @@
 import type React from "react";
-import type { Feature } from "../models/entities/Feature";
+import type { FeatureUI } from "../models/UI/FeatureUI";
 
 interface FeatureCardProps {
-  feature: Feature;
+  feature: FeatureUI;
 }
 
 const FeatureCard: React.FC<FeatureCardProps> = (props: FeatureCardProps) => {

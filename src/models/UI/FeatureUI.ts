@@ -1,6 +1,6 @@
 import type React from "react";
 
-export interface Feature {
+export interface FeatureUI {
   title: string;
   description: string;
   icon: React.ReactNode;

@@ -1,8 +1,8 @@
 import type React from "react";
 import SectorValue from "./SectorValue";
-import type { SectorStat } from "../models/entities/SectorStat";
+import type { SectorStatUI } from "../models/UI/SectorStatUI";
 
-const sectorsStats: SectorStat[] = [
+const sectorsStats: SectorStatUI[] = [
   { name: "Technology", pct: 37, color: "bg-purple-500" },
   { name: "Healthcare", pct: 21, color: "bg-indigo-400" },
   { name: "Finance", pct: 18, color: "bg-violet-300" },

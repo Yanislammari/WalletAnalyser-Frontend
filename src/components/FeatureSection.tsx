@@ -1,8 +1,8 @@
 import type React from "react";
 import FeatureCard from "./FeatureCard";
-import type { Feature } from "../models/entities/Feature";
+import type { FeatureUI } from "../models/UI/FeatureUI";
 
-const features: Feature[] = [
+const features: FeatureUI[] = [
   {
     title: "CSV & Excel import",
     description: "Upload any brokerage export. Download our pre-formatted template, map your columns, and you're live in seconds.",
