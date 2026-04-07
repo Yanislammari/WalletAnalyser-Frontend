@@ -1,6 +1,7 @@
 import type React from "react";
+import MetricBadge from "./MetricBadge";
 
-const metrics = ["CAGR", "TWR", "XIRR", "Sharpe ratio", "Sortino ratio", "Volatility", "Log returns", "Drawdown", "Max drawdown", "MWRR"];
+const metrics: string[] = ["CAGR", "TWR", "XIRR", "Sharpe ratio", "Sortino ratio", "Volatility", "Log returns", "Drawdown", "Max drawdown", "MWRR"];
 
 const compareRows = [
   { label: "Total gain", yours: "+31.4%", bench: "+24.1%", positive: true },
@@ -30,12 +31,7 @@ const MetricSection: React.FC = () => {
             </p>
             <div className="flex flex-wrap gap-2">
               {metrics.map((metric) => (
-                <span
-                  key={metric}
-                  className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.1] text-white/70 text-[13px] font-medium"
-                >
-                  {metric}
-                </span>
+                <MetricBadge key={metric} metricName={metric} />
               ))}
             </div>
           </div>
