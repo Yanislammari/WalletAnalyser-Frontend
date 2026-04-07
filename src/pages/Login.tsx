@@ -83,7 +83,7 @@ const Login: React.FC = () => {
           <div className="text-center">
             <button
               className="text-sm text-purple-600 hover:underline hover:cursor-pointer"
-              onClick={() => toast("Forgotten password flow (UI only)")}
+              onClick={() => navigate("/forgotten-password")}
             >
               Forgotten Password?
             </button>

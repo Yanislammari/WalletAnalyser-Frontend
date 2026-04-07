@@ -43,6 +43,13 @@ class AuthService extends BaseService {
       method: "POST",
     });
   }
+
+  public async sendPasswordReset(email: string): Promise<void> {
+    await this.request("/auth/send-reset-password-email", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  }
 }
 
 export default AuthService;
