@@ -1,4 +1,5 @@
 import type React from "react";
+import McLineChart from "./McLineChart";
 
 const compareRows = [
   { label: "Total gain", yours: "+31.4%", bench: "+24.1%", positive: true },
@@ -23,30 +24,7 @@ const MetricContainer: React.FC = () => {
           </span>
         </div>
       </div>
-
-      {/* Mini line chart comparing two portfolios */}
-      <svg viewBox="0 0 400 100" className="w-full h-24 mb-5" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="yourGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {/* benchmark line */}
-        <polyline
-          points="0,85 50,78 100,82 150,65 200,72 250,58 300,63 350,50 400,42"
-          fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeDasharray="4 3"
-          strokeLinejoin="round" strokeLinecap="round"
-        />
-        {/* yours */}
-        <path d="M0,100 L0,85 50,72 100,78 150,58 200,62 250,45 300,50 350,35 400,20 L400,100 Z" fill="url(#yourGrad)" />
-        <polyline
-          points="0,85 50,72 100,78 150,58 200,62 250,45 300,50 350,35 400,20"
-          fill="none" stroke="#7c3aed" strokeWidth="2.5"
-          strokeLinejoin="round" strokeLinecap="round"
-        />
-      </svg>
-
+      <McLineChart />
       <div className="space-y-1">
         <div className="flex text-[11px] text-white/30 uppercase tracking-widest pb-2 border-b border-white/[0.06]">
           <span className="flex-1">Metric</span>
