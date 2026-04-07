@@ -3,10 +3,11 @@ import SectorValue from "./SectorValue";
 import type { SectorStat } from "../models/entities/SectorStat";
 
 const sectorsStats: SectorStat[] = [
-  { name: "Technology", pct: 38, color: "bg-purple-500" },
-  { name: "Healthcare", pct: 22, color: "bg-indigo-400" },
-  { name: "Finance", pct: 19, color: "bg-violet-300" },
-  { name: "Other", pct: 21, color: "bg-purple-200" },
+  { name: "Technology", pct: 37, color: "bg-purple-500" },
+  { name: "Healthcare", pct: 21, color: "bg-indigo-400" },
+  { name: "Finance", pct: 18, color: "bg-violet-300" },
+  { name: "Textile", pct: 14, color: "bg-pink-300" },
+  { name: "Other", pct: 10, color: "bg-purple-200" },
 ];
 
 const SectorBreakdown: React.FC = () => {

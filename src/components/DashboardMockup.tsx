@@ -2,8 +2,10 @@ import type React from "react";
 import DmLineChart from "./DmLineChart";
 import SectorBreakdown from "./SectorBreakdown";
 import MetricStrip from "./MetricStrip";
+import DmStatCard from "./DmStatCard";
+import type { DmStat } from "../models/entities/DmStat";
 
-const dashboardMockupStats = [
+const dashboardMockupStats: DmStat[] = [
   { label: "Portfolio value", value: "€47,320", delta: "+12.4%", up: true },
   { label: "Total gain", value: "€5,180", delta: "+€420 this month", up: true },
   { label: "Sharpe ratio", value: "1.43", delta: "vs 0.91 S&P", up: true },
@@ -22,11 +24,7 @@ const DashboardMockup: React.FC = () => {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
           {dashboardMockupStats.map((stat) => (
-            <div key={stat.label} className="bg-gray-50/80 rounded-xl p-3.5">
-              <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">{stat.label}</p>
-              <p className="text-xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-[11px] text-emerald-600 mt-0.5">{stat.delta}</p>
-            </div>
+            <DmStatCard key={stat.label} stat={stat} />
           ))}
         </div>
         <div className="grid md:grid-cols-3 gap-3">

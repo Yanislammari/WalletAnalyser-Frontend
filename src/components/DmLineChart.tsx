@@ -1,24 +1,32 @@
 import type React from "react";
 
 const chartData = [38, 52, 44, 61, 55, 70, 63, 80, 74, 91, 85, 100];
-const chartMax = 100;
-const chartW = 400;
-const chartH = 120;
-
-const pts = chartData.map((v, i) => {
-  const x = (i / (chartData.length - 1)) * chartW;
-  const y = chartH - (v / chartMax) * chartH;
-  return `${x},${y}`;
-}).join(" ");
-
 const months = ["Jan", "Mar", "May", "Jul", "Sep", "Nov"];
-const areaPath = `M0,${chartH} L${pts.split(" ").map(p => p).join(" L")} L${chartW},${chartH} Z`;
 
 const DmLineChart: React.FC = () => {
+  const chartW = 400;
+  const chartH = 112;
+  const totalH = 140;
+  const chartMax = 100;
+
+  const pts = chartData.map((v, i) => {
+    const x = (i / (chartData.length - 1)) * chartW;
+    const y = chartH - (v / chartMax) * chartH;
+    return `${x},${y}`;
+  }).join(" ");
+
+  const areaPath = `M0,${chartH} L${pts.split(" ").join(" L")} L${chartW},${chartH} Z`;
+
   return (
     <div className="md:col-span-2 bg-gray-50/80 rounded-xl p-4">
-      <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">Portfolio value over time</p>
-      <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-24" preserveAspectRatio="none">
+      <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">
+        Portfolio value over time
+      </p>
+      <svg
+        viewBox={`0 0 ${chartW} ${totalH}`}
+        className="w-full"
+        preserveAspectRatio="none"
+      >
         <defs>
           <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.2" />
@@ -26,7 +34,14 @@ const DmLineChart: React.FC = () => {
           </linearGradient>
         </defs>
         <path d={areaPath} fill="url(#areaGrad)" />
-        <polyline points={pts} fill="none" stroke="#7c3aed" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        <polyline
+          points={pts}
+          fill="none"
+          stroke="#7c3aed"
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
         {chartData.map((v, i) => {
           const x = (i / (chartData.length - 1)) * chartW;
           const y = chartH - (v / chartMax) * chartH;
@@ -34,12 +49,20 @@ const DmLineChart: React.FC = () => {
             <circle key={i} cx={x} cy={y} r="4" fill="#7c3aed" />
           ) : null;
         })}
-      </svg>
-      <div className="flex justify-between mt-2">
-        {months.map((month) => (
-          <span key={month} className="text-[10px] text-gray-300">{month}</span>
+        {months.map((month, i) => (
+          <text
+            key={month}
+            x={(i / (months.length - 1)) * chartW}
+            y={totalH - 6}
+            fontSize="11"
+            fill="#9ca3af"
+            textAnchor={i === 0 ? "start" : i === months.length - 1 ? "end" : "middle"}
+            fontFamily="sans-serif"
+          >
+            {month}
+          </text>
         ))}
-      </div>
+      </svg>
     </div>
   );
 }
