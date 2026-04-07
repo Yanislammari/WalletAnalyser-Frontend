@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import HeroBanner from "../components/HeroBanner";
 import FeatureSection from "../components/FeatureSection";
 import MetricSection from "../components/MetricSection";
+import GamificationSection from "../components/GamificationSection";
 
 const pricingPlans = [
   {
@@ -90,46 +91,9 @@ const LandingPage: React.FC = () => {
       <HeroBanner />
       <FeatureSection />
       <MetricSection />
+      <GamificationSection />
 
-      {/* ── GAMIFICATION strip ───────────────────────────────── */}
-      <section className="relative bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 py-20 px-6 overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{
-            backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-          }}
-        />
-        <div className="relative z-10 max-w-4xl mx-auto flex flex-col md:flex-row gap-10 items-center">
-          <div className="flex-1">
-            <p className="text-purple-200 text-xs font-semibold uppercase tracking-[0.15em] mb-3">Gamification</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-4 tracking-tight">
-              Earn badges.<br />Stay motivated.
-            </h2>
-            <p className="text-white/60 text-[15px] leading-relaxed">
-              Every week, WalletAnalyser awards you badges based on portfolio milestones — diversification, consistency, volatility control. Long-term wealth building, with the satisfaction loop of a game.
-            </p>
-          </div>
-          {/* Badge showcase */}
-          <div className="flex gap-3 flex-wrap justify-center">
-            {[
-              { label: "Diversified", color: "bg-amber-400/20 border-amber-400/40 text-amber-300" },
-              { label: "Low vol.", color: "bg-teal-400/20 border-teal-400/40 text-teal-300" },
-              { label: "CAGR 10%+", color: "bg-purple-400/20 border-purple-400/40 text-purple-200" },
-              { label: "Sharpe 1.5", color: "bg-indigo-400/20 border-indigo-400/40 text-indigo-200" },
-              { label: "1 year streak", color: "bg-pink-400/20 border-pink-400/40 text-pink-200" },
-              { label: "Beat index", color: "bg-green-400/20 border-green-400/40 text-green-300" },
-            ].map((b) => (
-              <div
-                key={b.label}
-                className={`px-4 py-2 rounded-xl border text-[13px] font-semibold ${b.color} backdrop-blur-sm`}
-              >
-                {b.label}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      
 
       {/* ── PRICING ──────────────────────────────────────────── */}
       <section id="pricing" className="relative bg-[#0d0a1a] py-28 px-6 overflow-hidden">
