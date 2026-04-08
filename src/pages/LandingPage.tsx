@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import HeroBanner from "../components/HeroBanner";
 import FeatureSection from "../components/FeatureSection";
 import MetricSection from "../components/MetricSection";
@@ -6,34 +6,6 @@ import GamificationSection from "../components/GamificationSection";
 import ExcelImportSection from "../components/ExcelImportSection";
 import PricingSection from "../components/PricingSection";
 import FaqSection from "../components/FaqSection";
-
-const FaqItem: React.FC<{ q: string; a: string }> = ({ q, a }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border-b border-white/10">
-      <button
-        className="w-full text-left flex justify-between items-center py-5 text-white/90 font-medium text-[15px] hover:text-white transition-colors"
-        onClick={() => setOpen(!open)}
-      >
-        <span>{q}</span>
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          className={`flex-shrink-0 ml-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-      {open && (
-        <p className="text-white/55 text-[14px] leading-relaxed pb-5 -mt-1">{a}</p>
-      )}
-    </div>
-  );
-};
 
 const LandingPage: React.FC = () => {
   return (
