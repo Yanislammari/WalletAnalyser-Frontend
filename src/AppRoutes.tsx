@@ -5,11 +5,13 @@ import Register from "./pages/Register";
 import Main from "./pages/Main";
 import ForgottenPassword from "./pages/ForgottenPassword";
 import ResetPassword from "./pages/ResetPassword";
+import LandingPage from "./pages/LandingPage";
 
 const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/main" element={<Main />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

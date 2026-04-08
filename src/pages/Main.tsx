@@ -33,7 +33,7 @@ const Main: React.FC = () => {
             Wallet<span className="text-purple-600">Analyser</span>
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            Analyse, compare et optimise tes investissements
+            Analyze, compare and optimize your investments
           </p>
         </div>
         <div className="flex flex-col gap-4">
