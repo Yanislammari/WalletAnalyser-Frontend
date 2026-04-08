@@ -1,4 +1,4 @@
-export interface PricingPlan {
+export interface PricingPlanUI {
   name: string;
   price: string;
   period: string;

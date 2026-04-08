@@ -1,7 +1,8 @@
 import type React from "react";
-import type { PricingPlan } from "../models/UI/PricingPlanUI";
+import type { PricingPlanUI } from "../models/UI/PricingPlanUI";
+import PricingPlanCard from "./PricingPlanCard";
 
-const pricingPlans: PricingPlan[] = [
+const pricingPlans: PricingPlanUI[] = [
   {
     name: "Free",
     price: "€0",
@@ -45,45 +46,7 @@ const PricingSection: React.FC = () => {
         </div>
         <div className="grid md:grid-cols-3 gap-5">
           {pricingPlans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative rounded-2xl p-7 flex flex-col ${
-                plan.featured
-                  ? "bg-purple-600 border-2 border-purple-400/50 shadow-2xl shadow-purple-900/40"
-                  : "bg-white/[0.04] border border-white/[0.08]"
-              }`}
-            >
-              {plan.featured && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 text-[11px] font-bold px-4 py-1 rounded-full uppercase tracking-wider">
-                  Most popular
-                </div>
-              )}
-              <p className={`text-sm font-medium mb-2 ${plan.featured ? "text-purple-200" : "text-white/40"}`}>{plan.name}</p>
-              <p className={`text-4xl font-bold mb-1 tracking-tight ${plan.featured ? "text-white" : "text-white"}`}>
-                {plan.price}
-                <span className={`text-sm font-normal ${plan.featured ? "text-purple-300" : "text-white/30"}`}>{plan.period}</span>
-              </p>
-              <p className={`text-[13px] mb-6 mt-1 leading-relaxed ${plan.featured ? "text-purple-200/80" : "text-white/40"}`}>{plan.description}</p>
-              <div className="flex-1 space-y-2 mb-6">
-                {plan.features.map((feature) => (
-                  <div key={feature} className="flex items-center gap-2.5">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={plan.featured ? "rgba(255,255,255,0.8)" : "rgba(139,92,246,0.8)"} strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span className={`text-[13px] ${plan.featured ? "text-white/90" : "text-white/55"}`}>{feature}</span>
-                  </div>
-                ))}
-              </div>
-              <button
-                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  plan.featured
-                    ? "bg-white text-purple-700 hover:bg-purple-50"
-                    : "bg-white/[0.08] text-white hover:bg-white/[0.12] border border-white/[0.1]"
-                }`}
-              >
-                {plan.cta}
-              </button>
-            </div>
+            <PricingPlanCard key={plan.name} plan={plan} />
           ))}
         </div>
       </div>

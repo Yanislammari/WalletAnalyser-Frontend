@@ -4,6 +4,7 @@ import FeatureSection from "../components/FeatureSection";
 import MetricSection from "../components/MetricSection";
 import GamificationSection from "../components/GamificationSection";
 import ExcelImportSection from "../components/ExcelImportSection";
+import PricingSection from "../components/PricingSection";
 
 const faqs = [
   {
@@ -64,7 +65,7 @@ const LandingPage: React.FC = () => {
       <ExcelImportSection />
       <MetricSection />
       <GamificationSection />
-
+      <PricingSection />
       
 
       {/* ── PRICING ──────────────────────────────────────────── */}
