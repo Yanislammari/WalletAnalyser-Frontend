@@ -3,6 +3,7 @@ import HeroBanner from "../components/HeroBanner";
 import FeatureSection from "../components/FeatureSection";
 import MetricSection from "../components/MetricSection";
 import GamificationSection from "../components/GamificationSection";
+import ExcelImportSection from "../components/ExcelImportSection";
 
 const pricingPlans = [
   {
@@ -90,6 +91,7 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
       <HeroBanner />
       <FeatureSection />
+      <ExcelImportSection />
       <MetricSection />
       <GamificationSection />
 
