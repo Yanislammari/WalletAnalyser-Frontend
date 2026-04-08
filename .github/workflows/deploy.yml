@@ -29,9 +29,13 @@ jobs:
         run: |
           docker build -t walletanalyseracr.azurecr.io/walletanalyser-frontend:latest .
 
-      - name: Push Docker image
+      - name: Build Docker image
         run: |
-          docker push walletanalyseracr.azurecr.io/walletanalyser-frontend:latest
+          docker build \
+            --build-arg VITE_BACKEND_BASE_URL=${{ secrets.VITE_BACKEND_BASE_URL }} \
+            --build-arg VITE_GOOGLE_OAUTH_CLIENT_ID=${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID }} \
+            -t walletanalyseracr.azurecr.io/walletanalyser-frontend:latest .
+
 
       - name: Restart Azure App Service
         run: |
