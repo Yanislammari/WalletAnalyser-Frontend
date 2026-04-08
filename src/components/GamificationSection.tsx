@@ -1,4 +1,5 @@
 import React from "react";
+import BadgeItem from "./BadgeItem";
 
 const badges = [
   { label: "Diversified", dot: "#f59e0b", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.3)", text: "#92400e" },
@@ -64,12 +65,7 @@ const GamificationSection: React.FC = () => {
           <p className="text-[11px] font-semibold tracking-widest text-violet-400 mb-4">YOUR BADGES</p>
           <div className="flex flex-wrap gap-2 mb-5">
             {badges.map((badge) => (
-              <div key={badge.label}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium"
-                style={{ background: badge.bg, border: `1px solid ${badge.border}`, color: badge.text }}>
-                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: badge.dot }} />
-                {badge.label}
-              </div>
+              <BadgeItem key={badge.label} badge={badge} />
             ))}
           </div>
           <div className="border-t pt-4" style={{ borderColor: "rgba(167,139,250,0.15)" }}>
