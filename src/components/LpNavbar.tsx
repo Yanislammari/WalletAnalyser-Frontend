@@ -4,16 +4,31 @@ import { useNavigate, type NavigateFunction } from "react-router";
 const LpNavbar: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
 
+  const scrollTo = (id: string) => {
+    const element: HTMLElement | null = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
   return (
     <nav className="relative z-10 flex items-center justify-between px-8 md:px-16 py-6">
       <div className="text-xl font-bold tracking-tight text-gray-900">
         Wallet<span className="text-purple-600">Analyser</span>
       </div>
       <div className="hidden md:flex items-center gap-8 text-sm text-gray-500">
-        <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
-        <a href="#metrics" className="hover:text-gray-900 transition-colors">Metrics</a>
-        <a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a>
-        <a href="#faq" className="hover:text-gray-900 transition-colors">FAQ</a>
+        <button onClick={() => scrollTo("features")} className="hover:text-gray-900 transition-colors cursor-pointer">
+          Features
+        </button>
+        <button onClick={() => scrollTo("metrics")} className="hover:text-gray-900 transition-colors cursor-pointer">
+          Metrics
+        </button>
+        <button onClick={() => scrollTo("pricing")} className="hover:text-gray-900 transition-colors cursor-pointer">
+          Pricing
+        </button>
+        <button onClick={() => scrollTo("faq")} className="hover:text-gray-900 transition-colors cursor-pointer">
+          FAQ
+        </button>
       </div>
       <div className="flex items-center gap-3">
         <button onClick={() => navigate("/login")} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors hover:cursor-pointer">
