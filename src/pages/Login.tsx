@@ -3,6 +3,7 @@ import { useNavigate, type NavigateFunction } from "react-router-dom";
 import { toast } from "sonner";
 import Background from "../components/Background";
 import { useAuth } from "../providers/AuthProvider";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 const Login: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
@@ -100,6 +101,7 @@ const Login: React.FC = () => {
             <span className="text-xs text-gray-400">OR</span>
             <div className="flex-1 h-px bg-gray-300" />
           </div>
+          <GoogleAuthButton />
           <div className="text-center text-sm">
             No account?{" "}
             <button

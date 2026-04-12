@@ -6,6 +6,7 @@ import Background from "../components/Background";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/regex";
 import { useAuth } from "../providers/AuthProvider";
 import AuthService from "../services/AuthService";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 const Register: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
@@ -183,6 +184,7 @@ const Register: React.FC = () => {
             <span className="text-xs text-gray-400">OR</span>
             <div className="flex-1 h-px bg-gray-300" />
           </div>
+          <GoogleAuthButton />
           <div className="text-center text-sm">
             Already have an account?{" "}
             <button
