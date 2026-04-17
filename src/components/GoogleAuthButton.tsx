@@ -17,6 +17,7 @@ const GoogleAuthButton: React.FC = () => {
 
     try {
       await loginWithGoogle(idToken);
+      toast.success("Logged in with Google successfully!");
       navigate("/home");
     }
     catch {

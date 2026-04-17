@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import Background from "../components/Background";
 import { useAuth } from "../providers/AuthProvider";
 import GoogleAuthButton from "../components/GoogleAuthButton";
+import BackButton from "../components/BackButton";
 
 const Login: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
@@ -60,7 +61,8 @@ const Login: React.FC = () => {
 
   return (
     <Background>
-      <div className="backdrop-blur-xl bg-white/80 border border-gray-200 rounded-3xl shadow-xl p-10 w-full max-w-sm text-gray-900">
+      <div className="relative backdrop-blur-xl bg-white/80 border border-gray-200 rounded-3xl shadow-xl p-10 w-full max-w-sm text-gray-900">
+        <BackButton route="/main" />
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold">
             Login to Wallet<span className="text-purple-600">Analyser</span>

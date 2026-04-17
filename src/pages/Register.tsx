@@ -7,6 +7,7 @@ import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/regex";
 import { useAuth } from "../providers/AuthProvider";
 import AuthService from "../services/AuthService";
 import GoogleAuthButton from "../components/GoogleAuthButton";
+import BackButton from "../components/BackButton";
 
 const Register: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
@@ -16,6 +17,7 @@ const Register: React.FC = () => {
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState<boolean>(false);
   const [isEmailAvailable, setIsEmailAvailable] = useState<boolean | null>(null);
@@ -74,6 +76,11 @@ const Register: React.FC = () => {
       return;
     }
 
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
     setLoading(true);
     try {
       await register({ firstName, lastName, email, password });
@@ -96,7 +103,8 @@ const Register: React.FC = () => {
 
   return (
     <Background>
-      <div className="backdrop-blur-xl bg-white/80 border border-gray-200 rounded-3xl shadow-xl p-10 w-full max-w-sm text-gray-900">
+      <div className="relative backdrop-blur-xl bg-white/80 border border-gray-200 rounded-3xl shadow-xl p-10 w-full max-w-sm text-gray-900">
+        <BackButton route="/main" />
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold">
             Register for Wallet<span className="text-purple-600">Analyser</span>
@@ -165,6 +173,13 @@ const Register: React.FC = () => {
             className="px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            className="px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
           />
           <button
             onClick={handleRegister}
