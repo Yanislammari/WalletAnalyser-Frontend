@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
 import { toast } from "sonner";
-import { FaCheck, FaTimes, FaSpinner } from "react-icons/fa";
+import { FaCheck, FaTimes, FaSpinner, FaEye, FaEyeSlash } from "react-icons/fa";
 import Background from "../components/Background";
 import { EMAIL_REGEX, PASSWORD_REGEX } from "../constants/regex";
 import { useAuth } from "../providers/AuthProvider";
@@ -18,6 +18,8 @@ const Register: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState<boolean>(false);
   const [isEmailAvailable, setIsEmailAvailable] = useState<boolean | null>(null);
@@ -70,12 +72,10 @@ const Register: React.FC = () => {
       );
       return;
     }
-
     if (isEmailAvailable === false) {
       toast.error("Email is already taken.");
       return;
     }
-
     if (password !== confirmPassword) {
       toast.error("Passwords do not match.");
       return;
@@ -167,20 +167,38 @@ const Register: React.FC = () => {
               </p>
             )}
           </div>
-          <input
-            type="password"
-            placeholder="Password"
-            className="px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            className="px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
+          <div className="flex items-center w-full px-4 py-3 rounded-xl bg-white/90 border border-gray-300 focus-within:ring-2 focus-within:ring-purple-500">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-400"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="ml-2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+          <div className="flex items-center w-full px-4 py-3 rounded-xl bg-white/90 border border-gray-300 focus-within:ring-2 focus-within:ring-purple-500">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm Password"
+              className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-400"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="ml-2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+            >
+              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
           <button
             onClick={handleRegister}
             className={`btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none ${

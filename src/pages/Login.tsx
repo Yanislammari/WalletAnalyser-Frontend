@@ -5,12 +5,14 @@ import Background from "../components/Background";
 import { useAuth } from "../providers/AuthProvider";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import BackButton from "../components/BackButton";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const Login: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
   const { login } = useAuth();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
   const getErrorMessage = (backendMessage: string): string => {
@@ -76,13 +78,22 @@ const Login: React.FC = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <input
-            type="password"
-            placeholder="Password"
-            className="px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="flex items-center w-full px-4 py-3 rounded-xl bg-white/90 border border-gray-300 focus-within:ring-2 focus-within:ring-purple-500">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-400"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="ml-2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
           <div className="text-center">
             <button
               className="text-sm text-purple-600 hover:underline hover:cursor-pointer"
