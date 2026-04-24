@@ -5,6 +5,7 @@ import { FaSpinner, FaEye, FaEyeSlash } from "react-icons/fa";
 import Background from "../components/Background";
 import AuthService from "../services/AuthService";
 import { PASSWORD_REGEX } from "../constants/regex";
+import { TokenErrorType } from "../enums/TokenErrorType";
 
 const ResetPassword: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
@@ -15,13 +16,15 @@ const ResetPassword: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null);
+  const [errorType, setErrorType] = useState<TokenErrorType | null>(null);
   const [searchParams] = useSearchParams();
   const token: string | null = searchParams.get("token");
 
   useEffect(() => {
     const verifyToken = async () => {
-      if (!token) {
-        toast.error("Invalid or missing token.");
+      if (!token || token.trim() === "") {
+        setErrorType(TokenErrorType.MISSING);
+        toast.error("Reset link is missing.");
         setIsTokenValid(false);
         return;
       }
@@ -31,11 +34,18 @@ const ResetPassword: React.FC = () => {
         setIsTokenValid(true);
       }
       catch (error: any) {
-        if (error.message === "TOKEN_EXPIRED") {
-          toast.error("Your reset link has expired.");
-        }
-        else {
-          toast.error("Invalid reset link.");
+        switch (error.message) {
+          case "Token expired":
+            setErrorType(TokenErrorType.EXPIRED);
+            toast.error("Your reset link has expired.");
+            break;
+          case "Invalid token":
+            setErrorType(TokenErrorType.INVALID);
+            toast.error("This reset link is invalid.");
+            break;
+          default:
+            setErrorType(TokenErrorType.UNKNOWN);
+            toast.error("Failed to verify reset link.");
         }
         setIsTokenValid(false);
       }
@@ -45,8 +55,8 @@ const ResetPassword: React.FC = () => {
   }, [token]);
 
   const handleResetPassword = async () => {
-    if (!token) {
-      toast.error("Invalid or missing token.");
+    if (!token || token.trim() === "") {
+      toast.error("Reset link is missing.");
       return;
     }
     if (!password || !confirmPassword) {
@@ -72,11 +82,11 @@ const ResetPassword: React.FC = () => {
     }
     catch (error: any) {
       switch (error.message) {
-        case "TOKEN_EXPIRED":
+        case "Token expired":
           toast.error("Your reset link has expired.");
           break;
-        case "INVALID_TOKEN":
-          toast.error("Invalid reset link.");
+        case "Invalid token":
+          toast.error("This reset link is invalid.");
           break;
         default:
           toast.error("Something went wrong. Try again later.");
@@ -93,10 +103,18 @@ const ResetPassword: React.FC = () => {
         {isTokenValid === false ? (
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-red-500 mb-3">
-              Invalid or Expired Link
+              {errorType === TokenErrorType.MISSING && "Missing Reset Link"}
+              {errorType === TokenErrorType.EXPIRED && "Expired Reset Link"}
+              {errorType === TokenErrorType.INVALID && "Invalid Reset Link"}
+              {errorType === TokenErrorType.UNKNOWN && "Reset Link Error"}
+              {!errorType && "Reset Link Error"}
             </h1>
             <p className="opacity-80 mb-6">
-              Please request a new password reset link.
+              {errorType === TokenErrorType.MISSING && "The reset link is incomplete or missing."}
+              {errorType === TokenErrorType.EXPIRED && "Your reset link has expired. Please request a new one."}
+              {errorType === TokenErrorType.INVALID && "This reset link is not valid."}
+              {errorType === TokenErrorType.UNKNOWN && "An unknown error occurred with the reset link."}
+              {!errorType && "Something went wrong. Please try again."}
             </p>
             <button
               onClick={() => navigate("/forgot-password")}

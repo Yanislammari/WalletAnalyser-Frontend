@@ -24,7 +24,6 @@ const Main: React.FC = () => {
           >
             Sign In
           </button>
-
           <button
             onClick={() => navigate("/register")}
             className="btn btn-outline w-full rounded-xl normal-case text-base border-gray-300 text-gray-700 hover:bg-gray-100"
