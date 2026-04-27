@@ -6,6 +6,7 @@ import { useAuth } from "../providers/AuthProvider";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import BackButton from "../components/BackButton";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import Loading from "../components/Loading";
 
 const Login: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
@@ -63,69 +64,73 @@ const Login: React.FC = () => {
 
   return (
     <Background>
-      <div className="relative backdrop-blur-xl bg-white/80 border border-gray-200 rounded-3xl shadow-xl p-10 w-full max-w-sm text-gray-900">
-        <BackButton route="/main" />
-        <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold">
-            Login to Wallet<span className="text-purple-600">Analyser</span>
-          </h1>
-        </div>
-        <div className="flex flex-col gap-4">
-          <input
-            type="email"
-            placeholder="Email"
-            className="px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <div className="flex items-center w-full px-4 py-3 rounded-xl bg-white/90 border border-gray-300 focus-within:ring-2 focus-within:ring-purple-500">
+      {loading ? (
+        <Loading size={96} />
+      ) : (
+        <div className="relative backdrop-blur-xl bg-white/80 border border-gray-200 rounded-3xl shadow-xl p-10 w-full max-w-sm text-gray-900">
+          <BackButton route="/main" />
+          <div className="mb-6 text-center">
+            <h1 className="text-3xl font-bold">
+              Login to Wallet<span className="text-purple-600">Analyser</span>
+            </h1>
+          </div>
+          <div className="flex flex-col gap-4">
             <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-400"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              type="email"
+              placeholder="Email"
+              className="px-4 py-3 rounded-xl bg-white/90 text-gray-900 placeholder-gray-400 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
+            <div className="flex items-center w-full px-4 py-3 rounded-xl bg-white/90 border border-gray-300 focus-within:ring-2 focus-within:ring-purple-500">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-400"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="ml-2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+            <div className="text-center">
+              <button
+                className="text-sm text-purple-600 hover:underline hover:cursor-pointer"
+                onClick={() => navigate("/forgotten-password")}
+              >
+                Forgotten Password?
+              </button>
+            </div>
             <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="ml-2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              onClick={handleLogin}
+              className={`btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+              disabled={loading}
             >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
+              {loading ? <span className="loading loading-spinner loading-sm"></span> : "Login"}
             </button>
-          </div>
-          <div className="text-center">
-            <button
-              className="text-sm text-purple-600 hover:underline hover:cursor-pointer"
-              onClick={() => navigate("/forgotten-password")}
-            >
-              Forgotten Password?
-            </button>
-          </div>
-          <button
-            onClick={handleLogin}
-            className={`btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-            disabled={loading}
-          >
-            {loading ? <span className="loading loading-spinner loading-sm"></span> : "Login"}
-          </button>
-          <div className="flex items-center gap-3 my-2">
-            <div className="flex-1 h-px bg-gray-300" />
-            <span className="text-xs text-gray-400">OR</span>
-            <div className="flex-1 h-px bg-gray-300" />
-          </div>
-          <GoogleAuthButton />
-          <div className="text-center text-sm">
-            No account?{" "}
-            <button
-              className="text-purple-600 hover:underline hover:cursor-pointer"
-              onClick={() => navigate("/register")}
-            >
-              Sign up here!
-            </button>
+            <div className="flex items-center gap-3 my-2">
+              <div className="flex-1 h-px bg-gray-300" />
+              <span className="text-xs text-gray-400">OR</span>
+              <div className="flex-1 h-px bg-gray-300" />
+            </div>
+            <GoogleAuthButton />
+            <div className="text-center text-sm">
+              No account?{" "}
+              <button
+                className="text-purple-600 hover:underline hover:cursor-pointer"
+                onClick={() => navigate("/register")}
+              >
+                Sign up here!
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </Background>
   );
 }
