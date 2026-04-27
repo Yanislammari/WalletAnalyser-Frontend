@@ -9,6 +9,7 @@ import LandingPage from "./pages/LandingPage";
 import HomeLayout from "./layouts/HomeLayout";
 import DashboardPage from "./pages/DashboardPage";
 import ImportPage from "./pages/ImportPage";
+import ActivateAccountPage from "./pages/ActivateAccountPage";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -20,8 +21,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/forgotten-password" element={<ForgottenPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-
-        {/* Zone authentifiée — layout partagé */}
+        <Route path="activate-account" element={<ActivateAccountPage />} />
         <Route path="/home" element={<HomeLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />

@@ -64,6 +64,20 @@ class AuthService extends BaseService {
       body: JSON.stringify({ token, newPassword }),
     });
   }
+
+  public async sendActivationEmail(email: string): Promise<void> {
+    await this.request("/auth/send-activate-account-email", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  public async activateAccount(token: string): Promise<void> {
+    await this.request("/auth/activate-account", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  }
 }
 
 export default AuthService;
