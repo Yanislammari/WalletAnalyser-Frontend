@@ -2,7 +2,7 @@ import { HiOutlineSquares2X2, HiOutlineArrowDownTray } from "react-icons/hi2";
 import type { NavItem } from "../models/UI/NavItem";
 import { NavLink } from "react-router";
 
-const navItems: NavItem[] = [
+const NAV_ITEMS: NavItem[] = [
   {
     to: "/home/dashboard",
     label: "Dashboard",
@@ -60,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
         <p className="text-[10px] text-white/30 uppercase tracking-[0.15em] font-medium">Menu</p>
       </div>
       <nav className="relative z-10 flex-1 px-3 space-y-0.5">
-        {navItems.map((item) => (
+        {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
