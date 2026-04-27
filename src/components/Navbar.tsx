@@ -1,8 +1,8 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
-import Avatar from "./Avatar";
-import type { User } from "../models/User";
+import { useLocation, type Location } from "react-router-dom";
 import SearchBar from "./SearchBar";
+import ProfileBlock from "./ProfileBlock";
+import type { User } from "../models/User";
 
 const pageTitles: Record<string, string> = {
   "/home/dashboard": "Dashboard",
@@ -10,20 +10,20 @@ const pageTitles: Record<string, string> = {
 };
 
 interface NavbarProps {
+  onMenuClick: () => void;
   user: User | null;
   onAvatarClick: () => void;
-  onMenuClick: () => void;
   avatarRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ user, onAvatarClick, onMenuClick, avatarRef }) => {
-  const location = useLocation();
-  const title = pageTitles[location.pathname] ?? "Home";
+const Navbar: React.FC<NavbarProps> = (props: NavbarProps) => {
+  const location: Location = useLocation();
+  const title: string = pageTitles[location.pathname] ?? "Home";
 
   return (
     <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 z-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center px-4 sm:px-6 gap-3">
       <button
-        onClick={onMenuClick}
+        onClick={props.onMenuClick}
         className="lg:hidden w-9 h-9 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors cursor-pointer shrink-0"
         aria-label="Open menu"
       >
@@ -43,27 +43,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onAvatarClick, onMenuClick, avata
         </svg>
         <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-purple-500 rounded-full border-2 border-white" />
       </button>
-      <button
-        ref={avatarRef}
-        onClick={onAvatarClick}
-        className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer shrink-0"
-      >
-        <Avatar
-          pictureUrl={user?.googlePictureUrl}
-          firstName={user?.firstName}
-          lastName={user?.lastName}
-          size="sm"
-        />
-        <div className="hidden sm:block text-left">
-          <p className="text-[13px] font-semibold text-gray-800 leading-tight max-w-[120px] truncate">
-            {user?.firstName} {user?.lastName}
-          </p>
-          <p className="text-[11px] text-gray-400 leading-tight max-w-[120px] truncate">{user?.email}</p>
-        </div>
-        <svg className="w-3.5 h-3.5 text-gray-400 hidden sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+      <ProfileBlock user={props.user} onAvatarClick={props.onAvatarClick} avatarRef={props.avatarRef} />
     </header>
   );
 }
