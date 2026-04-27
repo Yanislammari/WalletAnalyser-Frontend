@@ -1,11 +1,15 @@
 import type React from "react";
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Main from "./pages/Main";
 import ForgottenPassword from "./pages/ForgottenPassword";
 import ResetPassword from "./pages/ResetPassword";
 import LandingPage from "./pages/LandingPage";
+import HomeLayout from "./layouts/HomeLayout";
+import DashboardPage from "./pages/DashboardPage";
+import ImportPage from "./pages/ImportPage";
+import ActivateAccountPage from "./pages/ActivateAccountPage";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -17,9 +21,15 @@ const AppRoutes: React.FC = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/forgotten-password" element={<ForgottenPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="activate-account" element={<ActivateAccountPage />} />
+        <Route path="/home" element={<HomeLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="import" element={<ImportPage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
-}
+};
 
 export default AppRoutes;

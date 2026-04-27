@@ -9,6 +9,7 @@ export interface UserResponse {
   googlePictureUrl: string | null;
   ban: boolean;
   userType: UserType;
+  activated: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

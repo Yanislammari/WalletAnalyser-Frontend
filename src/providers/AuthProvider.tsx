@@ -12,6 +12,7 @@ interface AuthContextType {
   register: (payload: RegisterPayload) => Promise<User>;
   loginWithGoogle: (idToken: string) => Promise<User>;
   logout: () => void;
+  sendActivationEmail: () => Promise<void>;
 }
 
 const mapUserResponseToUser = (userResponse: UserResponse): User => ({
@@ -24,6 +25,7 @@ const mapUserResponseToUser = (userResponse: UserResponse): User => ({
   ban: userResponse.ban,
   userType: userResponse.userType,
   subscribe: false,
+  activated: userResponse.activated,
   createdAt: new Date(userResponse.createdAt),
   updatedAt: new Date(userResponse.updatedAt),
 });
@@ -36,8 +38,26 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const authService = AuthService.getInstance();
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      return {
+        ...parsed,
+        createdAt: new Date(parsed.createdAt),
+        updatedAt: new Date(parsed.updatedAt),
+      } as User;
+    } catch {
+      return null;
+    }
+  });
+
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem("token");
+  });
+
   const isAuthenticated = !!token;
 
   const login = useCallback(async (email: string, password: string) => {
@@ -50,6 +70,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(mappedUser));
+      sessionStorage.setItem("justLoggedIn", "true");
+      sessionStorage.setItem("showActivationBanner", "true");
+
+      if (!mappedUser.activated) {
+        await authService.sendActivationEmail(mappedUser.email);
+      }
     } catch (error: any) {
       throw new Error(error.message || "Login failed");
     }
@@ -65,6 +91,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(mappedUser));
+      sessionStorage.setItem("justLoggedIn", "true");
+      sessionStorage.setItem("showActivationBanner", "true");
+
+      if (!mappedUser.activated) {
+        await authService.sendActivationEmail(mappedUser.email);
+      }
 
       return mappedUser;
     } catch (error: any) {
@@ -82,6 +114,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(mappedUser));
+      sessionStorage.setItem("justLoggedIn", "true");
+      sessionStorage.setItem("showActivationBanner", "true");
+
+      if (!mappedUser.activated) {
+        await authService.sendActivationEmail(mappedUser.email);
+      }
 
       return mappedUser;
     } catch (error: any) {
@@ -89,15 +127,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [authService]);
 
+  const sendActivationEmail = useCallback(async () => {
+    if (!user) return;
+    await authService.sendActivationEmail(user.email);
+  }, [authService, user]);
+
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.removeItem("justLoggedIn");
+    sessionStorage.removeItem("showActivationBanner");
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, login, register, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, login, register, loginWithGoogle, logout, sendActivationEmail }}>
       {children}
     </AuthContext.Provider>
   );
