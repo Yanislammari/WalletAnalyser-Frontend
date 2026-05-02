@@ -29,7 +29,7 @@ const PortfolioCard: React.FC<PortfolioCardProps> = (props: PortfolioCardProps) 
   return (
     <div
       onClick={() => navigate(`/home/portfolio/${props.portfolio.id}/transactions`)}
-      className="group bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+      className="group bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer min-h-[200px]"
     >
       <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${colorClass} flex items-center justify-center shadow-lg mb-4`}>
         <HiOutlineBriefcase className="w-7 h-7 text-white" />
