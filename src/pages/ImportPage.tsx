@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router";
+import React, { useState, useRef } from "react";
+import { useNavigate, type NavigateFunction } from "react-router";
 import { HiOutlinePencilSquare, HiOutlineBriefcase, HiOutlineXMark } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
 import PortfolioService from "../services/PortfolioService";
 import type { Portfolio } from "../models/Portfolio";
+import ImportDataDropzone from "../components/ImportDataDropzone";
 
 const PORTFOLIO_COLORS = [
   "from-purple-500 to-indigo-600",
@@ -16,22 +17,26 @@ const PORTFOLIO_COLORS = [
 
 const ImportPage: React.FC = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const navigate: NavigateFunction = useNavigate();
   const dialogRef = useRef<HTMLDialogElement>(null);
-
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
-  const [loadingPortfolios, setLoadingPortfolios] = useState(false);
+  const [loadingPortfolios, setLoadingPortfolios] = useState<boolean>(false);
 
   const openManualModal = async () => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
+
     setLoadingPortfolios(true);
     dialogRef.current?.showModal();
     try {
-      const data = await PortfolioService.getInstance().getPortfoliosByUserId(user.id);
-      setPortfolios(data);
-    } catch {
+      const portfolios: Portfolio[] = await PortfolioService.getInstance().getPortfoliosByUserId(user.id);
+      setPortfolios(portfolios);
+    }
+    catch {
       setPortfolios([]);
-    } finally {
+    }
+    finally {
       setLoadingPortfolios(false);
     }
   };
@@ -47,37 +52,12 @@ const ImportPage: React.FC = () => {
         <h2 className="text-gray-900 text-xl font-bold tracking-tight">Import Data</h2>
         <p className="text-gray-500 text-sm mt-0.5">Upload your portfolio file or enter transactions manually.</p>
       </div>
-
-      {/* Drop zone */}
-      <div className="bg-white border-2 border-dashed border-purple-200 rounded-2xl p-8 sm:p-16 flex flex-col items-center justify-center gap-4 hover:border-purple-400 hover:bg-purple-50/30 transition-all cursor-pointer group">
-        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-          <svg className="w-7 h-7 sm:w-8 sm:h-8 text-purple-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v13m0 0l-4-4m4 4l4-4" />
-          </svg>
-        </div>
-        <div className="text-center">
-          <p className="text-gray-700 font-semibold text-sm sm:text-base">
-            Drop your file here or <span className="text-purple-600">browse</span>
-          </p>
-          <p className="text-gray-400 text-xs sm:text-sm mt-1">Supports .xlsx, .csv, .xls — up to 10 MB</p>
-        </div>
-        <div className="flex flex-wrap justify-center gap-2">
-          {["Excel", "CSV", "Brokerage export"].map((f) => (
-            <span key={f} className="px-3 py-1 bg-purple-50 border border-purple-100 text-purple-700 text-[11px] rounded-full font-medium">
-              {f}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Divider */}
+      <ImportDataDropzone />
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-gray-100" />
         <span className="text-xs text-gray-400 font-medium">or</span>
         <div className="flex-1 h-px bg-gray-100" />
       </div>
-
-      {/* Manual entry button */}
       <button
         onClick={openManualModal}
         className="w-full flex items-center justify-center gap-2.5 py-3.5 bg-white border border-gray-200 hover:border-purple-300 hover:bg-purple-50/30 rounded-2xl text-sm font-medium text-gray-700 hover:text-purple-700 transition-all cursor-pointer shadow-sm"
