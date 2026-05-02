@@ -60,8 +60,8 @@ const HomeLayout: React.FC = () => {
       />
       <Navbar onMenuClick={() => setSidebarOpen((v) => !v)} />
 
-      <div className="lg:ml-64 pt-16 min-h-screen">
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-7 py-6 sm:py-8 space-y-5">
+      <div className="lg:ml-64 pt-16 min-h-screen flex flex-col">
+        <main className="flex-1 flex flex-col max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-7 py-6 sm:py-8 space-y-5">
           {bannerVisible && (
             <ActivationBanner
               onClose={() => {

@@ -35,6 +35,7 @@ const Avatar: React.FC<AvatarProps> = (props: AvatarProps) => {
         src={props.pictureUrl}
         alt="Profile"
         className={`${dim} rounded-full object-cover ring-2 ring-white/20 shrink-0`}
+        referrerPolicy="no-referrer"
       />
     );
   }

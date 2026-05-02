@@ -9,6 +9,8 @@ import LandingPage from "./pages/LandingPage";
 import HomeLayout from "./layouts/HomeLayout";
 import DashboardPage from "./pages/DashboardPage";
 import ImportPage from "./pages/ImportPage";
+import PortfolioPage from "./pages/PortfolioPage";
+import TransactionPage from "./pages/TransactionPage";
 import ActivateAccountPage from "./pages/ActivateAccountPage";
 import PublicRoute from "./guards/PublicRoute";
 import PrivateRoute from "./guards/PrivateRoute";
@@ -32,6 +34,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/home" element={<PrivateRoute><HomeLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="portfolio" element={<PortfolioPage />} />
+          <Route path="portfolio/:portfolioId/transactions" element={<TransactionPage />} />
           <Route path="import" element={<ImportPage />} />
         </Route>
         

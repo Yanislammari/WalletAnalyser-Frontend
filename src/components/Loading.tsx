@@ -8,7 +8,7 @@ const Loading: React.FC<LoadingProps> = (props: LoadingProps) => {
   const size: number = props.size || 32;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-50">
+    <div className="flex-1 flex items-center justify-center w-full">
       <span
         className="loading loading-spinner text-primary"
         style={{ width: size, height: size }}

@@ -8,6 +8,7 @@ import ProfileDropdown from "./ProfileDropdown";
 const pageTitles: Record<string, string> = {
   "/home/dashboard": "Dashboard",
   "/home/import": "Import Data",
+  "/home/portfolio" : "Portfolio",
 };
 
 interface NavbarProps {
