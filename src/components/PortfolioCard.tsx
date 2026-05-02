@@ -48,7 +48,7 @@ const PortfolioCard: React.FC<PortfolioCardProps> = (props: PortfolioCardProps) 
       <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
         <span className="text-[11px] text-gray-400 font-medium">0 assets</span>
         <span className="text-[11px] text-purple-600 font-medium group-hover:underline">
-          Open
+          Open →
         </span>
       </div>
     </div>

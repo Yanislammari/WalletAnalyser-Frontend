@@ -7,10 +7,10 @@ import PortfolioService from "../services/PortfolioService";
 import type { Portfolio } from "../models/Portfolio";
 import Loading from "../components/Loading";
 import PortfolioCard from "../components/PortfolioCard";
+import NewPortfolioCard from "../components/NewPortfolioCard";
 
 const PortfolioPage: React.FC = () => {
   const { user } = useAuth();
-  const navigate: NavigateFunction = useNavigate();
   const portfolioService = PortfolioService.getInstance();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -114,22 +114,11 @@ const PortfolioPage: React.FC = () => {
           </button>
         </div>
       ) : (
-        /* Portfolio grid */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {portfolios.map((portfolio) => (
             <PortfolioCard key={portfolio.id} portfolio={portfolio} />
           ))}
-
-          {/* Add card */}
-          <button
-            onClick={openModal}
-            className="border-2 border-dashed border-purple-200 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 hover:border-purple-400 hover:bg-purple-50/30 transition-all cursor-pointer group min-h-[160px]"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-purple-100 group-hover:bg-purple-200 transition-colors flex items-center justify-center">
-              <HiOutlinePlus className="w-6 h-6 text-purple-500" />
-            </div>
-            <p className="text-sm font-medium text-purple-600">New portfolio</p>
-          </button>
+          <NewPortfolioCard onClick={openModal} />
         </div>
       )}
 
