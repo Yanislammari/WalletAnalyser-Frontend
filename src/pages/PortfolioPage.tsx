@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router";
 import { toast } from "sonner";
 import { HiOutlineBriefcase, HiOutlinePlus } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
@@ -11,6 +12,7 @@ import CreatePortfolioModal from "../components/CreatePortfolioModal";
 
 const PortfolioPage: React.FC = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const portfolioService = PortfolioService.getInstance();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -43,6 +45,13 @@ const PortfolioPage: React.FC = () => {
     setNewName("");
     dialogRef.current?.showModal();
   };
+
+  useEffect(() => {
+    if (!loading && location.state?.openCreateModal) {
+      openModal();
+      window.history.replaceState({}, "");
+    }
+  }, [loading, location.state]);
 
   const closeModal = () => {
     dialogRef.current?.close();

@@ -2,29 +2,15 @@ import type React from "react";
 import type { Portfolio } from "../models/Portfolio";
 import { useNavigate, type NavigateFunction } from "react-router";
 import { HiOutlineBriefcase } from "react-icons/hi2";
-
-const PORTFOLIO_COLORS: string[] = [
-  "from-purple-500 to-indigo-600",
-  "from-indigo-500 to-blue-600",
-  "from-blue-500 to-cyan-600",
-  "from-emerald-500 to-teal-600",
-  "from-amber-500 to-orange-600",
-  "from-rose-500 to-pink-600",
-];
+import { getPortfolioColor } from "../utils/Colors";
 
 interface PortfolioCardProps {
   portfolio: Portfolio;
 }
 
-const getColorClass = (portfolioId: string | number): string => {
-  const numericId: number = Number.parseInt(String(portfolioId), 10);
-  const safeId: number = Number.isNaN(numericId) ? 0 : numericId;
-  return PORTFOLIO_COLORS[safeId % PORTFOLIO_COLORS.length];
-};
-
 const PortfolioCard: React.FC<PortfolioCardProps> = (props: PortfolioCardProps) => {
   const navigate: NavigateFunction = useNavigate();
-  const colorClass: string = getColorClass(props.portfolio.id);
+  const colorClass: string = getPortfolioColor(props.portfolio.id);
 
   return (
     <div
