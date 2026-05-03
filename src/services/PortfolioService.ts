@@ -1,8 +1,8 @@
 import { BaseService } from "./BaseService";
 import type { Portfolio } from "../models/Portfolio";
-import type { AssetBuyResponse } from "../models/transactions/AssetBuyResponse";
-import type { AssetSellResponse } from "../models/transactions/AssetSellResponse";
-import type { AssetDividendResponse } from "../models/transactions/AssetDividendResponse";
+import type { AssetBuyResponse } from "../responses/AssetBuyResponse";
+import type { AssetSellResponse } from "../responses/AssetSellResponse";
+import type { AssetDividendResponse } from "../responses/AssetDividendResponse";
 import type { CreatePortfolioPayload } from "../payloads/CreatePortfolioPayload";
 import type { AddAssetBuyPayload } from "../payloads/AddAssetBuyPayload";
 import type { AddAssetSellPayload } from "../payloads/AddAssetSellPayload";
