@@ -27,6 +27,10 @@ const TransactionPage: React.FC = () => {
   const [buys, setBuys] = useState<AssetBuyResponse[]>([]);
   const [sells, setSells] = useState<AssetSellResponse[]>([]);
   const [dividends, setDividends] = useState<AssetDividendResponse[]>([]);
+  const [companies, setCompanies] = useState<string[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const buyDialogRef = useRef<HTMLDialogElement>(null);
   const sellDialogRef = useRef<HTMLDialogElement>(null);
   const dividendDialogRef = useRef<HTMLDialogElement>(null);
@@ -39,12 +43,13 @@ const TransactionPage: React.FC = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const [portfolio, currencies, buys, sells, dividends] = await Promise.all([
+        const [portfolio, currencies, buys, sells, dividends, companies] = await Promise.all([
           portfolioService.getPortfolioById(portfolioId),
           currencyService.getAll(),
           portfolioService.getBuysByPortfolioId(portfolioId),
           portfolioService.getSellsByPortfolioId(portfolioId),
           portfolioService.getDividendsByPortfolioId(portfolioId),
+          portfolioService.getCompaniesByPortfolioId(portfolioId),
         ]);
 
         setPortfolio(portfolio);
@@ -52,6 +57,7 @@ const TransactionPage: React.FC = () => {
         setBuys(buys);
         setSells(sells);
         setDividends(dividends);
+        setCompanies(companies);
       }
       catch {
         toast.error("Failed to load data.");
@@ -125,6 +131,13 @@ const TransactionPage: React.FC = () => {
         onDeleteSell={handleDeleteSell}
         onDeleteDividend={handleDeleteDividend}
         currencyName={(uuid) => currencies.find((c) => c.uuid === uuid)?.currencyName ?? uuid}
+        companies={companies}
+        selectedCompany={selectedCompany}
+        onCompanyChange={setSelectedCompany}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateFromChange={setDateFrom}
+        onDateToChange={setDateTo}
       />
       {portfolioId && (
         <div>
@@ -132,13 +145,23 @@ const TransactionPage: React.FC = () => {
             dialogRef={buyDialogRef}
             currencies={currencies}
             portfolioId={portfolioId}
-            onSuccess={(buy) => setBuys((prev) => [...prev, buy])}
+            onSuccess={(buy) => {
+              setBuys((prev) => [...prev, buy]);
+              if (buy.companyName && !companies.includes(buy.companyName)) {
+                setCompanies((prev) => [...prev, buy.companyName!].sort());
+              }
+            }}
           />
           <AddNewSellModal
             dialogRef={sellDialogRef}
             currencies={currencies}
             portfolioId={portfolioId}
-            onSuccess={(sell) => setSells((prev) => [...prev, sell])}
+            onSuccess={(sell) => {
+              setSells((prev) => [...prev, sell]);
+              if (sell.companyName && !companies.includes(sell.companyName)) {
+                setCompanies((prev) => [...prev, sell.companyName!].sort());
+              }
+            }}
           />
           <AddNewDividendModal
             dialogRef={dividendDialogRef}

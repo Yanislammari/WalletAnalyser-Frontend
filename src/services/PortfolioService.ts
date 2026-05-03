@@ -106,6 +106,12 @@ class PortfolioService extends BaseService {
     if (!res.ok) throw new Error("Failed to delete dividend");
   }
 
+  public async getCompaniesByPortfolioId(portfolioId: string): Promise<string[]> {
+    return this.request<string[]>(`/portfolio/${portfolioId}/companies`, {
+      method: "GET",
+    });
+  }
+
   public async getAssetCountByPortfolioId(portfolioId: string): Promise<AssetCountResponse> {
     return this.request<AssetCountResponse>(`/portfolio/${portfolioId}/asset-count`, {
       method: "GET",
