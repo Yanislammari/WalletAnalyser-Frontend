@@ -4,6 +4,7 @@ import { HiOutlineBanknotes, HiOutlineXMark } from "react-icons/hi2";
 import type { Currency } from "../models/Currency";
 import { tabAccent, inputCls, labelCls } from "../constants/transactionConstants";
 import PortfolioService from "../services/PortfolioService";
+import DateInput from "./DateInput";
 import type { AssetDividendResponse } from "../responses/AssetDividendResponse";
 import { emptyDividend, type DividendForm } from "../forms/DividendForm";
 
@@ -90,12 +91,7 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props: AddNewDi
         <div className="space-y-3">
           <div>
             <label className={labelCls}>Date</label>
-            <input
-              type="date"
-              value={form.date}
-              onChange={(e) => setForm((form) => ({ ...form, date: e.target.value }))}
-              className={inputCls}
-            />
+            <DateInput value={form.date} onChange={(value) => setForm((form) => ({ ...form, date: value }))} />
           </div>
           <div className="flex gap-2">
             <div className="flex-1">

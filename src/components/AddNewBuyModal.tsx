@@ -5,6 +5,7 @@ import type { Currency } from "../models/Currency";
 import type { AssetBuyResponse } from "../responses/AssetBuyResponse";
 import { tabAccent, inputCls, labelCls } from "../constants/transactionConstants";
 import InputModeToggle from "./InputModeToggle";
+import DateInput from "./DateInput";
 import PortfolioService from "../services/PortfolioService";
 import { emptyBuy, type BuyForm } from "../forms/BuyForm";
 import { InputMode } from "../enums/InputMode";
@@ -95,12 +96,7 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
         <div className="space-y-3">
           <div>
             <label className={labelCls}>Date</label>
-            <input
-              type="date"
-              value={form.date}
-              onChange={(e) => setForm((form) => ({ ...form, date: e.target.value }))}
-              className={inputCls}
-            />
+            <DateInput value={form.date} onChange={(value) => setForm((form) => ({ ...form, date: value }))} />
           </div>
           <div>
             <label className={labelCls}>Company</label>
@@ -176,7 +172,7 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
             </button>
             <button
               onClick={handleAdd}
-              disabled={!form.date || !form.currencyId || saving}
+              disabled={!form.date || !form.company || !form.currencyId || !form.pricePerShare || (form.inputMode === InputMode.AMOUNT ? !form.amount : !form.shares) || saving}
               className={`flex-1 py-2.5 text-sm text-white ${tabAccent.BUYS.btn} disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium transition-colors cursor-pointer`}
             >
               {saving ? <span className="loading loading-spinner loading-xs text-white" /> : "Add"}

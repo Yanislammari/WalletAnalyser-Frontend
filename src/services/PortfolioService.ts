@@ -7,6 +7,7 @@ import type { CreatePortfolioPayload } from "../payloads/CreatePortfolioPayload"
 import type { AddAssetBuyPayload } from "../payloads/AddAssetBuyPayload";
 import type { AddAssetSellPayload } from "../payloads/AddAssetSellPayload";
 import type { AddAssetDividendPayload } from "../payloads/AddAssetDividendPayload";
+import type { AssetCountResponse } from "../responses/AssetCountResponse";
 
 class PortfolioService extends BaseService {
   private static instance: PortfolioService;
@@ -78,6 +79,47 @@ class PortfolioService extends BaseService {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  }
+
+  public async deleteAssetBuy(portfolioId: string, buyId: string): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/portfolio/${portfolioId}/buys/${buyId}`, {
+      method: "DELETE" 
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to delete buy");
+    }
+  }
+
+  public async deleteAssetSell(portfolioId: string, sellId: string): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/portfolio/${portfolioId}/sells/${sellId}`, {
+      method: "DELETE"
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to delete sell");
+    }
+  }
+
+  public async deleteAssetDividend(portfolioId: string, dividendId: string): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/portfolio/${portfolioId}/dividends/${dividendId}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete dividend");
+  }
+
+  public async getAssetCountByPortfolioId(portfolioId: string): Promise<AssetCountResponse> {
+    return this.request<AssetCountResponse>(`/portfolio/${portfolioId}/asset-count`, {
+      method: "GET",
+    });
+  }
+
+  public async deletePortfolio(portfolioId: string): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/portfolio/${portfolioId}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to delete portfolio");
+    }
   }
 }
 

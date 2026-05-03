@@ -64,6 +64,21 @@ const TransactionPage: React.FC = () => {
     load();
   }, [portfolioId]);
 
+  const handleDeleteBuy = async (id: string): Promise<void> => {
+    await portfolioService.deleteAssetBuy(portfolioId!, id);
+    setBuys((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const handleDeleteSell = async (id: string): Promise<void> => {
+    await portfolioService.deleteAssetSell(portfolioId!, id);
+    setSells((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const handleDeleteDividend = async (id: string): Promise<void> => {
+    await portfolioService.deleteAssetDividend(portfolioId!, id);
+    setDividends((prev) => prev.filter((r) => r.id !== id));
+  };
+
   const openModal = () => {
     if (activeTab === TabType.BUYS) {
       buyDialogRef.current?.showModal();
@@ -106,9 +121,9 @@ const TransactionPage: React.FC = () => {
         dividends={dividends}
         loading={loading}
         onAdd={openModal}
-        onDeleteBuy={(id) => setBuys((prev) => prev.filter((r) => r.id !== id))}
-        onDeleteSell={(id) => setSells((prev) => prev.filter((r) => r.id !== id))}
-        onDeleteDividend={(id) => setDividends((prev) => prev.filter((r) => r.id !== id))}
+        onDeleteBuy={handleDeleteBuy}
+        onDeleteSell={handleDeleteSell}
+        onDeleteDividend={handleDeleteDividend}
         currencyName={(uuid) => currencies.find((c) => c.uuid === uuid)?.currencyName ?? uuid}
       />
       {portfolioId && (

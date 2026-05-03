@@ -125,7 +125,11 @@ const PortfolioPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {portfolios.map((portfolio) => (
-            <PortfolioCard key={portfolio.id} portfolio={portfolio} />
+            <PortfolioCard
+              key={portfolio.id}
+              portfolio={portfolio}
+              onDelete={(id) => setPortfolios((prev) => prev.filter((p) => p.id !== id))}
+            />
           ))}
           <NewPortfolioCard onClick={openModal} />
         </div>

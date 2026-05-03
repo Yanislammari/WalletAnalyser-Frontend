@@ -16,9 +16,9 @@ interface TransactionTableProps {
   dividends: AssetDividendResponse[];
   loading: boolean;
   onAdd: () => void;
-  onDeleteBuy: (id: string) => void;
-  onDeleteSell: (id: string) => void;
-  onDeleteDividend: (id: string) => void;
+  onDeleteBuy: (id: string) => Promise<void>;
+  onDeleteSell: (id: string) => Promise<void>;
+  onDeleteDividend: (id: string) => Promise<void>;
   currencyName: (id: string) => string;
 }
 
@@ -27,17 +27,17 @@ interface EmptyTableProps {
   label: string;
 }
 
-const EmptyTable: React.FC<EmptyTableProps> = ({ onAdd, label }) => (
+const EmptyTable: React.FC<EmptyTableProps> = (props: EmptyTableProps) => (
   <div className="flex flex-col items-center justify-center py-16 gap-4">
     <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center">
       <HiOutlinePlus className="w-5 h-5 text-gray-400" />
     </div>
     <div className="text-center">
-      <p className="text-gray-600 font-medium text-sm">No {label} yet</p>
+      <p className="text-gray-600 font-medium text-sm">No {props.label} yet</p>
       <p className="text-gray-400 text-xs mt-0.5">Click + to add a row</p>
     </div>
     <button
-      onClick={onAdd}
+      onClick={props.onAdd}
       className="flex items-center gap-1.5 px-4 py-2 text-sm text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-xl font-medium transition-colors cursor-pointer"
     >
       <HiOutlinePlus size={15} /> Add
@@ -46,8 +46,7 @@ const EmptyTable: React.FC<EmptyTableProps> = ({ onAdd, label }) => (
 );
 
 const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTableProps) => {
-  const count = (tab: TabType) =>
-    tab === TabType.BUYS ? props.buys.length : tab === TabType.SELLS ? props.sells.length : props.dividends.length;
+  const count = (tab: TabType) => tab === TabType.BUYS ? props.buys.length : tab === TabType.SELLS ? props.sells.length : props.dividends.length;
 
   return (
     <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
@@ -193,6 +192,6 @@ const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTab
       </div>
     </div>
   );
-};
+}
 
 export default TransactionTable;
