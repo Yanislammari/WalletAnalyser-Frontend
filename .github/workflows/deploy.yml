@@ -30,6 +30,7 @@ jobs:
           docker build \
             --build-arg VITE_BACKEND_BASE_URL=${{ secrets.VITE_BACKEND_BASE_URL }} \
             --build-arg VITE_GOOGLE_OAUTH_CLIENT_ID=${{ secrets.VITE_GOOGLE_OAUTH_CLIENT_ID }} \
+            --build-arg VITE_APPINSIGHTS_CONNECTION_STRING=${{ secrets.VITE_APPINSIGHTS_CONNECTION_STRING }} \
             -t walletanalyseracr.azurecr.io/walletanalyser-frontend:latest .
 
       - name: Push Docker image

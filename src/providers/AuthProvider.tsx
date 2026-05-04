@@ -12,6 +12,7 @@ interface AuthContextType {
   register: (payload: RegisterPayload) => Promise<User>;
   loginWithGoogle: (idToken: string) => Promise<User>;
   logout: () => void;
+  sendActivationEmail: () => Promise<void>;
 }
 
 const mapUserResponseToUser = (userResponse: UserResponse): User => ({
@@ -24,21 +25,44 @@ const mapUserResponseToUser = (userResponse: UserResponse): User => ({
   ban: userResponse.ban,
   userType: userResponse.userType,
   subscribe: false,
+  activated: userResponse.activated,
   createdAt: new Date(userResponse.createdAt),
   updatedAt: new Date(userResponse.updatedAt),
 });
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext: React.Context<AuthContextType | undefined> = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderProps) => {
   const authService = AuthService.getInstance();
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const isAuthenticated = !!token;
+
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const stored: string | null = localStorage.getItem("user");
+      if (!stored) {
+        return null;
+      }
+
+      const parsed = JSON.parse(stored);
+      return {
+        ...parsed,
+        createdAt: new Date(parsed.createdAt),
+        updatedAt: new Date(parsed.updatedAt),
+      } as User;
+    }
+    catch {
+      return null;
+    }
+  });
+
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem("token");
+  });
+
+  const isAuthenticated: boolean = !!token;
 
   const login = useCallback(async (email: string, password: string) => {
     try {
@@ -50,7 +74,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(mappedUser));
-    } catch (error: any) {
+      sessionStorage.setItem("justLoggedIn", "true");
+      sessionStorage.setItem("showActivationBanner", "true");
+
+      if (!mappedUser.activated) {
+        await authService.sendActivationEmail(mappedUser.email);
+      }
+    }
+    catch (error: any) {
       throw new Error(error.message || "Login failed");
     }
   }, [authService]);
@@ -65,9 +96,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(mappedUser));
+      sessionStorage.setItem("justLoggedIn", "true");
+      sessionStorage.setItem("showActivationBanner", "true");
+
+      if (!mappedUser.activated) {
+        await authService.sendActivationEmail(mappedUser.email);
+      }
 
       return mappedUser;
-    } catch (error: any) {
+    }
+    catch (error: any) {
       throw new Error(error.message || "Registration failed");
     }
   }, [authService]);
@@ -82,29 +120,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(mappedUser));
+      sessionStorage.setItem("justLoggedIn", "true");
+      sessionStorage.setItem("showActivationBanner", "true");
+
+      if (!mappedUser.activated) {
+        await authService.sendActivationEmail(mappedUser.email);
+      }
 
       return mappedUser;
-    } catch (error: any) {
+    }
+    catch (error: any) {
       throw new Error(error.message || "Google login failed");
     }
   }, [authService]);
 
+  const sendActivationEmail = useCallback(async () => {
+    if (!user) {
+      return;
+    }
+
+    await authService.sendActivationEmail(user.email);
+  }, [authService, user]);
+
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
+
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.removeItem("justLoggedIn");
+    sessionStorage.removeItem("showActivationBanner");
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, login, register, loginWithGoogle, logout }}>
-      {children}
+    <AuthContext.Provider value={{ user, token, isAuthenticated, login, register, loginWithGoogle, logout, sendActivationEmail }}>
+      {props.children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within an AuthProvider");
+  const context: AuthContextType | undefined = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  
   return context;
 };

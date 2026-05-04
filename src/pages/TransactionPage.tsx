@@ -1,0 +1,316 @@
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, useSearchParams, type NavigateFunction } from "react-router";
+import { toast } from "sonner";
+import { HiOutlineArrowLeft, HiOutlinePlus } from "react-icons/hi2";
+import PortfolioService from "../services/PortfolioService";
+import CurrencyService from "../services/CurrencyService";
+import type { Portfolio } from "../models/Portfolio";
+import type { Currency } from "../models/Currency";
+import type { AssetBuyResponse } from "../responses/AssetBuyResponse";
+import type { AssetSellResponse } from "../responses/AssetSellResponse";
+import type { AssetDividendResponse } from "../responses/AssetDividendResponse";
+import TransactionTable from "../components/TransactionTable";
+import AddNewBuyModal from "../components/AddNewBuyModal";
+import AddNewSellModal from "../components/AddNewSellModal";
+import AddNewDividendModal from "../components/AddNewDividendModal";
+import { TabType } from "../enums/TabType";
+
+const PAGE_SIZE: number = 10;
+
+const TransactionPage: React.FC = () => {
+  const { portfolioId } = useParams<{ portfolioId: string }>();
+  const navigate: NavigateFunction = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const portfolioService = PortfolioService.getInstance();
+  const currencyService = CurrencyService.getInstance();
+  const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [buys, setBuys] = useState<AssetBuyResponse[]>([]);
+  const [sells, setSells] = useState<AssetSellResponse[]>([]);
+  const [dividends, setDividends] = useState<AssetDividendResponse[]>([]);
+  const [buyTotal, setBuyTotal] = useState<number>(0);
+  const [sellTotal, setSellTotal] = useState<number>(0);
+  const [dividendTotal, setDividendTotal] = useState<number>(0);
+  const [companies, setCompanies] = useState<string[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(() => searchParams.get("company") || null);
+  const [dateFrom, setDateFrom] = useState<string>(() => searchParams.get("from") ?? "");
+  const [dateTo, setDateTo] = useState<string>(() => searchParams.get("to") ?? "");
+  const [hasAnyBuys, setHasAnyBuys] = useState<boolean>(false);
+  const [hasAnySells, setHasAnySells] = useState<boolean>(false);
+  const [hasAnyDividends, setHasAnyDividends] = useState<boolean>(false);
+  const [reloadTrigger, setReloadTrigger] = useState<number>(0);
+  const buyDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
+  const sellDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
+  const dividendDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
+
+  const parseTab = (raw: string | null): TabType => {
+    const upper: string | undefined = raw?.toUpperCase();
+    if (upper === TabType.SELLS || upper === TabType.DIVIDENDS) {
+      return upper as TabType;
+    }
+
+    return TabType.BUYS;
+  };
+
+  const [activeTab, setActiveTab] = useState<TabType>(() => parseTab(searchParams.get("tab")));
+
+  const parsePage = (raw: string | null): number => {
+    const n = parseInt(raw ?? "1");
+    return isNaN(n) || n < 1 ? 1 : n;
+  };
+
+  const [buyPage, setBuyPage] = useState<number>(() => parsePage(searchParams.get("buyPage")));
+  const [sellPage, setSellPage] = useState<number>(() => parsePage(searchParams.get("sellPage")));
+  const [dividendPage, setDividendPage] = useState<number>(() => parsePage(searchParams.get("dividendPage")));
+
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    params.tab = activeTab.toLowerCase();
+
+    if (buyPage !== 1) {
+      params.buyPage = String(buyPage);
+    }
+    if (sellPage !== 1) {
+      params.sellPage = String(sellPage);
+    }
+    if (dividendPage !== 1) {
+      params.dividendPage = String(dividendPage);
+    }
+    if (dateFrom) {
+      params.from = dateFrom;
+    }
+    if (dateTo) {
+      params.to = dateTo;
+    }
+    if (selectedCompany) {
+      params.company = selectedCompany;
+    }
+
+    setSearchParams(params, { replace: true });
+  }, [activeTab, buyPage, sellPage, dividendPage, dateFrom, dateTo, selectedCompany]);
+
+  useEffect(() => {
+    if (!portfolioId) {
+      return;
+    }
+
+    const loadStatic = async () => {
+      try {
+        const [fetchedPortfolio, fetchedCurrencies, fetchedCompanies] = await Promise.all([
+          portfolioService.getPortfolioById(portfolioId),
+          currencyService.getAll(),
+          portfolioService.getCompaniesByPortfolioId(portfolioId),
+        ]);
+
+        setPortfolio(fetchedPortfolio);
+        setCurrencies(fetchedCurrencies);
+        setCompanies(fetchedCompanies);
+      }
+      catch {
+        toast.error("Failed to load portfolio data.");
+      }
+    };
+
+    loadStatic();
+  }, [portfolioId]);
+
+  useEffect(() => {
+    if (!portfolioId) {
+      return;
+    }
+
+    const loadTransactions = async () => {
+      setLoading(true);
+      try {
+        const [buyResult, sellResult, dividendResult] = await Promise.all([
+          portfolioService.getBuysByPortfolioId(portfolioId, buyPage, PAGE_SIZE, dateFrom || undefined, dateTo || undefined, selectedCompany || undefined),
+          portfolioService.getSellsByPortfolioId(portfolioId, sellPage, PAGE_SIZE, dateFrom || undefined, dateTo || undefined, selectedCompany || undefined),
+          portfolioService.getDividendsByPortfolioId(portfolioId, dividendPage, PAGE_SIZE, dateFrom || undefined, dateTo || undefined),
+        ]);
+
+        setBuys(buyResult.data);
+        setBuyTotal(buyResult.total);
+        setSells(sellResult.data);
+        setSellTotal(sellResult.total);
+        setDividends(dividendResult.data);
+        setDividendTotal(dividendResult.total);
+
+        if (!selectedCompany && !dateFrom && !dateTo) {
+          setHasAnyBuys(buyResult.total > 0);
+          setHasAnySells(sellResult.total > 0);
+          setHasAnyDividends(dividendResult.total > 0);
+        }
+      }
+      catch {
+        toast.error("Failed to load transactions.");
+      }
+      finally {
+        setLoading(false);
+      }
+    };
+
+    loadTransactions();
+  }, [portfolioId, buyPage, sellPage, dividendPage, selectedCompany, dateFrom, dateTo, reloadTrigger]);
+
+  const handleCompanyChange = (company: string | null) => {
+    setBuyPage(1);
+    setSellPage(1);
+    setDividendPage(1);
+    setSelectedCompany(company);
+  };
+
+  const handleDateFromChange = (value: string) => {
+    setBuyPage(1);
+    setSellPage(1);
+    setDividendPage(1);
+    setDateFrom(value);
+  };
+
+  const handleDateToChange = (value: string) => {
+    setBuyPage(1);
+    setSellPage(1);
+    setDividendPage(1);
+    setDateTo(value);
+  };
+
+  const clampPageAfterDelete = (currentPage: number, currentTotal: number, setPage: (p: number) => void) => {
+    const newTotal = currentTotal - 1;
+    const maxPage = Math.max(Math.ceil(newTotal / PAGE_SIZE), 1);
+    if (currentPage > maxPage) setPage(maxPage);
+  };
+
+  const handleDeleteBuy = async (id: string): Promise<void> => {
+    await portfolioService.deleteAssetBuy(portfolioId!, id);
+    clampPageAfterDelete(buyPage, buyTotal, setBuyPage);
+    setReloadTrigger((prev) => prev + 1);
+  };
+
+  const handleDeleteSell = async (id: string): Promise<void> => {
+    await portfolioService.deleteAssetSell(portfolioId!, id);
+    clampPageAfterDelete(sellPage, sellTotal, setSellPage);
+    setReloadTrigger((prev) => prev + 1);
+  };
+
+  const handleDeleteDividend = async (id: string): Promise<void> => {
+    await portfolioService.deleteAssetDividend(portfolioId!, id);
+    clampPageAfterDelete(dividendPage, dividendTotal, setDividendPage);
+    setReloadTrigger((prev) => prev + 1);
+  };
+
+  const handleBuySuccess = (buy: AssetBuyResponse): void => {
+    setHasAnyBuys(true);
+    if (buy.companyName && !companies.includes(buy.companyName)) {
+      setCompanies((prev) => [...prev, buy.companyName!].sort());
+    }
+  
+    setReloadTrigger((prev) => prev + 1);
+  };
+
+  const handleSellSuccess = (sell: AssetSellResponse): void => {
+    setHasAnySells(true);
+    if (sell.companyName && !companies.includes(sell.companyName)) {
+      setCompanies((prev) => [...prev, sell.companyName!].sort());
+    }
+    
+    setReloadTrigger((prev) => prev + 1);
+  };
+
+  const handleDividendSuccess = (_dividend: AssetDividendResponse): void => {
+    setHasAnyDividends(true);
+    setReloadTrigger((prev) => prev + 1);
+  };
+
+  const openModal = () => {
+    if (activeTab === TabType.BUYS) {
+      buyDialogRef.current?.showModal();
+    }
+    else if (activeTab === TabType.SELLS) {
+      sellDialogRef.current?.showModal();
+    }
+    else {
+      dividendDialogRef.current?.showModal();
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          >
+            <HiOutlineArrowLeft size={16} className="text-gray-600" />
+          </button>
+          <div>
+            <h2 className="text-gray-900 text-xl font-bold tracking-tight">{portfolio?.name ?? "…"}</h2>
+            <p className="text-gray-500 text-sm mt-0.5">Enter your transactions manually.</p>
+          </div>
+        </div>
+        <button
+          onClick={openModal}
+          className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-colors cursor-pointer font-medium shadow-sm shadow-purple-200 shrink-0"
+        >
+          <HiOutlinePlus size={15} /> Add a row
+        </button>
+      </div>
+      <TransactionTable
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        buys={buys}
+        sells={sells}
+        dividends={dividends}
+        buyTotal={buyTotal}
+        sellTotal={sellTotal}
+        dividendTotal={dividendTotal}
+        buyPage={buyPage}
+        sellPage={sellPage}
+        dividendPage={dividendPage}
+        onBuyPageChange={setBuyPage}
+        onSellPageChange={setSellPage}
+        onDividendPageChange={setDividendPage}
+        loading={loading}
+        onAdd={openModal}
+        onDeleteBuy={handleDeleteBuy}
+        onDeleteSell={handleDeleteSell}
+        onDeleteDividend={handleDeleteDividend}
+        currencyName={(uuid) => currencies.find((c) => c.uuid === uuid)?.currencyName ?? uuid}
+        companies={companies}
+        selectedCompany={selectedCompany}
+        onCompanyChange={handleCompanyChange}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateFromChange={handleDateFromChange}
+        onDateToChange={handleDateToChange}
+        hasAnyBuys={hasAnyBuys}
+        hasAnySells={hasAnySells}
+        hasAnyDividends={hasAnyDividends}
+      />
+      {portfolioId && (
+        <div>
+          <AddNewBuyModal
+            dialogRef={buyDialogRef}
+            currencies={currencies}
+            portfolioId={portfolioId}
+            onSuccess={handleBuySuccess}
+          />
+          <AddNewSellModal
+            dialogRef={sellDialogRef}
+            currencies={currencies}
+            portfolioId={portfolioId}
+            onSuccess={handleSellSuccess}
+          />
+          <AddNewDividendModal
+            dialogRef={dividendDialogRef}
+            currencies={currencies}
+            portfolioId={portfolioId}
+            onSuccess={handleDividendSuccess}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default TransactionPage;

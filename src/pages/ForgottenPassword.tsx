@@ -5,6 +5,7 @@ import { FaCheck, FaTimes, FaSpinner } from "react-icons/fa";
 import Background from "../components/Background";
 import { EMAIL_REGEX } from "../constants/regex";
 import AuthService from "../services/AuthService";
+import Loading from "../components/Loading";
 
 const ForgottenPassword: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
@@ -73,77 +74,81 @@ const ForgottenPassword: React.FC = () => {
 
   return (
     <Background>
-      <div className="backdrop-blur-xl bg-white/80 border border-gray-200 rounded-3xl shadow-xl p-10 w-full max-w-sm text-gray-900">
-        <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold">
-            Forgotten Password
-          </h1>
-        </div>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col w-full">
-            <div
-              className={`flex items-center w-full px-4 py-3 rounded-xl bg-white/90 border ${getBorderColor()} 
-                focus-within:ring-2 focus-within:ring-offset-1 ${
-                  isEmailValid === true
-                    ? "focus-within:ring-green-500"
-                    : isEmailValid === false
-                    ? "focus-within:ring-red-500"
-                    : "focus-within:ring-purple-500"
-                } transition-colors duration-200`}
-            >
-              <input
-                type="email"
-                placeholder="Email"
-                className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-400"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <div className="ml-2 flex-shrink-0">
-                {isCheckingEmail ? (
-                  <FaSpinner className="w-5 h-5 animate-spin text-gray-400" />
-                ) : isEmailValid === true ? (
-                  <FaCheck className="w-5 h-5 text-green-500" />
-                ) : isEmailValid === false ? (
-                  <FaTimes className="w-5 h-5 text-red-500" />
-                ) : null}
-              </div>
-            </div>
-            {isEmailValid !== null && !isCheckingEmail && (
-              <p
-                className={`text-sm font-semibold mt-1 ${
-                  isEmailValid ? "text-green-500" : "text-red-500"
-                }`}
+      {loading ? (
+        <Loading size={96} />
+      ) : (
+        <div className="backdrop-blur-xl bg-white/80 border border-gray-200 rounded-3xl shadow-xl p-10 w-full max-w-sm text-gray-900">
+          <div className="mb-6 text-center">
+            <h1 className="text-3xl font-bold">
+              Forgotten Password
+            </h1>
+          </div>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col w-full">
+              <div
+                className={`flex items-center w-full px-4 py-3 rounded-xl bg-white/90 border ${getBorderColor()} 
+                  focus-within:ring-2 focus-within:ring-offset-1 ${
+                    isEmailValid === true
+                      ? "focus-within:ring-green-500"
+                      : isEmailValid === false
+                      ? "focus-within:ring-red-500"
+                      : "focus-within:ring-purple-500"
+                  } transition-colors duration-200`}
               >
-                {isEmailValid
-                  ? "Email exists."
-                  : "Email is not registered."}
-              </p>
-            )}
-          </div>
-          <button
-            onClick={handleResetPassword}
-            className={`btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none ${
-              loading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            disabled={loading}
-          >
-            {loading ? (
-              <span className="loading loading-spinner loading-sm"></span>
-            ) : (
-              "Send Email"
-            )}
-          </button>
-          <div className="text-center text-sm mt-4">
-            Remember your password?{" "}
+                <input
+                  type="email"
+                  placeholder="Email"
+                  className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-400"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <div className="ml-2 flex-shrink-0">
+                  {isCheckingEmail ? (
+                    <FaSpinner className="w-5 h-5 animate-spin text-gray-400" />
+                  ) : isEmailValid === true ? (
+                    <FaCheck className="w-5 h-5 text-green-500" />
+                  ) : isEmailValid === false ? (
+                    <FaTimes className="w-5 h-5 text-red-500" />
+                  ) : null}
+                </div>
+              </div>
+              {isEmailValid !== null && !isCheckingEmail && (
+                <p
+                  className={`text-sm font-semibold mt-1 ${
+                    isEmailValid ? "text-green-500" : "text-red-500"
+                  }`}
+                >
+                  {isEmailValid
+                    ? "Email exists."
+                    : "Email is not registered."}
+                </p>
+              )}
+            </div>
             <button
-              className="text-purple-600 hover:underline hover:cursor-pointer"
-              onClick={() => navigate("/login")}
+              onClick={handleResetPassword}
+              className={`btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={loading}
             >
-              Login here!
+              {loading ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                "Send Email"
+              )}
             </button>
+            <div className="text-center text-sm mt-4">
+              Remember your password?{" "}
+              <button
+                className="text-purple-600 hover:underline hover:cursor-pointer"
+                onClick={() => navigate("/login")}
+              >
+                Login here!
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </Background>
   );
 }

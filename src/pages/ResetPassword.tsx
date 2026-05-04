@@ -1,194 +1,192 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, type NavigateFunction } from "react-router-dom";
 import { toast } from "sonner";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaEye, FaEyeSlash } from "react-icons/fa";
 import Background from "../components/Background";
 import AuthService from "../services/AuthService";
 import { PASSWORD_REGEX } from "../constants/regex";
+import { TokenErrorType } from "../enums/TokenErrorType";
+import Loading from "../components/Loading";
 
 const ResetPassword: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
-  const authService = AuthService.getInstance();
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [confirmError, setConfirmError] = useState<string | null>(null);
-  const [isTokenProvided, setIsTokenProvided] = useState(true);
-  const [isTokenExpired, setIsTokenExpired] = useState(false);
-  const [isTokenInvalid, setIsTokenInvalid] = useState(false);
+  const authService: AuthService = AuthService.getInstance();
+  const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null);
+  const [errorType, setErrorType] = useState<TokenErrorType | null>(null);
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
-  const verifyPasswordErrorMessage = "Password must contain at least 8 characters, including an uppercase, lowercase, number and special character.";
+  const token: string | null = searchParams.get("token");
 
   useEffect(() => {
     const verifyToken = async () => {
-      if (!token) {
-        toast.error("Invalid or missing token.");
-        setIsTokenProvided(false);
+      if (!token || token.trim() === "") {
+        setErrorType(TokenErrorType.MISSING);
+        toast.error("Reset link is missing.");
+        setIsTokenValid(false);
         return;
       }
 
       try {
-        const isValid = await authService.verifyToken(token);
-        if (!isValid) {
-          setIsTokenExpired(true);
-          toast.error("Your reset link has expired.");
-        }
+        await authService.verifyToken(token);
+        setIsTokenValid(true);
       }
       catch (error: any) {
-        if (error.message === "TOKEN_EXPIRED") {
-          setIsTokenExpired(true);
-          toast.error("Your reset link has expired.");
+        switch (error.message) {
+          case "Token expired":
+            setErrorType(TokenErrorType.EXPIRED);
+            toast.error("Your reset link has expired.");
+            break;
+          case "Invalid token":
+            setErrorType(TokenErrorType.INVALID);
+            toast.error("This reset link is invalid.");
+            break;
+          default:
+            setErrorType(TokenErrorType.UNKNOWN);
+            toast.error("Failed to verify reset link.");
         }
-        else if (error.message === "INVALID_TOKEN") {
-          setIsTokenInvalid(true);
-          toast.error("The token is invalid.");
-        }
-        else {
-          setIsTokenInvalid(true);
-          toast.error("Invalid reset link.");
-        }
+        setIsTokenValid(false);
       }
     };
 
     verifyToken();
-  }, [token, authService]);
+  }, [token]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setPasswordError(null);
-    setConfirmError(null);
-
-    if (!token) {
-      toast.error("Invalid or missing token.");
+  const handleResetPassword = async () => {
+    if (!token || token.trim() === "") {
+      toast.error("Reset link is missing.");
       return;
     }
-    if (!password) {
-      setPasswordError("Please enter a new password.");
+    if (!password || !confirmPassword) {
+      toast.error("All fields are required.");
       return;
     }
     if (!PASSWORD_REGEX.test(password)) {
-      setPasswordError(verifyPasswordErrorMessage);
+      toast.error(
+        "Password must be 8+ chars, include upper, lower, number & special char."
+      );
       return;
     }
     if (password !== confirmPassword) {
-      setConfirmError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
 
-    setIsSubmitting(true);
+    setLoading(true);
     try {
       await authService.resetPassword(password, token);
-      toast.success("Password successfully reset! You can now login.");
+      toast.success("Password successfully reset!");
       navigate("/login");
     }
     catch (error: any) {
       switch (error.message) {
-        case "TOKEN_EXPIRED":
-          toast.error("Your reset link has expired. Please request a new one.");
+        case "Token expired":
+          toast.error("Your reset link has expired.");
           break;
-        case "INVALID_TOKEN":
-          toast.error("Invalid reset link.");
-          break;
-        case "RESET_PASSWORD_FAILED":
-          toast.error("Error resetting password. Try again later.");
+        case "Invalid token":
+          toast.error("This reset link is invalid.");
           break;
         default:
           toast.error("Something went wrong. Try again later.");
       }
     }
     finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  const getInputBorderClass = (error: string | null) => error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-purple-500";
-
   return (
     <Background>
-      <div className="backdrop-blur-xl bg-white/70 border border-gray-200 rounded-3xl shadow-xl p-10 w-full max-w-sm text-gray-900">
-      {!isTokenProvided ? (
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-red-500 mb-3">Token Missing</h1>
-          <p className="opacity-80 mb-6">No token found. Please request a new reset link.</p>
-          <button
-            onClick={() => navigate("/forgot-password")}
-            className="btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none"
-          >
-            Request New Link
-          </button>
-        </div>
-      ) : isTokenInvalid ? (
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-red-500 mb-3">Invalid Token</h1>
-          <p className="opacity-80 mb-6">The reset link is invalid or tampered with.</p>
-          <button
-            onClick={() => navigate("/forgot-password")}
-            className="btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none"
-          >
-            Request New Link
-          </button>
-        </div>
-      ) : isTokenExpired ? (
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-yellow-500 mb-3">Link Expired</h1>
-          <p className="opacity-80 mb-6">Your reset link has expired. Request a new one to reset your password.</p>
-          <button
-            onClick={() => navigate("/forgot-password")}
-            className="btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none"
-          >
-            Request New Link
-          </button>
-        </div>
+      {loading ? (
+        <Loading size={96} />
       ) : (
-        <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-          <h1 className="text-3xl font-bold text-center mb-4">Reset Password</h1>
-          <div className="flex flex-col gap-2">
-            <input
-              type="password"
-              placeholder="New Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`bg-white/90 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 ${getInputBorderClass(
-                passwordError
-              )}`}
-            />
-            {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
-          </div>
-          <div className="flex flex-col gap-2">
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className={`bg-white/90 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 ${getInputBorderClass(
-                confirmError
-              )}`}
-            />
-            {confirmError && <p className="text-red-500 text-sm mt-1">{confirmError}</p>}
-          </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none ${
-              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            {isSubmitting ? <FaSpinner className="animate-spin mx-auto" /> : "Reset Password"}
-          </button>
-          <div className="text-center text-sm mt-1">
-            <button
-              onClick={() => navigate("/login")}
-              className="text-purple-600 hover:underline hover:cursor-pointer"
-            >
-              Back to Login
-            </button>
-          </div>
-        </form>
+        <div className="relative backdrop-blur-xl bg-white/80 border border-gray-200 rounded-3xl shadow-xl p-10 w-full max-w-sm text-gray-900">
+          {isTokenValid === false ? (
+            <div className="text-center">
+              <h1 className="text-2xl font-semibold text-red-500 mb-3">
+                {errorType === TokenErrorType.MISSING && "Missing Reset Link"}
+                {errorType === TokenErrorType.EXPIRED && "Expired Reset Link"}
+                {errorType === TokenErrorType.INVALID && "Invalid Reset Link"}
+                {errorType === TokenErrorType.UNKNOWN && "Reset Link Error"}
+                {!errorType && "Reset Link Error"}
+              </h1>
+              <p className="opacity-80 mb-6">
+                {errorType === TokenErrorType.MISSING && "The reset link is incomplete or missing."}
+                {errorType === TokenErrorType.EXPIRED && "Your reset link has expired. Please request a new one."}
+                {errorType === TokenErrorType.INVALID && "This reset link is not valid."}
+                {errorType === TokenErrorType.UNKNOWN && "An unknown error occurred with the reset link."}
+                {!errorType && "Something went wrong. Please try again."}
+              </p>
+              <button
+                onClick={() => navigate("/forgotten-password")}
+                className="btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none"
+              >
+                Request New Link
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <h1 className="text-3xl font-bold text-center">
+                Reset Password
+              </h1>
+              <div className="flex items-center w-full px-4 py-3 rounded-xl bg-white/90 border border-gray-300 focus-within:ring-2 focus-within:ring-purple-500">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="New Password"
+                  className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-400"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="ml-2 text-gray-500 hover:text-gray-700 cursor-pointer"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+              <div className="flex items-center w-full px-4 py-3 rounded-xl bg-white/90 border border-gray-300 focus-within:ring-2 focus-within:ring-purple-500">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm Password"
+                  className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-400"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="ml-2 text-gray-500 hover:text-gray-700 cursor-pointer"
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+              <button
+                onClick={handleResetPassword}
+                disabled={loading}
+                className={`btn bg-purple-600 hover:bg-purple-700 text-white w-full rounded-xl normal-case text-base border-none ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                {loading ? (
+                  <FaSpinner className="animate-spin mx-auto" />
+                ) : (
+                  "Reset Password"
+                )}
+              </button>
+              <button
+                onClick={() => navigate("/login")}
+                className="btn btn-outline w-full rounded-xl normal-case text-base border-gray-300 text-gray-700 hover:bg-gray-100"
+              >
+                Back to Login
+              </button>
+            </div>
+          )}
+        </div>
       )}
-      </div>
     </Background>
   );
 }

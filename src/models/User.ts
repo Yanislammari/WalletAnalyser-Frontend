@@ -11,6 +11,7 @@ export interface User {
   ban: boolean;
   userType: UserType;
   subscribe: boolean;
+  activated: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
