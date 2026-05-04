@@ -58,7 +58,7 @@ const TransactionRow: React.FC<TransactionRowProps> = (props: TransactionRowProp
   };
 
   const deleteBtn: JSX.Element = (
-    <td className="py-3 pl-4 text-right">
+    <td className="py-3 px-2 text-center w-10">
       <button
         onClick={handleDeleteClick}
         className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all cursor-pointer"

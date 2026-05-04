@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { HiOutlineCalendarDays, HiOutlineXMark } from "react-icons/hi2";
+import { HiOutlineCalendarDays, HiOutlineXMark, HiOutlineChevronDown } from "react-icons/hi2";
 import DateInput from "./DateInput";
 
 interface DateRangeFilterProps {
@@ -19,11 +19,11 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = (props: DateRangeFilterP
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        buttonRef.current && !buttonRef.current.contains(target) &&
-        panelRef.current && !panelRef.current.contains(target)
-      ) {
+      const target: Element = e.target as Element;
+      if (target.closest("[data-date-picker-portal]")) {
+        return;
+      }
+      if (buttonRef.current && !buttonRef.current.contains(target) && panelRef.current && !panelRef.current.contains(target)) {
         setOpen(false);
       }
     };
@@ -34,7 +34,8 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = (props: DateRangeFilterP
 
   const handleOpen = () => {
     if (!open && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
+      const rect: DOMRect = buttonRef.current.getBoundingClientRect();
+
       setPanelStyle({
         position: "fixed",
         top: rect.bottom + 6,
@@ -42,6 +43,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = (props: DateRangeFilterP
         zIndex: 9999,
       });
     }
+
     setOpen((prev) => !prev);
   };
 
@@ -76,14 +78,16 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = (props: DateRangeFilterP
         }`}
       >
         <HiOutlineCalendarDays size={14} />
-        <span className="max-w-[160px] truncate">{label()}</span>
-        {isActive && (
+        <span className={`truncate ${props.from && props.to ? "max-w-[220px]" : "max-w-[160px]"}`}>{label()}</span>
+        {isActive ? (
           <span
             onClick={handleClear}
             className="ml-1 text-purple-400 hover:text-purple-700 transition-colors"
           >
             <HiOutlineXMark size={14} />
           </span>
+        ) : (
+          <HiOutlineChevronDown size={13} className={`transition-transform ${open ? "rotate-180" : ""}`} />
         )}
       </button>
       {open && createPortal(
@@ -116,6 +120,6 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = (props: DateRangeFilterP
       )}
     </>
   );
-};
+}
 
 export default DateRangeFilter;

@@ -91,7 +91,11 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props: AddNewDi
         <div className="space-y-3">
           <div>
             <label className={labelCls}>Date</label>
-            <DateInput value={form.date} onChange={(value) => setForm((form) => ({ ...form, date: value }))} />
+            <DateInput
+              value={form.date}
+              onChange={(value) => setForm((form) => ({ ...form, date: value }))}
+              portalTarget={props.dialogRef.current}
+            />
           </div>
           <div className="flex gap-2">
             <div className="flex-1">

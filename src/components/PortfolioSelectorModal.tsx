@@ -1,8 +1,11 @@
 import type React from "react";
 import { HiOutlinePencilSquare, HiOutlineBriefcase, HiOutlineXMark } from "react-icons/hi2";
+import { useNavigate, type NavigateFunction } from "react-router";
 import type { Portfolio } from "../models/Portfolio";
 import Loading from "./Loading";
 import PortfolioSelectorItem from "./PortfolioSelectorItem";
+
+const MAX_DISPLAYED: number = 9;
 
 interface PortfolioSelectorModalProps {
   dialogRef: React.RefObject<HTMLDialogElement | null>;
@@ -14,6 +17,15 @@ interface PortfolioSelectorModalProps {
 }
 
 const PortfolioSelectorModal: React.FC<PortfolioSelectorModalProps> = (props: PortfolioSelectorModalProps) => {
+  const navigate: NavigateFunction = useNavigate();
+  const hasMore: boolean = props.portfolios.length >= MAX_DISPLAYED;
+  const displayed: Portfolio[] = props.portfolios.slice(0, MAX_DISPLAYED);
+
+  const handleViewAll = () => {
+    props.onClose();
+    navigate("/home/portfolio");
+  };
+
   return (
     <dialog ref={props.dialogRef} className="modal">
       <div className="modal-box bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl border border-gray-100">
@@ -48,9 +60,18 @@ const PortfolioSelectorModal: React.FC<PortfolioSelectorModalProps> = (props: Po
           </div>
         ) : (
           <div className="space-y-2">
-            {props.portfolios.map((portfolio) => (
+            {displayed.map((portfolio) => (
               <PortfolioSelectorItem key={portfolio.id} portfolio={portfolio} onClick={() => props.onSelectPortfolio(portfolio.id)} />
             ))}
+            {hasMore && (
+              <button
+                type="button"
+                onClick={handleViewAll}
+                className="w-full text-center text-sm text-purple-600 hover:text-purple-700 font-medium cursor-pointer pt-2 transition-colors"
+              >
+                View all portfolios →
+              </button>
+            )}
           </div>
         )}
       </div>

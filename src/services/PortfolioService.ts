@@ -3,6 +3,7 @@ import type { Portfolio } from "../models/Portfolio";
 import type { AssetBuyResponse } from "../responses/AssetBuyResponse";
 import type { AssetSellResponse } from "../responses/AssetSellResponse";
 import type { AssetDividendResponse } from "../responses/AssetDividendResponse";
+import type { PaginatedResponse } from "../responses/PaginatedResponse";
 import type { CreatePortfolioPayload } from "../payloads/CreatePortfolioPayload";
 import type { AddAssetBuyPayload } from "../payloads/AddAssetBuyPayload";
 import type { AddAssetSellPayload } from "../payloads/AddAssetSellPayload";
@@ -23,10 +24,16 @@ class PortfolioService extends BaseService {
     return PortfolioService.instance;
   }
 
-  public async getPortfoliosByUserId(userId: string): Promise<Portfolio[]> {
-    return this.request<Portfolio[]>(`/portfolio/user/${userId}`, {
+  public async getPortfoliosByUserId(userId: string, page: number, limit: number): Promise<PaginatedResponse<Portfolio>> {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    return this.request<PaginatedResponse<Portfolio>>(`/portfolio/user/${userId}?${params}`, {
       method: "GET",
     });
+  }
+
+  public async getAllPortfoliosByUserId(userId: string): Promise<Portfolio[]> {
+    const result = await this.getPortfoliosByUserId(userId, 1, 1000);
+    return result.data;
   }
 
   public async getPortfolioById(portfolioId: string): Promise<Portfolio> {
@@ -42,9 +49,20 @@ class PortfolioService extends BaseService {
     });
   }
 
-  public async getBuysByPortfolioId(portfolioId: string): Promise<AssetBuyResponse[]> {
-    return this.request<AssetBuyResponse[]>(`/portfolio/${portfolioId}/buys`, {
-      method: "GET"
+  public async getBuysByPortfolioId(portfolioId: string, page: number, limit: number, from?: string, to?: string, company?: string): Promise<PaginatedResponse<AssetBuyResponse>> {
+    const params: URLSearchParams = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (from) {
+      params.set("from", from);
+    }
+    if (to) {
+      params.set("to", to);
+    }
+    if (company) {
+      params.set("company", company);
+    }
+
+    return this.request<PaginatedResponse<AssetBuyResponse>>(`/portfolio/${portfolioId}/buys?${params}`, {
+      method: "GET" 
     });
   }
 
@@ -55,8 +73,19 @@ class PortfolioService extends BaseService {
     });
   }
 
-  public async getSellsByPortfolioId(portfolioId: string): Promise<AssetSellResponse[]> {
-    return this.request<AssetSellResponse[]>(`/portfolio/${portfolioId}/sells`, {
+  public async getSellsByPortfolioId(portfolioId: string, page: number, limit: number, from?: string, to?: string, company?: string): Promise<PaginatedResponse<AssetSellResponse>> {
+    const params: URLSearchParams = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (from) {
+      params.set("from", from);
+    }
+    if (to) {
+      params.set("to", to);
+    }
+    if (company) {
+      params.set("company", company);
+    }
+
+    return this.request<PaginatedResponse<AssetSellResponse>>(`/portfolio/${portfolioId}/sells?${params}`, {
       method: "GET"
     });
   }
@@ -68,8 +97,16 @@ class PortfolioService extends BaseService {
     });
   }
 
-  public async getDividendsByPortfolioId(portfolioId: string): Promise<AssetDividendResponse[]> {
-    return this.request<AssetDividendResponse[]>(`/portfolio/${portfolioId}/dividends`, {
+  public async getDividendsByPortfolioId(portfolioId: string, page: number, limit: number, from?: string, to?: string): Promise<PaginatedResponse<AssetDividendResponse>> {
+    const params: URLSearchParams = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (from) {
+      params.set("from", from);
+    }
+    if (to) {
+      params.set("to", to);
+    }
+
+    return this.request<PaginatedResponse<AssetDividendResponse>>(`/portfolio/${portfolioId}/dividends?${params}`, {
       method: "GET"
     });
   }

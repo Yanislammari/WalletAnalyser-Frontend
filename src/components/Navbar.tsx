@@ -1,6 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "../providers/AuthProvider";
+import PortfolioService from "../services/PortfolioService";
 import SearchBar from "./SearchBar";
 import ProfileBlock from "./ProfileBlock";
 import ProfileDropdown from "./ProfileDropdown";
@@ -8,8 +9,10 @@ import ProfileDropdown from "./ProfileDropdown";
 const pageTitles: Record<string, string> = {
   "/home/dashboard": "Dashboard",
   "/home/import": "Import Data",
-  "/home/portfolio" : "Portfolio",
+  "/home/portfolio": "Portfolio",
 };
+
+const TRANSACTION_RE: RegExp = /^\/home\/portfolio\/([^/]+)\/transactions/;
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -19,9 +22,33 @@ const Navbar: React.FC<NavbarProps> = (props: NavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const title: string = pageTitles[location.pathname] ?? "Home";
+  const portfolioService = PortfolioService.getInstance();
+
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
+  const [portfolioName, setPortfolioName] = useState<string | null>(null);
   const avatarRef: React.RefObject<HTMLButtonElement | null> = useRef<HTMLButtonElement | null>(null);
+
+  const transactionMatch = TRANSACTION_RE.exec(location.pathname);
+  const portfolioId = transactionMatch?.[1] ?? null;
+
+  useEffect(() => {
+    if (!portfolioId) {
+      setPortfolioName(null);
+      return;
+    }
+    portfolioService.getPortfolioById(portfolioId).then((p) => setPortfolioName(p.name)).catch(() => setPortfolioName(null));
+  }, [portfolioId]);
+
+  let title: string;
+  let subtitle: string;
+  if (portfolioId) {
+    title = "Portfolio";
+    subtitle = portfolioName ? `${portfolioName} / Transactions` : "Transactions";
+  }
+  else {
+    title = pageTitles[location.pathname] ?? "Home";
+    subtitle = "Overview";
+  }
 
   const handleLogout = () => {
     logout();
@@ -43,7 +70,7 @@ const Navbar: React.FC<NavbarProps> = (props: NavbarProps) => {
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <h1 className="text-gray-900 font-semibold text-[15px] truncate">{title}</h1>
           <span className="text-gray-300 text-sm hidden sm:inline">/</span>
-          <span className="text-gray-400 text-sm hidden sm:inline">Overview</span>
+          <span className="text-gray-400 text-sm hidden sm:inline truncate">{subtitle}</span>
         </div>
         <SearchBar />
         <button className="relative w-9 h-9 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors cursor-pointer shrink-0">

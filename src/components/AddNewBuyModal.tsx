@@ -96,7 +96,11 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
         <div className="space-y-3">
           <div>
             <label className={labelCls}>Date</label>
-            <DateInput value={form.date} onChange={(value) => setForm((form) => ({ ...form, date: value }))} />
+            <DateInput
+              value={form.date}
+              onChange={(value) => setForm((form) => ({ ...form, date: value }))}
+              portalTarget={props.dialogRef.current}
+            />
           </div>
           <div>
             <label className={labelCls}>Company</label>

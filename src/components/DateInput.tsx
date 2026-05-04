@@ -1,14 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  HiOutlineCalendarDays,
-  HiOutlineChevronLeft,
-  HiOutlineChevronRight,
-} from "react-icons/hi2";
+import { createPortal } from "react-dom";
+import { HiOutlineCalendarDays, HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi2";
 import { inputCls } from "../constants/transactionConstants";
 
 interface DateInputProps {
   value: string;
   onChange: (value: string) => void;
+  portalTarget?: HTMLElement | null;
 }
 
 const MONTHS: string[] = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -39,14 +37,19 @@ const DateInput: React.FC<DateInputProps> = (props: DateInputProps) => {
   const [open, setOpen] = useState<boolean>(false);
   const [viewYear, setViewYear] = useState<number>(today.getFullYear());
   const [viewMonth, setViewMonth] = useState<number>(today.getMonth());
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const selected: Date | null = parseLocalDate(props.value);
 
   today.setHours(0, 0, 0, 0);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideTrigger = containerRef.current?.contains(target);
+      const insideDropdown = dropdownRef.current?.contains(target);
+      if (!insideTrigger && !insideDropdown) {
         setOpen(false);
       }
     };
@@ -56,6 +59,15 @@ const DateInput: React.FC<DateInputProps> = (props: DateInputProps) => {
   }, []);
 
   const handleOpen = () => {
+    if (containerRef.current) {
+      const rect: DOMRect = containerRef.current.getBoundingClientRect();
+      const CALENDAR_HEIGHT: number = 340;
+      const spaceBelow: number = window.innerHeight - rect.bottom;
+      const top: number = spaceBelow >= CALENDAR_HEIGHT || spaceBelow >= rect.top ? rect.bottom + 6 : rect.top - CALENDAR_HEIGHT - 6;
+
+      setDropdownStyle({ position: "fixed", top, left: rect.left, width: 288 });
+    }
+
     const baseDate: Date = selected ?? today;
     setViewYear(baseDate.getFullYear());
     setViewMonth(baseDate.getMonth());
@@ -118,8 +130,8 @@ const DateInput: React.FC<DateInputProps> = (props: DateInputProps) => {
         </span>
         <HiOutlineCalendarDays size={16} className="text-gray-400 shrink-0 ml-2" />
       </div>
-      {open && (
-        <div className="absolute z-50 mt-1.5 left-0 bg-white border border-gray-100 rounded-2xl shadow-xl p-4 w-72">
+      {open && createPortal(
+        <div ref={dropdownRef} data-date-picker-portal="true" style={dropdownStyle} className="z-[9999] bg-white border border-gray-100 rounded-2xl shadow-xl p-4 w-72">
           <div className="flex items-center justify-between mb-4">
             <button
               type="button"
@@ -197,7 +209,8 @@ const DateInput: React.FC<DateInputProps> = (props: DateInputProps) => {
               Today
             </button>
           </div>
-        </div>
+        </div>,
+        props.portalTarget ?? document.body
       )}
     </div>
   );

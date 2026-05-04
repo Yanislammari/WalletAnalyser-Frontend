@@ -23,7 +23,7 @@ const ImportPage: React.FC = () => {
     setLoadingPortfolios(true);
     dialogRef.current?.showModal();
     try {
-      const portfolios: Portfolio[] = await PortfolioService.getInstance().getPortfoliosByUserId(user.id);
+      const portfolios: Portfolio[] = await PortfolioService.getInstance().getAllPortfoliosByUserId(user.id);
       setPortfolios(portfolios);
     }
     catch {
@@ -53,9 +53,9 @@ const ImportPage: React.FC = () => {
       </div>
       <ImportDataDropzone />
       <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-gray-100" />
+        <div className="flex-1 h-px bg-gray-300" />
         <span className="text-xs text-gray-400 font-medium">or</span>
-        <div className="flex-1 h-px bg-gray-100" />
+        <div className="flex-1 h-px bg-gray-300" />
       </div>
       <button
         onClick={openManualModal}
@@ -75,6 +75,6 @@ const ImportPage: React.FC = () => {
       />
     </div>
   );
-};
+}
 
 export default ImportPage;
