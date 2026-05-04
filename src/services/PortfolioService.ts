@@ -24,8 +24,9 @@ class PortfolioService extends BaseService {
     return PortfolioService.instance;
   }
 
-  public async getPortfoliosByUserId(userId: string, page: number, limit: number): Promise<PaginatedResponse<Portfolio>> {
+  public async getPortfoliosByUserId(userId: string, page: number, limit: number, search?: string): Promise<PaginatedResponse<Portfolio>> {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (search) params.set("search", search);
     return this.request<PaginatedResponse<Portfolio>>(`/portfolio/user/${userId}?${params}`, {
       method: "GET",
     });

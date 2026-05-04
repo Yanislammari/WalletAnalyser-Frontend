@@ -10,9 +10,10 @@ import PortfolioCard from "../components/PortfolioCard";
 import NewPortfolioCard from "../components/NewPortfolioCard";
 import CreatePortfolioModal from "../components/CreatePortfolioModal";
 import Pagination from "../components/Pagination";
+import SearchBar from "../components/SearchBar";
 import type { PaginatedResponse } from "../responses/PaginatedResponse";
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE: number = 9;
 
 const PortfolioPage: React.FC = () => {
   const { user } = useAuth();
@@ -22,23 +23,45 @@ const PortfolioPage: React.FC = () => {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [page, setPage] = useState<number>(() => { const p = parseInt(searchParams.get("page") ?? "1"); return isNaN(p) || p < 1 ? 1 : p; });
+  const [search, setSearch] = useState<string>(() => searchParams.get("search") ?? "");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(search);
   const [loading, setLoading] = useState<boolean>(true);
   const [creating, setCreating] = useState<boolean>(false);
   const [newName, setNewName] = useState<string>("");
   const [reloadTrigger, setReloadTrigger] = useState<number>(0);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const totalPages: number = Math.max(Math.ceil((total + 1) / PAGE_SIZE), 1);
+  const isSearching: boolean = !!debouncedSearch;
+  const totalPages: number = Math.max(Math.ceil((isSearching ? total : total + 1) / PAGE_SIZE), 1);
   const isLastPage: boolean = page === totalPages;
 
   useEffect(() => {
-    if (!user) {
-      return;
+    const timer: number = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    if (page !== 1) {
+      params.page = String(page);
     }
+    if (debouncedSearch) {
+      params.search = debouncedSearch;
+    }
+
+    setSearchParams(params, { replace: true });
+  }, [page, debouncedSearch]);
+
+  useEffect(() => {
+    if (!user) return;
 
     const fetchPortfolios = async () => {
       setLoading(true);
       try {
-        const result: PaginatedResponse<Portfolio> = await portfolioService.getPortfoliosByUserId(user.id, page, PAGE_SIZE);
+        const result: PaginatedResponse<Portfolio> = await portfolioService.getPortfoliosByUserId(user.id, page, PAGE_SIZE, debouncedSearch || undefined);
         setPortfolios(result.data);
         setTotal(result.total);
       }
@@ -51,7 +74,7 @@ const PortfolioPage: React.FC = () => {
     };
 
     fetchPortfolios();
-  }, [user, page, reloadTrigger]);
+  }, [user, page, debouncedSearch, reloadTrigger]);
 
   const openModal = () => {
     setNewName("");
@@ -81,22 +104,17 @@ const PortfolioPage: React.FC = () => {
   }, []);
 
   const handleCreate = async () => {
-    if (!newName.trim() || !user) {
-      return;
-    }
+    if (!newName.trim() || !user) return;
 
     setCreating(true);
     try {
       const createdPortfolio: Portfolio = await portfolioService.createPortfolio({ userId: user.id, name: newName.trim() });
       closeModal();
       toast.success(`Portfolio "${createdPortfolio.name}" created!`);
-      
       const newTotal: number = total + 1;
       setTotal(newTotal);
-
       const lastPage: number = Math.ceil((newTotal + 1) / PAGE_SIZE);
       setPage(lastPage);
-      setSearchParams(lastPage === 1 ? {} : { page: String(lastPage) }, { replace: true });
       setReloadTrigger((prev) => prev + 1);
     }
     catch {
@@ -109,22 +127,18 @@ const PortfolioPage: React.FC = () => {
 
   const handleDelete = () => {
     const newTotal: number = total - 1;
-    const newTotalPages: number = Math.max(Math.ceil((newTotal + 1) / PAGE_SIZE), 1);
-
-    setPage((page) => {
-      const clamped = Math.min(page, newTotalPages);
-      setSearchParams(clamped === 1 ? {} : { page: String(clamped) }, { replace: true });
-      return clamped;
-    });
-
+    const newTotalPages: number = Math.max(Math.ceil((isSearching ? newTotal : newTotal + 1) / PAGE_SIZE), 1);
+    setPage((p) => Math.min(p, newTotalPages));
     setTotal(newTotal);
     setReloadTrigger((prev) => prev + 1);
   };
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    setSearchParams(newPage === 1 ? {} : { page: String(newPage) }, { replace: true });
   };
+
+  const noResults: boolean = !loading && total === 0;
+  const noPortfoliosAtAll: boolean = noResults && !debouncedSearch;
 
   return (
     <div className="flex-1 flex flex-col space-y-6">
@@ -133,17 +147,24 @@ const PortfolioPage: React.FC = () => {
           <h2 className="text-gray-900 text-xl font-bold tracking-tight">My Portfolios</h2>
           <p className="text-gray-500 text-sm mt-0.5">Manage and track all your investment portfolios.</p>
         </div>
-        <button
-          onClick={openModal}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-colors cursor-pointer font-medium shadow-sm shadow-purple-200 shrink-0"
-        >
-          <HiOutlinePlus size={16} />
-          New portfolio
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <SearchBar
+            value={search}
+            onChange={(v) => setSearch(v)}
+            placeholder="Search portfolios…"
+          />
+          <button
+            onClick={openModal}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-colors cursor-pointer font-medium shadow-sm shadow-purple-200 shrink-0"
+          >
+            <HiOutlinePlus size={16} />
+            New portfolio
+          </button>
+        </div>
       </div>
       {loading ? (
         <Loading size={96} />
-      ) : total === 0 ? (
+      ) : noPortfoliosAtAll ? (
         <div className="flex flex-col items-center justify-center py-20 gap-5">
           <div className="w-20 h-20 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center">
             <HiOutlineBriefcase className="w-9 h-9 text-purple-400" />
@@ -160,6 +181,11 @@ const PortfolioPage: React.FC = () => {
             Create a portfolio
           </button>
         </div>
+      ) : noResults ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <HiOutlineBriefcase className="w-8 h-8 text-gray-300" />
+          <p className="text-gray-500 text-sm">No portfolios match "<span className="font-medium text-gray-700">{debouncedSearch}</span>"</p>
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -170,9 +196,15 @@ const PortfolioPage: React.FC = () => {
                 onDelete={handleDelete}
               />
             ))}
-            {isLastPage && <NewPortfolioCard onClick={openModal} />}
+            {isLastPage && !isSearching && <NewPortfolioCard onClick={openModal} />}
           </div>
-          <Pagination page={page} total={total + 1} pageSize={PAGE_SIZE} onChange={handlePageChange} displayTotal={total} />
+          <Pagination
+            page={page}
+            total={isSearching ? total : total + 1}
+            pageSize={PAGE_SIZE}
+            onChange={handlePageChange}
+            displayTotal={total}
+          />
         </>
       )}
       <CreatePortfolioModal
