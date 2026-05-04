@@ -30,26 +30,30 @@ const mapUserResponseToUser = (userResponse: UserResponse): User => ({
   updatedAt: new Date(userResponse.updatedAt),
 });
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext: React.Context<AuthContextType | undefined> = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderProps) => {
   const authService = AuthService.getInstance();
 
   const [user, setUser] = useState<User | null>(() => {
     try {
-      const stored = localStorage.getItem("user");
-      if (!stored) return null;
+      const stored: string | null = localStorage.getItem("user");
+      if (!stored) {
+        return null;
+      }
+
       const parsed = JSON.parse(stored);
       return {
         ...parsed,
         createdAt: new Date(parsed.createdAt),
         updatedAt: new Date(parsed.updatedAt),
       } as User;
-    } catch {
+    }
+    catch {
       return null;
     }
   });
@@ -58,7 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return localStorage.getItem("token");
   });
 
-  const isAuthenticated = !!token;
+  const isAuthenticated: boolean = !!token;
 
   const login = useCallback(async (email: string, password: string) => {
     try {
@@ -76,7 +80,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!mappedUser.activated) {
         await authService.sendActivationEmail(mappedUser.email);
       }
-    } catch (error: any) {
+    }
+    catch (error: any) {
       throw new Error(error.message || "Login failed");
     }
   }, [authService]);
@@ -99,7 +104,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       return mappedUser;
-    } catch (error: any) {
+    }
+    catch (error: any) {
       throw new Error(error.message || "Registration failed");
     }
   }, [authService]);
@@ -122,19 +128,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       return mappedUser;
-    } catch (error: any) {
+    }
+    catch (error: any) {
       throw new Error(error.message || "Google login failed");
     }
   }, [authService]);
 
   const sendActivationEmail = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
+
     await authService.sendActivationEmail(user.email);
   }, [authService, user]);
 
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
+
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     sessionStorage.removeItem("justLoggedIn");
@@ -143,13 +154,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ user, token, isAuthenticated, login, register, loginWithGoogle, logout, sendActivationEmail }}>
-      {children}
+      {props.children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within an AuthProvider");
+  const context: AuthContextType | undefined = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  
   return context;
 };
