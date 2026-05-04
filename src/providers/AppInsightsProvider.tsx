@@ -3,8 +3,6 @@ import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { ReactPlugin, AppInsightsContext } from "@microsoft/applicationinsights-react-js";
 import { APPINSIGHTS_CONNECTION_STRING } from "../constants/env";
 
-console.log("[AppInsights] VITE_APPINSIGHTS_CONNECTION_STRING =", APPINSIGHTS_CONNECTION_STRING);
-
 interface AppInsightsProviderProps {
   children: React.ReactNode;
 }
