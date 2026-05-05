@@ -7,11 +7,11 @@ import ForgottenPassword from "./pages/ForgottenPassword";
 import ResetPassword from "./pages/ResetPassword";
 import LandingPage from "./pages/LandingPage";
 import HomeLayout from "./layouts/HomeLayout";
-import DashboardPage from "./pages/DashboardPage";
-import ImportPage from "./pages/ImportPage";
-import PortfolioPage from "./pages/PortfolioPage";
-import TransactionPage from "./pages/TransactionPage";
-import ActivateAccountPage from "./pages/ActivateAccountPage";
+import Dashboard from "./pages/Dashboard";
+import ImportData from "./pages/ImportData";
+import Portfolios from "./pages/Portfolios";
+import Transactions from "./pages/Transactions";
+import ActivateAccount from "./pages/ActivateAccount";
 import PublicRoute from "./guards/PublicRoute";
 import PrivateRoute from "./guards/PrivateRoute";
 
@@ -28,15 +28,15 @@ const AppRoutes: React.FC = () => {
         {/* Routes Full Access */}
         <Route path="/forgotten-password" element={<ForgottenPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/activate-account" element={<ActivateAccountPage />} />
+        <Route path="/activate-account" element={<ActivateAccount />} />
 
         {/* Private Routes - redirect in Landing Page if user is not connected */}
         <Route path="/home" element={<PrivateRoute><HomeLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="portfolio" element={<PortfolioPage />} />
-          <Route path="portfolio/:portfolioId/transactions" element={<TransactionPage />} />
-          <Route path="import" element={<ImportPage />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="portfolio" element={<Portfolios />} />
+          <Route path="portfolio/:portfolioId/transactions" element={<Transactions />} />
+          <Route path="import" element={<ImportData />} />
         </Route>
         
       </Routes>

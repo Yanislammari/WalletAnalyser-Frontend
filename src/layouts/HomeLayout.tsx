@@ -15,7 +15,8 @@ const HomeLayout: React.FC = () => {
     try {
       await sendActivationEmail();
       toast.success("Activation email sent! Check your inbox.");
-    } catch {
+    }
+    catch {
       toast.error("Failed to send the email. Please try again.");
     }
   };
@@ -24,10 +25,9 @@ const HomeLayout: React.FC = () => {
     if (user && user.activated === false && sessionStorage.getItem("showActivationBanner") === "true") {
       setBannerVisible(true);
     }
+
     if (sessionStorage.getItem("accountJustActivated") === "true") {
       sessionStorage.removeItem("accountJustActivated");
-
-      // Affiche la modal de succès d'activation
     }
   }, [user]);
 
@@ -37,6 +37,7 @@ const HomeLayout: React.FC = () => {
         setSidebarOpen(false);
       }
     };
+
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
@@ -59,9 +60,8 @@ const HomeLayout: React.FC = () => {
         onClose={() => setSidebarOpen(false)}
       />
       <Navbar onMenuClick={() => setSidebarOpen((v) => !v)} />
-
-      <div className="lg:ml-64 pt-16 min-h-screen flex flex-col">
-        <main className="flex-1 flex flex-col max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-7 py-6 sm:py-8 space-y-5">
+      <div className="lg:ml-64 pt-16 flex flex-col">
+        <main className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5">
           {bannerVisible && (
             <ActivationBanner
               onClose={() => {
@@ -76,6 +76,6 @@ const HomeLayout: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export default HomeLayout;

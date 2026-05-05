@@ -3,11 +3,13 @@ import type { UserResponse } from "../responses/UserResponse";
 import type { User } from "../models/User";
 import AuthService from "../services/AuthService";
 import type { RegisterPayload } from "../payloads/RegisterPayload";
+import type { AuthResponse } from "../responses/AuthResponse";
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isAuthLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<User>;
   loginWithGoogle: (idToken: string) => Promise<User>;
@@ -62,6 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
     return localStorage.getItem("token");
   });
 
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
   const isAuthenticated: boolean = !!token;
 
   const login = useCallback(async (email: string, password: string) => {
@@ -111,9 +114,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
   }, [authService]);
 
   const loginWithGoogle = useCallback(async (idToken: string) => {
+    setIsAuthLoading(true);
+
     try {
-      const response = await authService.authWithGoogle(idToken);
-      const mappedUser = mapUserResponseToUser(response.user);
+      const response: AuthResponse = await authService.authWithGoogle(idToken);
+      const mappedUser: User = mapUserResponseToUser(response.user);
 
       setToken(response.token);
       setUser(mappedUser);
@@ -130,6 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
       return mappedUser;
     }
     catch (error: any) {
+      setIsAuthLoading(false);
       throw new Error(error.message || "Google login failed");
     }
   }, [authService]);
@@ -145,6 +151,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
+    setIsAuthLoading(false);
 
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -153,7 +160,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, login, register, loginWithGoogle, logout, sendActivationEmail }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, isAuthLoading, login, register, loginWithGoogle, logout, sendActivationEmail }}>
       {props.children}
     </AuthContext.Provider>
   );

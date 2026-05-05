@@ -8,7 +8,7 @@ import ImportDataDropzone from "../components/ImportDataDropzone";
 import RecentImportsPanel from "../components/RecentImportsPanel";
 import PortfolioSelectorModal from "../components/PortfolioSelectorModal";
 
-const ImportPage: React.FC = () => {
+const ImportData: React.FC = () => {
   const { user } = useAuth();
   const navigate: NavigateFunction = useNavigate();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -77,4 +77,4 @@ const ImportPage: React.FC = () => {
   );
 }
 
-export default ImportPage;
+export default ImportData;

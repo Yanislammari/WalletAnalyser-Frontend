@@ -16,7 +16,7 @@ const dashStats: DmStatUI[] = [
   { label: "Volatility", value: "11.2%", delta: "-2.1% vs last year", up: true },
 ];
 
-const DashboardPage: React.FC = () => {
+const Dashboard: React.FC = () => {
   const { user, sendActivationEmail } = useAuth();
   const [showActivationModal, setShowActivationModal] = useState<boolean>(false);
   const [showAccountActivatedModal, setShowAccountActivatedModal] = useState<boolean>(false);
@@ -144,4 +144,4 @@ const DashboardPage: React.FC = () => {
   );
 }
 
-export default DashboardPage;
+export default Dashboard;

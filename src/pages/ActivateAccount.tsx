@@ -1,17 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams, type NavigateFunction } from "react-router-dom";
 import { toast } from "sonner";
-import {
-  HiOutlineExclamationTriangle,
-  HiOutlineClock,
-  HiOutlineXCircle,
-} from "react-icons/hi2";
+import { HiOutlineExclamationTriangle, HiOutlineClock, HiOutlineXCircle } from "react-icons/hi2";
 import AuthService from "../services/AuthService";
 import Loading from "../components/Loading";
 import { TokenErrorType } from "../enums/TokenErrorType";
 import ErrorCard from "../components/ErrorCard";
 
-const ActivateAccountPage: React.FC = () => {
+const ActivateAccount: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate: NavigateFunction = useNavigate();
   const authService: AuthService = AuthService.getInstance();
@@ -149,4 +145,4 @@ const ActivateAccountPage: React.FC = () => {
   return null;
 }
 
-export default ActivateAccountPage;
+export default ActivateAccount;

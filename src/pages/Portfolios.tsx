@@ -15,7 +15,7 @@ import type { PaginatedResponse } from "../responses/PaginatedResponse";
 
 const PAGE_SIZE: number = 9;
 
-const PortfolioPage: React.FC = () => {
+const Portfolios: React.FC = () => {
   const { user } = useAuth();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -219,4 +219,4 @@ const PortfolioPage: React.FC = () => {
   );
 }
 
-export default PortfolioPage;
+export default Portfolios;

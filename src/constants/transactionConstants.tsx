@@ -42,5 +42,5 @@ export const tabAccent: Record<TabType, TabAccent> = {
   },
 };
 
-export const inputCls = "w-full px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition";
-export const labelCls = "block text-xs font-medium text-gray-600 mb-1";
+export const inputCls: string = "w-full px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition";
+export const labelCls: string = "block text-xs font-medium text-gray-600 mb-1";

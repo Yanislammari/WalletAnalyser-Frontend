@@ -17,7 +17,7 @@ import { TabType } from "../enums/TabType";
 
 const PAGE_SIZE: number = 10;
 
-const TransactionPage: React.FC = () => {
+const Transactions: React.FC = () => {
   const { portfolioId } = useParams<{ portfolioId: string }>();
   const navigate: NavigateFunction = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -313,4 +313,4 @@ const TransactionPage: React.FC = () => {
   );
 }
 
-export default TransactionPage;
+export default Transactions;
