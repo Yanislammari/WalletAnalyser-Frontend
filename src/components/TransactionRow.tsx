@@ -5,6 +5,7 @@ import type { AssetBuyResponse } from "../responses/AssetBuyResponse";
 import type { AssetSellResponse } from "../responses/AssetSellResponse";
 import type { AssetDividendResponse } from "../responses/AssetDividendResponse";
 import DeleteTransactionModal from "./DeleteTransactionModal";
+import CompanyLogo from "./CompanyLogo";
 import { toast } from "sonner";
 
 interface BuyRowProps {
@@ -75,7 +76,12 @@ const TransactionRow: React.FC<TransactionRowProps> = (props: TransactionRowProp
       <>
         <tr className="group hover:bg-gray-50 transition-colors">
           <td className="py-3 pr-4 text-gray-700">{row.buyDate}</td>
-          <td className="py-3 pr-4 text-gray-900 font-medium">{row.companyName ?? "—"}</td>
+          <td className="py-3 pr-4">
+            <div className="flex items-center gap-2">
+              {row.companyName && <CompanyLogo name={row.companyName} size={32} />}
+              <span className="text-gray-900 font-medium">{row.companyName ?? "—"}</span>
+            </div>
+          </td>
           <td className="py-3 pr-4 text-gray-700">
             {row.assetBuyAmount != null
               ? `${row.assetBuyAmount} ${currencyName(row.buyCurrencyId)}`
@@ -107,7 +113,12 @@ const TransactionRow: React.FC<TransactionRowProps> = (props: TransactionRowProp
       <>
         <tr className="group hover:bg-gray-50 transition-colors">
           <td className="py-3 pr-4 text-gray-700">{row.sellDate}</td>
-          <td className="py-3 pr-4 text-gray-900 font-medium">{row.companyName ?? "—"}</td>
+          <td className="py-3 pr-4">
+            <div className="flex items-center gap-2">
+              {row.companyName && <CompanyLogo name={row.companyName} size={32} />}
+              <span className="text-gray-900 font-medium">{row.companyName ?? "—"}</span>
+            </div>
+          </td>
           <td className="py-3 pr-4 text-gray-700">
             {row.assetSellAmount != null
               ? `${row.assetSellAmount} ${currencyName(row.sellCurrencyId)}`
@@ -157,6 +168,6 @@ const TransactionRow: React.FC<TransactionRowProps> = (props: TransactionRowProp
       )}
     </>
   );
-};
+}
 
 export default TransactionRow;

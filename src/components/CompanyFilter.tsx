@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { HiOutlineChevronDown, HiOutlineXMark, HiBuildingOffice2 } from "react-icons/hi2";
+import CompanyLogo from "./CompanyLogo";
 
 interface CompanyFilterProps {
   companies: string[];
@@ -41,7 +42,10 @@ const CompanyFilter: React.FC<CompanyFilterProps> = (props: CompanyFilterProps) 
             : "bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800"
         }`}
       >
-        <HiBuildingOffice2 size={14} />
+        {props.selected
+          ? <CompanyLogo name={props.selected} size={24} />
+          : <HiBuildingOffice2 size={14} />
+        }
         <span>{props.selected ?? "All companies"}</span>
         {props.selected ? (
           <span
@@ -71,13 +75,14 @@ const CompanyFilter: React.FC<CompanyFilterProps> = (props: CompanyFilterProps) 
             <button
               key={company}
               onClick={() => handleSelect(company)}
-              className={`w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer truncate ${
+              className={`w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer flex items-center gap-2 ${
                 props.selected === company
                   ? "text-purple-700 font-medium bg-purple-50"
                   : "text-gray-700 hover:bg-gray-50"
               }`}
             >
-              {company}
+              <CompanyLogo name={company} size={28} />
+              <span className="truncate">{company}</span>
             </button>
           ))}
         </div>
