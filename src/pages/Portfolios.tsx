@@ -182,7 +182,7 @@ const Portfolios: React.FC = () => {
           </button>
         </div>
       ) : noResults ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
           <HiOutlineBriefcase className="w-8 h-8 text-gray-300" />
           <p className="text-gray-500 text-sm">No portfolios match "<span className="font-medium text-gray-700">{debouncedSearch}</span>"</p>
         </div>
