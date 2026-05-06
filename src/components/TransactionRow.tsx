@@ -78,7 +78,7 @@ const TransactionRow: React.FC<TransactionRowProps> = (props: TransactionRowProp
           <td className="py-3 pr-4 text-gray-700">{row.buyDate}</td>
           <td className="py-3 pr-4">
             <div className="flex items-center gap-2">
-              {row.companyName && <CompanyLogo name={row.companyName} size={32} />}
+              {row.companyName && <CompanyLogo name={row.companyName} size={26} />}
               <span className="text-gray-900 font-medium">{row.companyName ?? "—"}</span>
             </div>
           </td>
@@ -115,7 +115,7 @@ const TransactionRow: React.FC<TransactionRowProps> = (props: TransactionRowProp
           <td className="py-3 pr-4 text-gray-700">{row.sellDate}</td>
           <td className="py-3 pr-4">
             <div className="flex items-center gap-2">
-              {row.companyName && <CompanyLogo name={row.companyName} size={32} />}
+              {row.companyName && <CompanyLogo name={row.companyName} size={26} />}
               <span className="text-gray-900 font-medium">{row.companyName ?? "—"}</span>
             </div>
           </td>

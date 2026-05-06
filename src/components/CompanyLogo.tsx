@@ -13,7 +13,7 @@ const CompanyLogo: React.FC<CompanyLogoProps> = (props: CompanyLogoProps) => {
   const slug: string = encodeURIComponent(props.name.toLowerCase().trim());
   const src: string = `https://img.logo.dev/name/${slug}?token=${LOGODEV_API_KEY}&size=40&format=png`;
 
-  const initials = props.name
+  const initials: string = props.name
     .split(" ")
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? "")
@@ -31,17 +31,13 @@ const CompanyLogo: React.FC<CompanyLogoProps> = (props: CompanyLogoProps) => {
   }
 
   return (
-    <span
-      className="inline-flex items-center justify-center rounded-lg bg-white border border-gray-100 overflow-hidden shrink-0"
+    <img
+      src={src}
+      alt={`${props.name} logo`}
+      onError={() => setFailed(true)}
+      className="rounded-lg border border-gray-100 shrink-0 object-cover"
       style={{ width: size, height: size }}
-    >
-      <img
-        src={src}
-        alt={`${props.name} logo`}
-        onError={() => setFailed(true)}
-        style={{ width: size * 0.6, height: size * 0.6, objectFit: "contain" }}
-      />
-    </span>
+    />
   );
 }
 

@@ -28,8 +28,26 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = (props: DateRangeFilterP
       }
     };
 
+    const handleScroll = () => {
+      if (buttonRef.current) {
+        const rect: DOMRect = buttonRef.current.getBoundingClientRect();
+        
+        setPanelStyle({
+          position: "fixed",
+          top: rect.bottom + 6,
+          right: window.innerWidth - rect.right,
+          zIndex: 9999,
+        });
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
   }, []);
 
   const handleOpen = () => {
