@@ -1,4 +1,4 @@
-import { BaseService } from "./BaseService";
+import BaseService from "./BaseService";
 import type { Portfolio } from "../models/Portfolio";
 import type { AssetBuyResponse } from "../responses/AssetBuyResponse";
 import type { AssetSellResponse } from "../responses/AssetSellResponse";

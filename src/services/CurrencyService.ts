@@ -1,4 +1,4 @@
-import { BaseService } from "./BaseService";
+import BaseService from "./BaseService";
 import type { Currency } from "../models/Currency";
 
 class CurrencyService extends BaseService {
