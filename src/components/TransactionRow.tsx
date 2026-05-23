@@ -7,6 +7,7 @@ import type { AssetDividendResponse } from "../responses/AssetDividendResponse";
 import DeleteTransactionModal from "./DeleteTransactionModal";
 import CompanyLogo from "./CompanyLogo";
 import { toast } from "sonner";
+import { computeBuyAmount } from "../utils/transactionSort";
 
 interface BuyRowProps {
   variant: "buy";
@@ -70,6 +71,11 @@ const TransactionRow: React.FC<TransactionRowProps> = (props: TransactionRowProp
     </td>
   );
 
+  const formatBuyAmount = (row: AssetBuyResponse, currencyName: (id: string) => string): string => {
+    const amount: number | null = computeBuyAmount(row);
+    return amount != null ? `${parseFloat(amount.toFixed(2))} ${currencyName(row.buyCurrencyId)}` : "—";
+  };
+
   if (props.variant === "buy") {
     const { row, currencyName } = props;
     return (
@@ -83,14 +89,13 @@ const TransactionRow: React.FC<TransactionRowProps> = (props: TransactionRowProp
             </div>
           </td>
           <td className="py-3 pr-4 text-gray-700">
-            {row.assetBuyAmount != null
-              ? `${row.assetBuyAmount} ${currencyName(row.buyCurrencyId)}`
-              : row.assetBuyShare != null
-              ? `${row.assetBuyShare} shares`
-              : "—"}
+            {row.assetBuyShare != null ? `${row.assetBuyShare}` : "—"}
           </td>
           <td className="py-3 pr-4 text-gray-700">
             {row.assetBuyPricePerShare != null ? `${row.assetBuyPricePerShare}` : "—"}
+          </td>
+          <td className="py-3 pr-4 font-medium text-gray-900">
+            {formatBuyAmount(row, currencyName)}
           </td>
           {deleteBtn}
         </tr>
@@ -153,6 +158,16 @@ const TransactionRow: React.FC<TransactionRowProps> = (props: TransactionRowProp
     <>
       <tr className="group hover:bg-gray-50 transition-colors">
         <td className="py-3 pr-4 text-gray-700">{row.cashflowDate}</td>
+        <td className="py-3 pr-4">
+          {row.companyName ? (
+            <div className="flex items-center gap-2">
+              <CompanyLogo name={row.companyName} size={26} />
+              <span className="text-gray-900 font-medium">{row.companyName}</span>
+            </div>
+          ) : (
+            <span className="text-gray-400">—</span>
+          )}
+        </td>
         <td className="py-3 pr-4 text-indigo-600 font-medium">{row.cashflowAmount}</td>
         <td className="py-3 pr-4 text-gray-700">{currencyName(row.currencyId)}</td>
         {deleteBtn}

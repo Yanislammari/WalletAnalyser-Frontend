@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { HiOutlineBanknotes, HiOutlineXMark } from "react-icons/hi2";
 import type { Currency } from "../models/Currency";
+import type { Asset } from "../models/Asset";
+import type { AssetDividendResponse } from "../responses/AssetDividendResponse";
 import { tabAccent, inputCls, labelCls } from "../constants/transactionConstants";
 import PortfolioService from "../services/PortfolioService";
+import AssetService from "../services/AssetService";
 import DateInput from "./DateInput";
-import type { AssetDividendResponse } from "../responses/AssetDividendResponse";
+import AssetSearchSelect from "./AssetSearchSelect";
 import { emptyDividend, type DividendForm } from "../forms/DividendForm";
 
 interface AddNewDividendModalProps {
@@ -18,7 +21,13 @@ interface AddNewDividendModalProps {
 const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props: AddNewDividendModalProps) => {
   const [form, setForm] = useState<DividendForm>(emptyDividend());
   const [saving, setSaving] = useState<boolean>(false);
-  const portfolioService = PortfolioService.getInstance();
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const portfolioService: PortfolioService = PortfolioService.getInstance();
+  const assetService: AssetService = AssetService.getInstance();
+
+  useEffect(() => {
+    assetService.getAssets().then(setAssets).catch(() => setAssets([]));
+  }, []);
 
   useEffect(() => {
     if (props.currencies.length === 0) {
@@ -51,9 +60,9 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props: AddNewDi
 
     setSaving(true);
     try {
-      const portfolioId: string = props.portfolioId;
       const createdDividend: AssetDividendResponse = await portfolioService.addAssetDividend({
-        portfolioId,
+        portfolioId: props.portfolioId,
+        assetId: form.assetId || undefined,
         currencyId: form.currencyId,
         cashflowDate: form.date,
         cashflowAmount: parseFloat(form.amount),
@@ -93,7 +102,17 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props: AddNewDi
             <label className={labelCls}>Date</label>
             <DateInput
               value={form.date}
-              onChange={(value) => setForm((form) => ({ ...form, date: value }))}
+              onChange={(value) => setForm((f) => ({ ...f, date: value }))}
+              portalTarget={props.dialogRef.current}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Asset</label>
+            <AssetSearchSelect
+              assets={assets}
+              value={form.assetId}
+              onChange={(assetId) => setForm((form) => ({ ...form, assetId }))}
+              placeholder="Search for an asset... (optional)"
               portalTarget={props.dialogRef.current}
             />
           </div>
@@ -104,7 +123,7 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props: AddNewDi
                 type="number"
                 min={0}
                 value={form.amount}
-                onChange={(e) => setForm((form) => ({ ...form, amount: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
                 placeholder="0.00"
                 className={inputCls}
               />
@@ -113,7 +132,7 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props: AddNewDi
               <label className={labelCls}>Currency</label>
               <select
                 value={form.currencyId}
-                onChange={(e) => setForm((form) => ({ ...form, currencyId: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, currencyId: e.target.value }))}
                 className={inputCls}
               >
                 <option value="">Currency</option>
