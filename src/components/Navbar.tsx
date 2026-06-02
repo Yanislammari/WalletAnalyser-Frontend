@@ -10,6 +10,7 @@ const pageTitles: Record<string, string> = {
   "/home/dashboard": "Dashboard",
   "/home/import": "Import Data",
   "/home/portfolio": "Portfolio",
+  "/home/badges": "Badges",
 };
 
 const TRANSACTION_RE: RegExp = /^\/home\/portfolio\/([^/]+)\/transactions/;
@@ -44,6 +45,10 @@ const Navbar: React.FC<NavbarProps> = (props: NavbarProps) => {
   if (portfolioId) {
     title = "Portfolio";
     subtitle = portfolioName ? `${portfolioName} / Transactions` : "Transactions";
+  }
+  else if(location.pathname.includes('badges')){
+    title = pageTitles[location.pathname] ?? "Home";
+    subtitle = "Your badges";
   }
   else {
     title = pageTitles[location.pathname] ?? "Home";

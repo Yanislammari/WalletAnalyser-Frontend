@@ -28,6 +28,7 @@ const mapUserResponseToUser = (userResponse: UserResponse): User => ({
   userType: userResponse.userType,
   subscribe: false,
   activated: userResponse.activated,
+  timeMsGift: userResponse.timeMsGift,
   createdAt: new Date(userResponse.createdAt),
   updatedAt: new Date(userResponse.updatedAt),
 });

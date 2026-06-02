@@ -1,6 +1,8 @@
-import { HiOutlineSquares2X2, HiOutlineArrowDownTray, HiOutlineBriefcase } from "react-icons/hi2";
+import { HiOutlineSquares2X2, HiOutlineArrowDownTray, HiOutlineBriefcase, HiOutlineGift } from "react-icons/hi2";
 import type { NavItem } from "../models/items/NavItem";
 import { NavLink } from "react-router";
+import { useEffect, useState } from "react";
+import type { User } from "../models/User";
 
 const NAV_ITEMS: NavItem[] = [
   {
@@ -18,6 +20,12 @@ const NAV_ITEMS: NavItem[] = [
     label: "Import Data",
     icon: <HiOutlineArrowDownTray size={18} />,
   },
+  {
+    to: "/home/badges",
+    label: "Gift",
+    isGift: true,
+    icon: <HiOutlineGift size={18} />,
+  }
 ];
 
 interface SidebarProps {
@@ -26,6 +34,35 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
+
+  function getTimeLeft() {
+    const raw = localStorage.getItem("user");
+    if (!raw) return "No time";
+    const user: User = JSON.parse(raw);
+    const timeLeftMs = user.timeMsGift;
+    console.log(timeLeftMs)
+    if (timeLeftMs == null || isNaN(timeLeftMs)) return "No time";
+    const diff = timeLeftMs - Date.now()
+    if (diff <= 0) return "Available now";
+
+    const seconds = Math.floor(diff / 1000) % 60;
+    const minutes = Math.floor(diff / (1000 * 60)) % 60;
+    const hours = Math.floor(diff / (1000 * 60 * 60)) % 24;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  }
+
+  const [timeLeft, setTimeLeft] = useState(getTimeLeft());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeLeft(getTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <aside
       className={`
@@ -82,6 +119,9 @@ const Sidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
               <>
                 <span className={isActive ? "text-white" : "text-white/40"}>{item.icon}</span>
                 {item.label}
+                {item.isGift &&
+                  <span className="text-[10px] text-white/30 uppercase tracking-[0.15em] font-medium ml-auto">{timeLeft}</span>
+                }
                 {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/60" />}
               </>
             )}

@@ -12,6 +12,7 @@ export interface User {
   userType: UserType;
   subscribe: boolean;
   activated: boolean;
+  timeMsGift: number;
   createdAt: Date;
   updatedAt: Date;
 }
