@@ -12,6 +12,7 @@ export abstract class BaseService {
     if (!isFormData) {
       headers = {
         ...(options.headers as Record<string, string>),
+        "Authorization" : `Bearer ${localStorage.getItem("token") ?? ""}`,
         "Content-Type": "application/json",
       };
     }

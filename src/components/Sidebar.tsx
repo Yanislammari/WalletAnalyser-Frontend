@@ -3,6 +3,7 @@ import type { NavItem } from "../models/items/NavItem";
 import { NavLink } from "react-router";
 import { useEffect, useState } from "react";
 import type { User } from "../models/User";
+import { HiOutlineSearch } from "react-icons/hi";
 
 const NAV_ITEMS: NavItem[] = [
   {
@@ -19,6 +20,11 @@ const NAV_ITEMS: NavItem[] = [
     to: "/home/import",
     label: "Import Data",
     icon: <HiOutlineArrowDownTray size={18} />,
+  },
+  {
+    to: "/home/analysis",
+    label: "Analysis",
+    icon: <HiOutlineSearch size={18} />,
   },
   {
     to: "/home/badges",
@@ -40,7 +46,6 @@ const Sidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
     if (!raw) return "No time";
     const user: User = JSON.parse(raw);
     const timeLeftMs = user.timeMsGift;
-    console.log(timeLeftMs)
     if (timeLeftMs == null || isNaN(timeLeftMs)) return "No time";
     const diff = timeLeftMs - Date.now()
     if (diff <= 0) return "Available now";

@@ -11,6 +11,7 @@ const pageTitles: Record<string, string> = {
   "/home/import": "Import Data",
   "/home/portfolio": "Portfolio",
   "/home/badges": "Badges",
+  "/home/analysis": "Analysis"
 };
 
 const TRANSACTION_RE: RegExp = /^\/home\/portfolio\/([^/]+)\/transactions/;
