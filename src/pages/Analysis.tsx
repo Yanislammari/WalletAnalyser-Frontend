@@ -66,7 +66,7 @@ const Analysis: React.FC = () => {
         setClusters(mappingClusters)
         const userStocksMapped = userStocksMetaData.sectorsData.map((userStock) =>{
           const mapped : UserStocksRankingProps = {
-            onClick : () => { navigate("/home/analysis/" + userStock.asset.sector_uuid + "?type=sector")},
+            onClick : () => { navigate("/home/analysis/" + userStock.asset.sector_uuid + `?type=sector&offset=${userStock.rank_position}`)},
             ranking : userStock.rank,
             sector_name : userStock.asset.sector.sector_name,
             country_name : userStock.asset.country.country_name,
@@ -135,23 +135,27 @@ const Analysis: React.FC = () => {
             My stocks
           </button>
         </div>
+        {view === "my_stocks" && (
+          <div className="grid grid-cols-1 gap-3 items-start">
+            {userStocks.filter(c => c.display_name?.toLowerCase()?.startsWith(search.toLowerCase())).length === 0
+              ? <p className="text-sm text-zinc-400 text-center py-6">No stocks found</p>
+              : userStocks.filter(c => c.display_name?.toLowerCase()?.startsWith(search.toLowerCase())).map((s) => <CardUserStocksPerf key={s.display_name} {...s} />)
+            }
+          </div>
+        )}
 
-        {
-          view === "my_stocks" && (
-            <div className="grid grid-cols-1 gap-3 items-start">
-              {userStocks.filter(c => c.display_name?.toLowerCase()?.startsWith(search.toLowerCase())).map((s) => <CardUserStocksPerf key={s.display_name} {...s} />)}
-            </div>
-          )
-        }
-        {
-          view !== "my_stocks" && (
-            <div className="grid grid-cols-2 gap-6 items-start">
-              {view === "cluster" ? clusters.filter(c => c.name?.toLowerCase()?.includes(search.toLowerCase())).map(c => <CardSectorPerf key={c.name} {...c} />)
+        {view !== "my_stocks" && (
+          <div className="grid grid-cols-2 gap-6 items-start">
+            {view === "cluster"
+              ? clusters.filter(c => c.name?.toLowerCase()?.includes(search.toLowerCase())).length === 0
+                ? <p className="text-sm text-zinc-400 text-center py-6 col-span-2">No clusters found</p>
+                : clusters.filter(c => c.name?.toLowerCase()?.includes(search.toLowerCase())).map(c => <CardSectorPerf key={c.name} {...c} />)
+              : sectors.filter(c => c.name?.toLowerCase()?.startsWith(search.toLowerCase())).length === 0
+                ? <p className="text-sm text-zinc-400 text-center py-6 col-span-2">No sectors found</p>
                 : sectors.filter(c => c.name?.toLowerCase()?.startsWith(search.toLowerCase())).map(s => <CardSectorPerf key={s.name} {...s} />)
-              }
-            </div>
-          )
-        }
+            }
+          </div>
+        )}
       </>
     );
   };

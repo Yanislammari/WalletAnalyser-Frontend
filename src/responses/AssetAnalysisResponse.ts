@@ -55,6 +55,7 @@ interface DetailedAsset {
 export interface RankedAsset {
   asset: DetailedAsset;
   rank: string;
+  rank_position : number;
   perf: number;
 }
 
