@@ -37,12 +37,12 @@ const StocksDetail = (rankAssetProps: RankedProps) => {
       </div>
 
       {/* Tags */}
-      <div className="flex items-center gap-2 flex-shrink-0 mr-5">
-        <span className="text-xs px-2.5 py-1 rounded border border-zinc-200 text-black bg-white">
-          {rankAsset?.asset?.country?.country_name ?? "Unknow"}
+      <div className="flex items-center gap-6 mr-5">
+        <span className="text-xs px-2.5 py-1 rounded border border-zinc-200 text-black bg-white w-32 text-center truncate">
+          {rankAsset?.asset?.country?.country_name ?? "Unknown"}
         </span>
-        <span className="text-xs px-2.5 py-1 rounded border border-zinc-200 text-black bg-white">
-          {rankAsset?.asset?.sector?.sector_name ?? "Unknow"}
+        <span className="text-xs px-2.5 py-1 rounded border border-zinc-200 text-black bg-white w-32 text-center truncate">
+          {rankAsset?.asset?.sector?.sector_name ?? "Unknown"}
         </span>
       </div>
 

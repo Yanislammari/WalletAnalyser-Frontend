@@ -132,10 +132,10 @@ export const CardUserStocksPerf = (userStocksRanking: UserStocksRankingProps) =>
 
         {/* Tags */}
         <div className="flex items-center gap-6">
-          <span className="text-[13px] font-medium px-5 py-1 rounded border border-zinc-300 text-black bg-white">
+          <span className="text-[13px] font-medium px-5 py-1 rounded border border-zinc-300 text-black bg-white w-36 text-center truncate">
             {userStocksRanking?.country_name}
           </span>
-          <span className="text-[13px] font-medium px-5 py-1 rounded border border-zinc-300 text-black bg-white mr-15">
+          <span className="text-[13px] font-medium px-5 py-1 rounded border border-zinc-300 text-black bg-white w-36 text-center truncate">
             {userStocksRanking?.sector_name}
           </span>
         </div>
