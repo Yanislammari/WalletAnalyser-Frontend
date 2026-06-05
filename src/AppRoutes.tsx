@@ -16,6 +16,7 @@ import PublicRoute from "./guards/PublicRoute";
 import PrivateRoute from "./guards/PrivateRoute";
 import Badges from "./pages/Badges";
 import Analysis from "./pages/Analysis";
+import AnalysisDetail from "./pages/AnalysisDetail";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -41,6 +42,7 @@ const AppRoutes: React.FC = () => {
           <Route path="import" element={<ImportData />} />
           <Route path="badges" element={<Badges/>} />
           <Route path="analysis" element={<Analysis />} />
+          <Route path="analysis/:uuid" element={<AnalysisDetail/>} />
         </Route>
         
       </Routes>

@@ -4,6 +4,7 @@ import { FiArrowLeft } from "react-icons/fi";
 
 interface BackButtonProps {
   route: string;
+  color?: string;
 }
 
 const BackButton: React.FC<BackButtonProps> = (props: BackButtonProps) => {
@@ -13,6 +14,7 @@ const BackButton: React.FC<BackButtonProps> = (props: BackButtonProps) => {
     <button
       onClick={() => navigate(props.route)}
       className="absolute top-4 left-4 p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all cursor-pointer"
+      style={{ color: props.color ?? "#9ca3af" }}
     >
       <FiArrowLeft size={20} />
     </button>

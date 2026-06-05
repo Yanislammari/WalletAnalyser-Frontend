@@ -23,13 +23,14 @@ const LEVEL_BADGE_LABEL: Record<LevelBadge, string> = {
   [LevelBadge.EXPERT]:       "bg-amber-100 text-amber-700",
 };
 
-const BadgeCard = ({ badge, allBadges }: { badge: UserBadge, allBadges : string[] }) => {
+const BadgeCard = ({ badge }: { badge: UserBadge | null }) => {
   const [hovered, setHovered] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const styles = LEVEL_STYLES[badge.level_badge];
-  const isUnlocked = allBadges.includes(badge.badge.uuid)
+  const styles = badge ? LEVEL_STYLES[badge.level_badge] : null;
+  const isUnlocked = badge !== null;
 
   useEffect(() => {
+    if(!isUnlocked) return;
     fetch(badge.badge.badge_image_path, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token") ?? ""}`}
     })
@@ -38,7 +39,7 @@ const BadgeCard = ({ badge, allBadges }: { badge: UserBadge, allBadges : string[
       .catch(console.error);
 
     return () => { if (imageSrc) URL.revokeObjectURL(imageSrc); };
-  }, [badge.badge.badge_image_path]);
+  }, [badge?.badge.badge_image_path]);
 
   return (
     <div
@@ -72,7 +73,7 @@ const BadgeCard = ({ badge, allBadges }: { badge: UserBadge, allBadges : string[
         </span>
       )}
 
-      <span className={`text-xs font-semibold tracking-wide text-center ${isUnlocked ? styles.title : "text-zinc-400"}`}>
+      <span className={`text-xs font-semibold tracking-wide text-center ${isUnlocked ? styles?.title : "text-zinc-400"}`}>
         {isUnlocked ? badge.badge.badge_title : "???"}
       </span>
 
@@ -172,6 +173,14 @@ const Badges: React.FC = () => {
 
   return (
     <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="text-gray-900 text-xl font-bold tracking-tight">
+            Your badges
+          </h2>
+          <p className="text-gray-500 text-sm mt-0.5">See the badges you have gain on the app.</p>
+        </div>
+      </div>
       {/* Celebration overlay */}
       {celebrating && activeBadge && (
         <div
@@ -246,7 +255,7 @@ const Badges: React.FC = () => {
             </div>
           )}
           <div className="grid grid-cols-5 gap-6 pt-15">
-            {badgesMetaData.userBadge.map(badge => <BadgeCard key={badge.uuid} badge={badge} allBadges={badgesMetaData.allBadges}/>)}
+            {badgesMetaData.allBadges.map(badge => <BadgeCard key={badge} badge={badgesMetaData.userBadge.find(b => b.badge.uuid === badge) ?? null}/>)}
           </div>
           <p className="text-center text-xs text-zinc-400 mt-6">
             {badgesMetaData.userBadge.length} / {badgesMetaData.allBadges.length} unlocked

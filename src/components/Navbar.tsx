@@ -5,6 +5,8 @@ import PortfolioService from "../services/PortfolioService";
 import SearchBar from "./SearchBar";
 import ProfileBlock from "./ProfileBlock";
 import ProfileDropdown from "./ProfileDropdown";
+import AnalysisService from "../services/Analysis";
+import { clusterName } from "../utils/ClusterNaming";
 
 const pageTitles: Record<string, string> = {
   "/home/dashboard": "Dashboard",
@@ -15,6 +17,7 @@ const pageTitles: Record<string, string> = {
 };
 
 const TRANSACTION_RE: RegExp = /^\/home\/portfolio\/([^/]+)\/transactions/;
+const ANALYSIS_DETAIL_RE: RegExp = /^\/home\/analysis\/([^/]+)/;
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -25,13 +28,18 @@ const Navbar: React.FC<NavbarProps> = (props: NavbarProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const portfolioService = PortfolioService.getInstance();
+  const analysisService = AnalysisService.getInstance();
 
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [portfolioName, setPortfolioName] = useState<string | null>(null);
+  const [analysisClusterName, setAnalysisClusterName] = useState<string | null>(null);
   const avatarRef: React.RefObject<HTMLButtonElement | null> = useRef<HTMLButtonElement | null>(null);
 
   const transactionMatch = TRANSACTION_RE.exec(location.pathname);
   const portfolioId = transactionMatch?.[1] ?? null;
+
+  const analysisDetailMatch = ANALYSIS_DETAIL_RE.exec(location.pathname);
+  const analysisDetailId = analysisDetailMatch?.[1] ?? null;
 
   useEffect(() => {
     if (!portfolioId) {
@@ -41,11 +49,28 @@ const Navbar: React.FC<NavbarProps> = (props: NavbarProps) => {
     portfolioService.getPortfolioById(portfolioId).then((p) => setPortfolioName(p.name)).catch(() => setPortfolioName(null));
   }, [portfolioId]);
 
+  useEffect(() => {
+    if (!analysisDetailId) {
+      setAnalysisClusterName(null);
+      return;
+    }
+    if (!isNaN(Number(analysisDetailId))) {
+      setAnalysisClusterName(clusterName(Number(analysisDetailId)))
+    }
+    else {
+      analysisService.getSectorName(analysisDetailId).then((p) => setAnalysisClusterName(p.sectorName)).catch(() => setPortfolioName(null));
+    }
+  }, [analysisDetailId]);
+
   let title: string;
   let subtitle: string;
   if (portfolioId) {
     title = "Portfolio";
     subtitle = portfolioName ? `${portfolioName} / Transactions` : "Transactions";
+  }
+  else if(analysisDetailId){
+    title = "Analysis";
+    subtitle = analysisClusterName ? `${analysisClusterName} / Details` : "Cluster details";
   }
   else if(location.pathname.includes('badges')){
     title = pageTitles[location.pathname] ?? "Home";
