@@ -5,19 +5,19 @@ import type { Currency } from "../models/Currency";
 import type { Asset } from "../models/Asset";
 import type { AssetSellResponse } from "../responses/AssetSellResponse";
 import { tabAccent, inputCls, labelCls } from "../constants/transactionConstants";
-import InputModeToggle from "./InputModeToggle";
 import DateInput from "./DateInput";
 import AssetSearchSelect from "./AssetSearchSelect";
 import PortfolioService from "../services/PortfolioService";
 import AssetService from "../services/AssetService";
+import CurrencyService from "../services/CurrencyService";
 import { emptySell, type SellForm } from "../forms/SellForm";
-import { InputMode } from "../enums/InputMode";
 import type { AssetPriceResponse } from "../responses/AssetPriceResponse";
 
 interface AddNewSellModalProps {
   dialogRef: React.RefObject<HTMLDialogElement | null>;
   currencies: Currency[];
   portfolioId: string;
+  ownedCompanies: string[];
   onSuccess: (sell: AssetSellResponse) => void;
 }
 
@@ -25,16 +25,54 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props: AddNewSellModalP
   const [form, setForm] = useState<SellForm>(emptySell());
   const [saving, setSaving] = useState<boolean>(false);
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [priceFetching, setPriceFetching] = useState<boolean>(false);
+  const [priceLoading, setPriceLoading] = useState<boolean>(false);
   const [fetchedPrice, setFetchedPrice] = useState<number | null>(null);
   const [autoFilled, setAutoFilled] = useState<boolean>(false);
+  const [availableShares, setAvailableShares] = useState<number | null>(null);
+  const [availableSharesLoading, setAvailableSharesLoading] = useState<boolean>(false);
+  const [avgBuyPrice, setAvgBuyPrice] = useState<number | null>(null);
   const portfolioService: PortfolioService = PortfolioService.getInstance();
   const assetService: AssetService = AssetService.getInstance();
+  const currencyService: CurrencyService = CurrencyService.getInstance();
 
   useEffect(() => {
     assetService.getAssets().then(setAssets).catch(() => setAssets([]));
   }, []);
 
+  // Fetch available shares when asset or date changes
+  useEffect(() => {
+    if (!form.assetId || !form.date) {
+      setAvailableShares(null);
+      return;
+    }
+
+    let cancelled = false;
+    setAvailableSharesLoading(true);
+
+    portfolioService.getAvailableShares(props.portfolioId, form.assetId, form.date)
+      .then((n) => { if (!cancelled) setAvailableShares(n); })
+      .catch(() => { if (!cancelled) setAvailableShares(null); })
+      .finally(() => { if (!cancelled) setAvailableSharesLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [form.assetId, form.date]);
+
+  // Fetch average buy price when asset, date or currency changes
+  useEffect(() => {
+    if (!form.assetId || !form.date || !form.currencyId) {
+      setAvgBuyPrice(null);
+      return;
+    }
+
+    let cancelled = false;
+    portfolioService.getAverageBuyPrice(props.portfolioId, form.assetId, form.date, form.currencyId)
+      .then((avg) => { if (!cancelled) setAvgBuyPrice(avg); })
+      .catch(() => { if (!cancelled) setAvgBuyPrice(null); });
+
+    return () => { cancelled = true; };
+  }, [form.assetId, form.date, form.currencyId]);
+
+  // Fetch raw price (in the asset's base currency) when asset or date changes
   useEffect(() => {
     if (!form.assetId || !form.date) {
       setFetchedPrice(null);
@@ -42,21 +80,19 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props: AddNewSellModalP
     }
 
     let cancelled = false;
-    setPriceFetching(true);
+    setPriceLoading(true);
     setAutoFilled(false);
 
     (async () => {
       try {
         const result: AssetPriceResponse | null = await assetService.getAssetPrice(form.assetId, form.date);
-        if (cancelled) {
-          return;
+        if (!cancelled) {
+          setFetchedPrice(result ? result.price : null);
         }
-
-        setFetchedPrice(result ? result.price : null);
       }
       finally {
         if (!cancelled) {
-          setPriceFetching(false);
+          setPriceLoading(false);
         }
       }
     })();
@@ -64,25 +100,50 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props: AddNewSellModalP
     return () => { cancelled = true; };
   }, [form.assetId, form.date]);
 
+  // Convert price to the selected currency and fill the price per share field
   useEffect(() => {
-    if (fetchedPrice == null) {
+    if (fetchedPrice == null || !form.currencyId) return;
+
+    const selectedAsset: Asset | undefined = assets.find((a) => a.id === form.assetId);
+    const baseCurrencyCode: string | undefined = props.currencies.find((c) => c.uuid === selectedAsset?.baseCurrencyId)?.currencyName;
+    const targetCurrencyCode: string | undefined = props.currencies.find((c) => c.uuid === form.currencyId)?.currencyName;
+
+    const applyPrice = (price: number): void => {
+      setForm((f) => ({ ...f, pricePerShare: String(parseFloat(price.toFixed(4))) }));
+      setAutoFilled(true);
+    };
+
+    if (!baseCurrencyCode || !targetCurrencyCode || baseCurrencyCode === targetCurrencyCode) {
+      applyPrice(fetchedPrice);
       return;
     }
 
-    if (form.inputMode === InputMode.AMOUNT) {
-      setForm((form) => ({ ...form, amount: String(fetchedPrice) }));
-    }
-    else {
-      setForm((form) => ({ ...form, pricePerShare: String(fetchedPrice) }));
-    }
-    setAutoFilled(true);
-  }, [fetchedPrice, form.inputMode]);
+    let cancelled = false;
+    setPriceLoading(true);
+
+    currencyService.convertPrice(baseCurrencyCode, targetCurrencyCode, fetchedPrice)
+      .then((converted) => { if (!cancelled) { applyPrice(converted); } })
+      .catch(() => { if (!cancelled) { applyPrice(fetchedPrice); } })
+      .finally(() => { if (!cancelled) { setPriceLoading(false); } });
+
+    return () => { cancelled = true; };
+  }, [fetchedPrice, form.currencyId, form.assetId]);
 
   useEffect(() => {
     if (props.currencies.length === 0) return;
-    const eur: string = props.currencies.find((currency) => currency.currencyName === "EUR")?.uuid ?? props.currencies[0].uuid;
-    setForm((form) => ({ ...form, currencyId: form.currencyId || eur, gainCurrencyId: form.gainCurrencyId || eur }));
+    const eur: string = props.currencies.find((c) => c.currencyName === "EUR")?.uuid ?? props.currencies[0].uuid;
+    setForm((f) => ({ ...f, currencyId: f.currencyId || eur }));
   }, [props.currencies]);
+
+  // Auto-compute capital gain when avgBuyPrice, pricePerShare or shares changes
+  useEffect(() => {
+    if (avgBuyPrice == null) return;
+    const shares: number = parseFloat(form.shares);
+    const price: number = parseFloat(form.pricePerShare);
+    if (isNaN(shares) || isNaN(price) || shares <= 0 || price <= 0) return;
+    const gain: number = parseFloat(((price - avgBuyPrice) * shares).toFixed(2));
+    setForm((f) => ({ ...f, capitalGain: String(gain) }));
+  }, [avgBuyPrice, form.shares, form.pricePerShare]);
 
   useEffect(() => {
     const dialog: HTMLDialogElement | null = props.dialogRef.current;
@@ -90,31 +151,41 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props: AddNewSellModalP
 
     const handleShow = () => {
       const eur: string = props.currencies.find((c) => c.currencyName === "EUR")?.uuid ?? props.currencies[0]?.uuid ?? "";
-      setForm({ ...emptySell(), currencyId: eur, gainCurrencyId: eur });
+      setForm({ ...emptySell(), currencyId: eur });
       setFetchedPrice(null);
       setAutoFilled(false);
+      setAvailableShares(null);
+      setAvgBuyPrice(null);
     };
 
     dialog.addEventListener("show", handleShow);
     return () => dialog.removeEventListener("show", handleShow);
   }, [props.dialogRef, props.currencies]);
 
+  const refreshAvailableShares = () => {
+    if (!form.assetId || !form.date) return;
+    portfolioService.getAvailableShares(props.portfolioId, form.assetId, form.date)
+      .then(setAvailableShares)
+      .catch(() => {});
+  };
+
   const handleAdd = async () => {
-    if (!form.date || !props.portfolioId || !form.currencyId) return;
+    if (!form.date || !props.portfolioId || !form.currencyId || !form.shares || !form.pricePerShare) return;
+
+    const shares: number = parseFloat(form.shares);
+    const price: number = parseFloat(form.pricePerShare);
+    if (shares <= 0 || price <= 0) return;
 
     setSaving(true);
     try {
-      const isAmountMode: boolean = form.inputMode === InputMode.AMOUNT;
-      const shares: number | undefined = form.shares ? parseFloat(form.shares) : undefined;
-      const price: number | undefined = form.pricePerShare ? parseFloat(form.pricePerShare) : undefined;
-
       const createdSell: AssetSellResponse = await portfolioService.addAssetSell({
         portfolioId: props.portfolioId,
         assetId: form.assetId || undefined,
         sellCurrencyId: form.currencyId,
+        gainCurrencyId: form.currencyId,
         sellDate: form.date,
-        assetSellAmount: isAmountMode && form.amount ? parseFloat(form.amount) : (shares && price ? parseFloat((shares * price).toFixed(2)) : undefined),
-        assetSellShare: !isAmountMode && shares ? shares : undefined,
+        assetSellAmount: parseFloat((shares * price).toFixed(2)),
+        assetSellShare: shares,
         assetSellGain: form.capitalGain ? parseFloat(form.capitalGain) : undefined,
       });
 
@@ -122,25 +193,41 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props: AddNewSellModalP
       props.dialogRef.current?.close();
       toast.success("Sell added.");
     }
-    catch {
-      toast.error("Failed to add entry.");
+    catch (err: unknown) {
+      if (err instanceof Error && err.message === "INSUFFICIENT_SHARES") {
+        toast.error("Not enough shares at this date.");
+        refreshAvailableShares();
+      }
+      else {
+        toast.error("Failed to add entry.");
+      }
     }
     finally {
       setSaving(false);
     }
   };
 
-  const isAmountMode: boolean = form.inputMode === InputMode.AMOUNT;
+  // Only show assets the user actually owns in this portfolio
+  const ownedAssets: Asset[] = assets.filter((a) => {
+    const name: string = a.officialName ?? a.tickerName ?? "";
+    return name !== "" && props.ownedCompanies.includes(name);
+  });
+
   const currencyName: string = props.currencies.find((c) => c.uuid === form.currencyId)?.currencyName ?? "";
+  const enteredShares: number = parseFloat(form.shares) || 0;
+  const sharesExceeded: boolean = availableShares !== null && enteredShares > 0 && enteredShares > availableShares;
+  const hasNoShares: boolean = availableShares !== null && availableShares === 0;
 
   const computedTotal: number | null = (() => {
-    const shares: number = parseFloat(form.shares);
-    const price: number = parseFloat(form.pricePerShare);
-    return !isAmountMode && shares > 0 && price > 0 ? parseFloat((shares * price).toFixed(2)) : null;
+    const s = parseFloat(form.shares);
+    const p = parseFloat(form.pricePerShare);
+    return s > 0 && p > 0 ? parseFloat((s * p).toFixed(2)) : null;
   })();
 
   const isDisabled: boolean = saving || !form.date || !form.assetId || !form.currencyId
-    || (isAmountMode ? !form.amount : (!form.shares || !form.pricePerShare));
+    || !form.shares || !form.pricePerShare
+    || hasNoShares
+    || sharesExceeded;
 
   return (
     <dialog ref={props.dialogRef} className="modal">
@@ -173,116 +260,71 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props: AddNewSellModalP
           <div>
             <label className={labelCls}>Asset</label>
             <AssetSearchSelect
-              assets={assets}
+              assets={ownedAssets}
               value={form.assetId}
               onChange={(assetId) => setForm((f) => ({ ...f, assetId }))}
               portalTarget={props.dialogRef.current}
             />
+            {form.assetId && form.date && (
+              <div className="mt-1.5">
+                {availableSharesLoading ? (
+                  <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                    <span className="loading loading-spinner loading-xs" /> Computing…
+                  </span>
+                ) : availableShares !== null ? (
+                  <span className={`text-[11px] font-medium ${availableShares === 0 ? "text-red-500" : "text-emerald-600"}`}>
+                    {availableShares} shares available
+                  </span>
+                ) : null}
+              </div>
+            )}
           </div>
 
+          {/* Shares — always required for sell (amount mode removed intentionally) */}
           <div>
-            <label className={`${labelCls} mb-1.5`}>Enter by</label>
-            <InputModeToggle
-              value={form.inputMode}
-              onChange={(value) => setForm((f) => ({ ...f, inputMode: value }))}
-            />
-          </div>
-
-          {isAmountMode ? (
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <label className={labelCls}>Amount</label>
-                  {priceFetching && (
-                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                      <span className="loading loading-spinner loading-xs" /> Fetching…
-                    </span>
-                  )}
-                  {!priceFetching && autoFilled && (
-                    <span className="text-[11px] text-purple-500 font-medium">Auto-filled</span>
-                  )}
-                </div>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.amount}
-                  onChange={(e) => {
-                    setAutoFilled(false);
-                    setForm((f) => ({ ...f, amount: e.target.value }));
-                  }}
-                  placeholder="0.00"
-                  className={inputCls}
-                />
-              </div>
-              <div className="w-32">
-                <label className={labelCls}>Currency</label>
-                <select
-                  value={form.currencyId}
-                  onChange={(e) => setForm((f) => ({ ...f, currencyId: e.target.value }))}
-                  className={inputCls}
-                >
-                  <option value="">Currency</option>
-                  {props.currencies.map((currency) => (
-                    <option key={currency.uuid} value={currency.uuid}>{currency.currencyName}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div>
-                <label className={labelCls}>Number of shares</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.shares}
-                  onChange={(e) => setForm((f) => ({ ...f, shares: e.target.value }))}
-                  placeholder="0"
-                  className={inputCls}
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className={labelCls}>Price per share</label>
-                  {priceFetching && (
-                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                      <span className="loading loading-spinner loading-xs" /> Fetching…
-                    </span>
-                  )}
-                  {!priceFetching && autoFilled && (
-                    <span className="text-[11px] text-purple-500 font-medium">Auto-filled</span>
-                  )}
-                </div>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.pricePerShare}
-                  onChange={(e) => {
-                    setAutoFilled(false);
-                    setForm((f) => ({ ...f, pricePerShare: e.target.value }));
-                  }}
-                  placeholder="0.00"
-                  className={inputCls}
-                />
-              </div>
-
-              {computedTotal != null && (
-                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl text-sm">
-                  <span className="text-gray-500">Total</span>
-                  <span className="font-medium text-gray-900">{computedTotal} {currencyName}</span>
-                </div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={labelCls}>Number of shares</label>
+              {availableShares !== null && (
+                <span className="text-[11px] text-gray-400">max {availableShares}</span>
               )}
-            </>
-          )}
+            </div>
+            <input
+              type="number"
+              min={0}
+              max={availableShares ?? undefined}
+              value={form.shares}
+              onChange={(e) => setForm((f) => ({ ...f, shares: e.target.value }))}
+              placeholder="0"
+              className={`${inputCls} ${sharesExceeded ? "border-red-400 focus:ring-red-300" : ""}`}
+            />
+            {sharesExceeded && (
+              <p className="text-[11px] text-red-500 mt-1">
+                Only {availableShares} shares available at this date
+              </p>
+            )}
+          </div>
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className={labelCls}>Capital gain</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className={labelCls}>Price per share</label>
+                {priceLoading && (
+                  <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                    <span className="loading loading-spinner loading-xs" /> Fetching…
+                  </span>
+                )}
+                {!priceLoading && autoFilled && (
+                  <span className="text-[11px] text-purple-500 font-medium">Auto-filled</span>
+                )}
+              </div>
               <input
                 type="number"
-                value={form.capitalGain}
-                onChange={(e) => setForm((f) => ({ ...f, capitalGain: e.target.value }))}
+                min={0}
+                value={form.pricePerShare}
+                onChange={(e) => {
+                  setAutoFilled(false);
+                  setForm((f) => ({ ...f, pricePerShare: e.target.value }));
+                }}
                 placeholder="0.00"
                 className={inputCls}
               />
@@ -290,8 +332,8 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props: AddNewSellModalP
             <div className="w-32">
               <label className={labelCls}>Currency</label>
               <select
-                value={form.gainCurrencyId}
-                onChange={(e) => setForm((f) => ({ ...f, gainCurrencyId: e.target.value }))}
+                value={form.currencyId}
+                onChange={(e) => setForm((f) => ({ ...f, currencyId: e.target.value }))}
                 className={inputCls}
               >
                 <option value="">Currency</option>
@@ -301,6 +343,35 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props: AddNewSellModalP
               </select>
             </div>
           </div>
+
+          {computedTotal != null && (
+            <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl text-sm">
+              <span className="text-gray-500">Total</span>
+              <span className="font-medium text-gray-900">{computedTotal} {currencyName}</span>
+            </div>
+          )}
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className={labelCls}>Capital gain</label>
+              {avgBuyPrice != null && (
+                <span className="text-[11px] text-purple-500 font-medium">Auto — avg cost {parseFloat(avgBuyPrice.toFixed(4))} {currencyName}</span>
+              )}
+            </div>
+            <input
+              type="number"
+              value={form.capitalGain}
+              onChange={(e) => setForm((f) => ({ ...f, capitalGain: e.target.value }))}
+              placeholder="0.00"
+              className={`${inputCls} ${avgBuyPrice != null ? "bg-purple-50 border-purple-200" : ""}`}
+            />
+          </div>
+
+          {hasNoShares && (
+            <p className="text-[11px] text-red-500">
+              You don't own any shares of this asset on this date.
+            </p>
+          )}
 
           <div className="flex gap-2 pt-1">
             <button

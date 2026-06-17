@@ -22,6 +22,28 @@ class AssetService extends BaseService {
     });
   }
 
+  public async previewCustomAsset(ticker: string): Promise<{
+    ticker: string;
+    officialName: string | null;
+    currency: string | null;
+    price: number | null;
+    assetType: string | null;
+  } | null> {
+    try {
+      return await this.request(`/asset/preview?ticker=${encodeURIComponent(ticker)}`, { method: "GET" });
+    }
+    catch {
+      return null;
+    }
+  }
+
+  public async createCustomAsset(ticker: string): Promise<Asset> {
+    return this.request<Asset>("/asset/custom", {
+      method: "POST",
+      body: JSON.stringify({ ticker }),
+    });
+  }
+
   public async getAssetPrice(assetId: string, date: string): Promise<AssetPriceResponse | null> {
     try {
       return await this.request<AssetPriceResponse>(`/asset/${assetId}/price?date=${date}`, {

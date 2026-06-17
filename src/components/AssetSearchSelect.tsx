@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { HiOutlinePlusCircle } from "react-icons/hi2";
 import type { Asset } from "../models/Asset";
 import { inputCls } from "../constants/transactionConstants";
 import { DROPDOWN_MAX_HEIGHT } from "../constants/styles";
@@ -10,6 +11,7 @@ interface AssetSearchSelectProps {
   onChange: (assetId: string) => void;
   placeholder?: string;
   portalTarget?: HTMLElement | null;
+  onAddCustomAsset?: () => void;
 }
 
 const AssetSearchSelect: React.FC<AssetSearchSelectProps> = (props: AssetSearchSelectProps) => {
@@ -25,13 +27,11 @@ const AssetSearchSelect: React.FC<AssetSearchSelectProps> = (props: AssetSearchS
     if (asset.officialName && asset.tickerName) {
       return `${asset.officialName} (${asset.tickerName})`;
     }
-
     return asset.officialName ?? asset.tickerName ?? "";
   };
 
   const filtered: Asset[] = props.assets.filter((asset) => {
     const q: string = query.toLowerCase();
-
     return (
       asset.officialName?.toLowerCase().includes(q) ||
       asset.tickerName?.toLowerCase().includes(q)
@@ -45,7 +45,6 @@ const AssetSearchSelect: React.FC<AssetSearchSelectProps> = (props: AssetSearchS
       const top: number = spaceBelow >= DROPDOWN_MAX_HEIGHT
         ? rect.bottom + 4
         : rect.top - DROPDOWN_MAX_HEIGHT - 4;
-
       setDropdownStyle({ position: "fixed", top, left: rect.left, width: rect.width });
     }
     setOpen(true);
@@ -59,12 +58,8 @@ const AssetSearchSelect: React.FC<AssetSearchSelectProps> = (props: AssetSearchS
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
-    if (!open) {
-      openDropdown();
-    }
-    if (e.target.value === "") {
-      props.onChange("");
-    }
+    if (!open) openDropdown();
+    if (e.target.value === "") props.onChange("");
   };
 
   const handleFocus = () => {
@@ -72,18 +67,23 @@ const AssetSearchSelect: React.FC<AssetSearchSelectProps> = (props: AssetSearchS
     openDropdown();
   };
 
+  const handleAddCustomAsset = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setOpen(false);
+    setQuery("");
+    props.onAddCustomAsset?.();
+  };
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target: Node = e.target as Node;
       const insideTrigger: boolean | undefined = containerRef.current?.contains(target);
       const insideDropdown: boolean | undefined = dropdownRef.current?.contains(target);
-
       if (!insideTrigger && !insideDropdown) {
         setOpen(false);
         setQuery("");
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -105,6 +105,18 @@ const AssetSearchSelect: React.FC<AssetSearchSelectProps> = (props: AssetSearchS
           style={{ ...dropdownStyle, maxHeight: DROPDOWN_MAX_HEIGHT, zIndex: 9999 }}
           className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-y-auto"
         >
+          {/* Add custom asset — always first */}
+          {props.onAddCustomAsset && (
+            <button
+              type="button"
+              onMouseDown={handleAddCustomAsset}
+              className="w-full text-left px-3 py-2 text-sm text-purple-600 hover:bg-purple-50 transition-colors flex items-center gap-2 cursor-pointer border-b border-gray-100"
+            >
+              <HiOutlinePlusCircle className="w-4 h-4 shrink-0" />
+              <span className="font-medium">Add custom asset</span>
+            </button>
+          )}
+
           {filtered.length === 0 ? (
             <div className="px-3 py-2 text-sm text-gray-400">No assets found</div>
           ) : (
@@ -130,6 +142,6 @@ const AssetSearchSelect: React.FC<AssetSearchSelectProps> = (props: AssetSearchS
       )}
     </div>
   );
-}
+};
 
 export default AssetSearchSelect;

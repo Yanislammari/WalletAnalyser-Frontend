@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { HiOutlineBanknotes, HiOutlineXMark } from "react-icons/hi2";
 import type { Currency } from "../models/Currency";
@@ -9,6 +9,7 @@ import PortfolioService from "../services/PortfolioService";
 import AssetService from "../services/AssetService";
 import DateInput from "./DateInput";
 import AssetSearchSelect from "./AssetSearchSelect";
+import AddCustomAssetModal from "./AddCustomAssetModal";
 import { emptyDividend, type DividendForm } from "../forms/DividendForm";
 
 interface AddNewDividendModalProps {
@@ -22,6 +23,7 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props: AddNewDi
   const [form, setForm] = useState<DividendForm>(emptyDividend());
   const [saving, setSaving] = useState<boolean>(false);
   const [assets, setAssets] = useState<Asset[]>([]);
+  const customAssetDialogRef = useRef<HTMLDialogElement>(null);
   const portfolioService: PortfolioService = PortfolioService.getInstance();
   const assetService: AssetService = AssetService.getInstance();
 
@@ -81,6 +83,7 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props: AddNewDi
   };
 
   return (
+    <>
     <dialog ref={props.dialogRef} className="modal">
       <div className="modal-box bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl border border-gray-100">
         <div className="flex items-center justify-between mb-5">
@@ -114,6 +117,7 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props: AddNewDi
               onChange={(assetId) => setForm((form) => ({ ...form, assetId }))}
               placeholder="Search for an asset... (optional)"
               portalTarget={props.dialogRef.current}
+              onAddCustomAsset={() => customAssetDialogRef.current?.showModal()}
             />
           </div>
           <div className="flex gap-2">
@@ -163,6 +167,15 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props: AddNewDi
         <button>close</button>
       </form>
     </dialog>
+
+    <AddCustomAssetModal
+      dialogRef={customAssetDialogRef}
+      onAssetCreated={(newAsset) => {
+        setAssets((prev) => [...prev, newAsset]);
+        setForm((f) => ({ ...f, assetId: newAsset.id }));
+      }}
+    />
+    </>
   );
 }
 

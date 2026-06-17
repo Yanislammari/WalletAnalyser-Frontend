@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { HiOutlineArrowTrendingUp, HiOutlineXMark } from "react-icons/hi2";
 import type { Currency } from "../models/Currency";
@@ -8,8 +8,10 @@ import { tabAccent, inputCls, labelCls } from "../constants/transactionConstants
 import InputModeToggle from "./InputModeToggle";
 import DateInput from "./DateInput";
 import AssetSearchSelect from "./AssetSearchSelect";
+import AddCustomAssetModal from "./AddCustomAssetModal";
 import PortfolioService from "../services/PortfolioService";
 import AssetService from "../services/AssetService";
+import CurrencyService from "../services/CurrencyService";
 import { emptyBuy, type BuyForm } from "../forms/BuyForm";
 import { InputMode } from "../enums/InputMode";
 import type { AssetPriceResponse } from "../responses/AssetPriceResponse";
@@ -25,16 +27,19 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
   const [form, setForm] = useState<BuyForm>(emptyBuy());
   const [saving, setSaving] = useState<boolean>(false);
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [priceFetching, setPriceFetching] = useState<boolean>(false);
+  const [priceLoading, setPriceLoading] = useState<boolean>(false);
   const [fetchedPrice, setFetchedPrice] = useState<number | null>(null);
   const [autoFilled, setAutoFilled] = useState<boolean>(false);
+  const customAssetDialogRef = useRef<HTMLDialogElement>(null);
   const portfolioService: PortfolioService = PortfolioService.getInstance();
   const assetService: AssetService = AssetService.getInstance();
+  const currencyService: CurrencyService = CurrencyService.getInstance();
 
   useEffect(() => {
     assetService.getAssets().then(setAssets).catch(() => setAssets([]));
   }, []);
 
+  // Fetch raw price (in the asset's base currency) when asset or date changes
   useEffect(() => {
     if (!form.assetId || !form.date) {
       setFetchedPrice(null);
@@ -42,21 +47,19 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
     }
 
     let cancelled: boolean = false;
-    setPriceFetching(true);
+    setPriceLoading(true);
     setAutoFilled(false);
 
     (async () => {
       try {
         const result: AssetPriceResponse | null = await assetService.getAssetPrice(form.assetId, form.date);
-        if (cancelled) {
-          return;
+        if (!cancelled) {
+          setFetchedPrice(result ? result.price : null);
         }
-
-        setFetchedPrice(result ? result.price : null);
       }
       finally {
         if (!cancelled) {
-          setPriceFetching(false);
+          setPriceLoading(false);
         }
       }
     })();
@@ -64,20 +67,41 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
     return () => { cancelled = true; };
   }, [form.assetId, form.date]);
 
+  // Convert price to the selected currency and fill the form field
   useEffect(() => {
-    if (fetchedPrice == null) {
+    if (fetchedPrice == null || !form.currencyId) {
       return;
     }
 
-    if (form.inputMode === InputMode.AMOUNT) {
-      setForm((f) => ({ ...f, amount: String(fetchedPrice) }));
-    }
-    else {
-      setForm((f) => ({ ...f, pricePerShare: String(fetchedPrice) }));
+    const selectedAsset: Asset | undefined = assets.find((a) => a.id === form.assetId);
+    const baseCurrencyCode: string | undefined = props.currencies.find((c) => c.uuid === selectedAsset?.baseCurrencyId)?.currencyName;
+    const targetCurrencyCode: string | undefined = props.currencies.find((c) => c.uuid === form.currencyId)?.currencyName;
+
+    const applyPrice = (price: number): void => {
+      if (form.inputMode === InputMode.AMOUNT) {
+        setForm((f) => ({ ...f, amount: String(parseFloat(price.toFixed(4))) }));
+      }
+      else {
+        setForm((f) => ({ ...f, pricePerShare: String(parseFloat(price.toFixed(4))) }));
+      }
+      setAutoFilled(true);
+    };
+
+    if (!baseCurrencyCode || !targetCurrencyCode || baseCurrencyCode === targetCurrencyCode) {
+      applyPrice(fetchedPrice);
+      return;
     }
 
-    setAutoFilled(true);
-  }, [fetchedPrice, form.inputMode]);
+    let cancelled: boolean = false;
+    setPriceLoading(true);
+
+    currencyService.convertPrice(baseCurrencyCode, targetCurrencyCode, fetchedPrice)
+      .then((converted) => { if (!cancelled) { applyPrice(converted); } })
+      .catch(() => { if (!cancelled) { applyPrice(fetchedPrice); } })
+      .finally(() => { if (!cancelled) { setPriceLoading(false); } });
+
+    return () => { cancelled = true; };
+  }, [fetchedPrice, form.currencyId, form.assetId, form.inputMode]);
 
   useEffect(() => {
     if (props.currencies.length === 0) {
@@ -147,6 +171,7 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
   const isDisabled: boolean = saving || !form.date || !form.assetId || !form.currencyId || (isAmountMode ? !form.amount : (!form.shares || !form.pricePerShare));
 
   return (
+    <>
     <dialog ref={props.dialogRef} className="modal">
       <div className="modal-box bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl border border-gray-100">
         <div className="flex items-center justify-between mb-5">
@@ -179,6 +204,7 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
               value={form.assetId}
               onChange={(assetId) => setForm((f) => ({ ...f, assetId }))}
               portalTarget={props.dialogRef.current}
+              onAddCustomAsset={() => customAssetDialogRef.current?.showModal()}
             />
           </div>
           <div>
@@ -193,12 +219,12 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
                   <label className={labelCls}>Amount</label>
-                  {priceFetching && (
+                  {priceLoading && (
                     <span className="text-[11px] text-gray-400 flex items-center gap-1">
                       <span className="loading loading-spinner loading-xs" /> Fetching…
                     </span>
                   )}
-                  {!priceFetching && autoFilled && (
+                  {!priceLoading && autoFilled && (
                     <span className="text-[11px] text-purple-500 font-medium">Auto-filled</span>
                   )}
                 </div>
@@ -241,29 +267,44 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
                   className={inputCls}
                 />
               </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className={labelCls}>Price per share</label>
-                  {priceFetching && (
-                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                      <span className="loading loading-spinner loading-xs" /> Fetching…
-                    </span>
-                  )}
-                  {!priceFetching && autoFilled && (
-                    <span className="text-[11px] text-purple-500 font-medium">Auto-filled</span>
-                  )}
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={labelCls}>Price per share</label>
+                    {priceLoading && (
+                      <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                        <span className="loading loading-spinner loading-xs" /> Fetching…
+                      </span>
+                    )}
+                    {!priceLoading && autoFilled && (
+                      <span className="text-[11px] text-purple-500 font-medium">Auto-filled</span>
+                    )}
+                  </div>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.pricePerShare}
+                    onChange={(e) => {
+                      setAutoFilled(false);
+                      setForm((form) => ({ ...form, pricePerShare: e.target.value }));
+                    }}
+                    placeholder="0.00"
+                    className={inputCls}
+                  />
                 </div>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.pricePerShare}
-                  onChange={(e) => {
-                    setAutoFilled(false);
-                    setForm((form) => ({ ...form, pricePerShare: e.target.value }));
-                  }}
-                  placeholder="0.00"
-                  className={inputCls}
-                />
+                <div className="w-32">
+                  <label className={labelCls}>Currency</label>
+                  <select
+                    value={form.currencyId}
+                    onChange={(e) => setForm((f) => ({ ...f, currencyId: e.target.value }))}
+                    className={inputCls}
+                  >
+                    <option value="">Currency</option>
+                    {props.currencies.map((currency) => (
+                      <option key={currency.uuid} value={currency.uuid}>{currency.currencyName}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               {computedTotal != null && (
                 <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl text-sm">
@@ -294,6 +335,15 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
         <button>close</button>
       </form>
     </dialog>
+
+    <AddCustomAssetModal
+      dialogRef={customAssetDialogRef}
+      onAssetCreated={(newAsset) => {
+        setAssets((prev) => [...prev, newAsset]);
+        setForm((f) => ({ ...f, assetId: newAsset.id }));
+      }}
+    />
+    </>
   );
 }
 

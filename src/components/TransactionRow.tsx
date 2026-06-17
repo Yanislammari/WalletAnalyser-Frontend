@@ -154,21 +154,32 @@ const TransactionRow: React.FC<TransactionRowProps> = (props: TransactionRowProp
   }
 
   const { row, currencyName } = props;
+  const today = new Date().toISOString().split("T")[0];
+  const isUpcoming = row.cashflowDate > today;
   return (
     <>
-      <tr className="group hover:bg-gray-50 transition-colors">
-        <td className="py-3 pr-4 text-gray-700">{row.cashflowDate}</td>
+      <tr className={`group transition-colors ${isUpcoming ? "opacity-50" : "hover:bg-gray-50"}`}>
+        <td className="py-3 pr-4 text-gray-700">
+          <div className="flex items-center gap-2">
+            <span>{row.cashflowDate}</span>
+            {isUpcoming && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-gray-100 text-gray-500 border border-gray-200">
+                Upcoming
+              </span>
+            )}
+          </div>
+        </td>
         <td className="py-3 pr-4">
           {row.companyName ? (
             <div className="flex items-center gap-2">
               <CompanyLogo name={row.companyName} size={26} />
-              <span className="text-gray-900 font-medium">{row.companyName}</span>
+              <span className={`font-medium ${isUpcoming ? "text-gray-500" : "text-gray-900"}`}>{row.companyName}</span>
             </div>
           ) : (
             <span className="text-gray-400">—</span>
           )}
         </td>
-        <td className="py-3 pr-4 text-indigo-600 font-medium">{row.cashflowAmount}</td>
+        <td className={`py-3 pr-4 font-medium ${isUpcoming ? "text-gray-400" : "text-indigo-600"}`}>{row.cashflowAmount}</td>
         <td className="py-3 pr-4 text-gray-700">{currencyName(row.currencyId)}</td>
         {deleteBtn}
       </tr>
