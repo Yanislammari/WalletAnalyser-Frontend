@@ -28,8 +28,8 @@ class AnalysisService extends BaseService {
     });
   }
 
-  public async getUserStocksMetaData(): Promise<AssetRankingResponse>{
-    return this.request<AssetRankingResponse>(this.url + "user_stocks", {
+  public async getUserStocksMetaData(portolio_id : string): Promise<AssetRankingResponse>{
+    return this.request<AssetRankingResponse>(this.url + "user_stocks/"+portolio_id, {
         method: "GET" 
     });
   }

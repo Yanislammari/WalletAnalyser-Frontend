@@ -7,6 +7,8 @@ import { HiOutlineXCircle } from "react-icons/hi2";
 import Loading from "../components/Loading";
 import SearchBar from "../components/SearchBar";
 import { clusterName } from "../utils/ClusterNaming";
+import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
+import NoPortfolioSelected from "../components/Error/NoPortfolioSelected";
 
 const Analysis: React.FC = () => {
   const analysisService = AnalysisService.getInstance();
@@ -19,6 +21,7 @@ const Analysis: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [view, setView] = useState<"cluster" | "sector" | "my_stocks" | "countries">("my_stocks");
+  const { selectedPortfolioId } = useSelectedPortfolio();
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -27,7 +30,7 @@ const Analysis: React.FC = () => {
         const [sectorsMetaData, clusterMetaData, userStocksMetaData] = await Promise.all([
           analysisService.getSectorsMetaData(),
           analysisService.getClustersMetaData(),
-          analysisService.getUserStocksMetaData()
+          selectedPortfolioId ? analysisService.getUserStocksMetaData(selectedPortfolioId) : Promise.resolve(null)
         ])
         const mappingSectors = sectorsMetaData.sectorsData.map((sector)=>{ 
           const mapped : SectorCardDataProps = {
@@ -65,7 +68,7 @@ const Analysis: React.FC = () => {
           return mapped
         })
         setClusters(mappingClusters)
-        const userStocksMapped = userStocksMetaData.sectorsData.map((userStock) =>{
+        const userStocksMapped = userStocksMetaData?.sectorsData.map((userStock) =>{
           const mapped : UserStocksRankingProps = {
             onClick : () => { navigate("/home/analysis/" + userStock.asset.sector_uuid + `?type=sector&offset=${userStock.rank_position}`)},
             ranking : userStock.rank,
@@ -76,7 +79,7 @@ const Analysis: React.FC = () => {
           }
           return mapped
         })
-        setUserStocks(userStocksMapped)
+        setUserStocks(userStocksMapped ?? [])
       }
       catch(error : any) {
         setHasError(true)
@@ -90,7 +93,7 @@ const Analysis: React.FC = () => {
   if ( loading ) {
     return <Loading />
   }
-  else if ( hasError || userStocks == null || sectors == null || clusters == null ) {
+  else if ( hasError || sectors == null || clusters == null ) {
     return <ErrorCardInApp
           iconBg="bg-gray-100"
           icon={<HiOutlineXCircle className="w-8 h-8 text-gray-400" />}
@@ -140,11 +143,16 @@ const Analysis: React.FC = () => {
             AI regrouping
           </button>
         </div>
+
         {view === "my_stocks" && (
           <div className="grid grid-cols-1 gap-3 items-start">
-            {userStocks.filter(c => c.display_name?.toLowerCase()?.startsWith(search.toLowerCase())).length === 0
-              ? <p className="text-sm text-zinc-400 text-center py-6">No stocks found</p>
-              : userStocks.filter(c => c.display_name?.toLowerCase()?.startsWith(search.toLowerCase())).map((s) => <CardUserStocksPerf key={s.display_name} {...s} />)
+            {!selectedPortfolioId
+              ? <NoPortfolioSelected />
+              : userStocks.filter(c => c.display_name?.toLowerCase()?.startsWith(search.toLowerCase())).length === 0
+                ? <p className="text-sm text-zinc-400 text-center py-6">No stocks found</p>
+                : userStocks
+                    .filter(c => c.display_name?.toLowerCase()?.startsWith(search.toLowerCase()))
+                    .map((s) => <CardUserStocksPerf key={s.display_name} {...s} />)
             }
           </div>
         )}
