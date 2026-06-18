@@ -1,5 +1,5 @@
 import type { AssetAnalysisResponse, AssetRankingResponse, SectorNameResponse } from "../responses/AssetAnalysisResponse";
-import { BaseService } from "./BaseService";
+import BaseService from "./BaseService";
 
 class AnalysisService extends BaseService {
   private static instance: AnalysisService;
