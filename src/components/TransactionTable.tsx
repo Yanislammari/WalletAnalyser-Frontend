@@ -105,7 +105,6 @@ const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTab
           />
         </div>
       </div>
-
       <div className="p-4">
         {props.loading ? (
           <div className="flex justify-center py-8">
@@ -136,14 +135,20 @@ const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTab
                           onSort={handleBuySort}
                         />
                         <SortableHeader
-                          label="Amount / Shares"
-                          columnKey="amount"
+                          label="Shares"
+                          columnKey="shares"
                           sortState={buySortState}
                           onSort={handleBuySort}
                         />
                         <SortableHeader
                           label="Price / share"
                           columnKey="pricePerShare"
+                          sortState={buySortState}
+                          onSort={handleBuySort}
+                        />
+                        <SortableHeader
+                          label="Amount"
+                          columnKey="amount"
                           sortState={buySortState}
                           onSort={handleBuySort}
                         />
@@ -176,7 +181,6 @@ const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTab
                 </div>
               )
             )}
-
             {props.activeTab === TabType.SELLS && (
               !props.hasAnySells && !isFiltered ? (
                 <EmptyTable onAdd={props.onAdd} label="sells" />
@@ -200,7 +204,7 @@ const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTab
                           onSort={handleSellSort}
                         />
                         <SortableHeader
-                          label="Amount / Shares"
+                          label="Amount"
                           columnKey="amount"
                           sortState={sellSortState}
                           onSort={handleSellSort}
@@ -240,7 +244,6 @@ const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTab
                 </div>
               )
             )}
-
             {props.activeTab === TabType.DIVIDENDS && (
               !props.hasAnyDividends && !isFiltered ? (
                 <EmptyTable onAdd={props.onAdd} label="dividends" />
@@ -254,6 +257,12 @@ const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTab
                         <SortableHeader
                           label="Date"
                           columnKey="date"
+                          sortState={dividendSortState}
+                          onSort={handleDividendSort}
+                        />
+                        <SortableHeader
+                          label="Company"
+                          columnKey="company"
                           sortState={dividendSortState}
                           onSort={handleDividendSort}
                         />
