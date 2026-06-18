@@ -103,9 +103,16 @@ const PortfolioCard: React.FC<PortfolioCardProps> = (props: PortfolioCardProps) 
           })}
         </p>
         <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-          <span className="text-[11px] text-gray-400 font-medium">
-            {assetCount === null ? "— assets" : `${assetCount} ${assetCount === 1 ? "asset" : "assets"}`}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-gray-400 font-medium">
+              {assetCount === null ? "— assets" : `${assetCount} ${assetCount === 1 ? "asset" : "assets"}`}
+            </span>
+            {props.portfolio.displayCurrencyName && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-100">
+                {props.portfolio.displayCurrencyName}
+              </span>
+            )}
+          </div>
           <span className="text-[11px] text-purple-600 font-medium group-hover:underline">
             Open →
           </span>

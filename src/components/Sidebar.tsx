@@ -1,7 +1,8 @@
 import { HiOutlineSquares2X2, HiOutlineArrowDownTray, HiOutlineBriefcase, HiOutlineGift, HiOutlineChartBar } from "react-icons/hi2";
 import type { NavItem } from "../models/items/NavItem";
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 import { useEffect, useState } from "react";
+import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 import type { User } from "../models/User";
 import { HiOutlineSearch } from "react-icons/hi";
 
@@ -45,6 +46,8 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
+  const location = useLocation();
+  const { selectedPortfolioId } = useSelectedPortfolio();
 
   function getTimeLeft() {
     const raw = localStorage.getItem("user");
@@ -112,31 +115,35 @@ const Sidebar: React.FC<SidebarProps> = (props: SidebarProps) => {
         <p className="text-[10px] text-white/30 uppercase tracking-[0.15em] font-medium">Menu</p>
       </div>
       <nav className="relative z-10 flex-1 px-3 space-y-0.5">
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={props.onClose}
-            className={({ isActive }) =>
-              `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+        {NAV_ITEMS.map((item) => {
+          const isPortfolio = item.to === "/home/portfolio";
+          const to = isPortfolio && selectedPortfolioId
+            ? `/home/portfolio/${selectedPortfolioId}/transactions`
+            : item.to;
+          const isActive = isPortfolio
+            ? location.pathname.startsWith("/home/portfolio")
+            : location.pathname === item.to || location.pathname.startsWith(item.to + "/");
+
+          return (
+            <NavLink
+              key={item.to}
+              to={to}
+              onClick={props.onClose}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                 isActive
                   ? "bg-purple-600/90 text-white shadow-lg shadow-purple-900/40"
                   : "text-white/50 hover:text-white/80 hover:bg-white/5"
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <span className={isActive ? "text-white" : "text-white/40"}>{item.icon}</span>
-                {item.label}
-                {item.isGift &&
-                  <span className="text-[10px] text-white/30 uppercase tracking-[0.15em] font-medium ml-auto">{timeLeft}</span>
-                }
-                {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/60" />}
-              </>
-            )}
-          </NavLink>
-        ))}
+              }`}
+            >
+              <span className={isActive ? "text-white" : "text-white/40"}>{item.icon}</span>
+              {item.label}
+              {item.isGift &&
+                <span className="text-[10px] text-white/30 uppercase tracking-[0.15em] font-medium ml-auto">{timeLeft}</span>
+              }
+              {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/60" />}
+            </NavLink>
+          );
+        })}
       </nav>
       <div className="relative z-10 px-4 pb-6">
         <div className="rounded-xl bg-white/[0.04] border border-white/[0.06] p-4">

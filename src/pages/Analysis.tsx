@@ -108,13 +108,11 @@ const Analysis: React.FC = () => {
             </h2>
             <p className="text-gray-500 text-sm mt-0.5">See each assets ranking compared to peers in the past year.</p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <SearchBar
-              value={search}
-              onChange={(v) => setSearch(v)}
-              placeholder="Search groups…"
-            />
-          </div>
+          <SearchBar
+            value={search}
+            onChange={(v) => setSearch(v)}
+            placeholder="Search groups…"
+          />
         </div>
         <div className="flex items-center bg-zinc-100 rounded-xl p-1 w-fit mb-6">
           <button

@@ -65,7 +65,7 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props: AddNewSellModalP
     }
 
     let cancelled = false;
-    portfolioService.getAverageBuyPrice(props.portfolioId, form.assetId, form.date, form.currencyId)
+    portfolioService.getAverageBuyPrice(props.portfolioId, form.assetId, form.date)
       .then((avg) => { if (!cancelled) setAvgBuyPrice(avg); })
       .catch(() => { if (!cancelled) setAvgBuyPrice(null); });
 
