@@ -1,4 +1,4 @@
-import { HiOutlineSquares2X2, HiOutlineArrowDownTray, HiOutlineBriefcase, HiOutlineGift } from "react-icons/hi2";
+import { HiOutlineSquares2X2, HiOutlineArrowDownTray, HiOutlineBriefcase, HiOutlineGift, HiOutlineChartBar } from "react-icons/hi2";
 import type { NavItem } from "../models/items/NavItem";
 import { NavLink } from "react-router";
 import { useEffect, useState } from "react";
@@ -14,7 +14,12 @@ const NAV_ITEMS: NavItem[] = [
   {
     to: "/home/portfolio",
     label: "Portfolios",
-    icon: <HiOutlineBriefcase size={18} />
+    icon: <HiOutlineBriefcase size={18} />,
+  },
+  {
+    to: "/home/metrics",
+    label: "Metrics",
+    icon: <HiOutlineChartBar size={18} />,
   },
   {
     to: "/home/import",

@@ -1,4 +1,4 @@
-import { BaseService } from "./BaseService";
+import BaseService from "./BaseService";
 import type { Portfolio } from "../models/Portfolio";
 import type { AssetBuyResponse } from "../responses/AssetBuyResponse";
 import type { AssetSellResponse } from "../responses/AssetSellResponse";
@@ -9,6 +9,8 @@ import type { AddAssetBuyPayload } from "../payloads/AddAssetBuyPayload";
 import type { AddAssetSellPayload } from "../payloads/AddAssetSellPayload";
 import type { AddAssetDividendPayload } from "../payloads/AddAssetDividendPayload";
 import type { AssetCountResponse } from "../responses/AssetCountResponse";
+import type { PortfolioTotalResponse } from "../responses/PortfolioTotalResponse";
+import type { MetricResponse } from "../responses/MetricResponse";
 
 class PortfolioService extends BaseService {
   private static instance: PortfolioService;
@@ -154,6 +156,30 @@ class PortfolioService extends BaseService {
     return this.request<AssetCountResponse>(`/portfolio/${portfolioId}/asset-count`, {
       method: "GET",
     });
+  }
+
+  public async getAvailableShares(portfolioId: string, assetId: string, date: string): Promise<number> {
+    const params = new URLSearchParams({ assetId, date });
+    const res = await this.request<{ availableShares: number }>(`/portfolio/${portfolioId}/available-shares?${params}`, { method: "GET" });
+    return res.availableShares;
+  }
+
+  public async getAverageBuyPrice(portfolioId: string, assetId: string, date: string, currencyId: string): Promise<number | null> {
+    const params = new URLSearchParams({ assetId, date, currencyId });
+    const res = await this.request<{ averageBuyPrice: number | null }>(`/portfolio/${portfolioId}/average-buy-price?${params}`, { method: "GET" });
+    return res.averageBuyPrice;
+  }
+
+  public async getPortfolioTotal(portfolioId: string, currencyId: string): Promise<PortfolioTotalResponse> {
+    const params = new URLSearchParams({ currencyId });
+    return this.request<PortfolioTotalResponse>(`/portfolio/${portfolioId}/total?${params}`, {
+      method: "GET",
+    });
+  }
+
+  public async getMetrics(portfolioId: string, currencyId: string): Promise<MetricResponse> {
+    const params = new URLSearchParams({ currencyId });
+    return this.request<MetricResponse>(`/portfolio/${portfolioId}/metrics?${params}`, { method: "GET" });
   }
 
   public async deletePortfolio(portfolioId: string): Promise<void> {

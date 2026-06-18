@@ -8,6 +8,7 @@ import ResetPassword from "./pages/ResetPassword";
 import LandingPage from "./pages/LandingPage";
 import HomeLayout from "./layouts/HomeLayout";
 import Dashboard from "./pages/Dashboard";
+import Metrics from "./pages/Metrics";
 import ImportData from "./pages/ImportData";
 import Portfolios from "./pages/Portfolios";
 import Transactions from "./pages/Transactions";
@@ -37,6 +38,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/home" element={<PrivateRoute><HomeLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="metrics" element={<Metrics />} />
           <Route path="portfolio" element={<Portfolios />} />
           <Route path="portfolio/:portfolioId/transactions" element={<Transactions />} />
           <Route path="import" element={<ImportData />} />

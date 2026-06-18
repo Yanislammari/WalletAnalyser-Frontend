@@ -1,6 +1,6 @@
 import { BACKEND_BASE_URL } from "../constants/env";
 
-export abstract class BaseService {
+abstract class BaseService {
   protected baseUrl: string;
 
   constructor() {
@@ -30,3 +30,5 @@ export abstract class BaseService {
     return res.json() as Promise<T>;
   }
 }
+
+export default BaseService;

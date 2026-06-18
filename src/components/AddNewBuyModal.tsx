@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { HiOutlineArrowTrendingUp, HiOutlineXMark } from "react-icons/hi2";
 import type { Currency } from "../models/Currency";
+import type { Asset } from "../models/Asset";
 import type { AssetBuyResponse } from "../responses/AssetBuyResponse";
 import { tabAccent, inputCls, labelCls } from "../constants/transactionConstants";
 import InputModeToggle from "./InputModeToggle";
 import DateInput from "./DateInput";
+import AssetSearchSelect from "./AssetSearchSelect";
+import AddCustomAssetModal from "./AddCustomAssetModal";
 import PortfolioService from "../services/PortfolioService";
+import AssetService from "../services/AssetService";
+import CurrencyService from "../services/CurrencyService";
 import { emptyBuy, type BuyForm } from "../forms/BuyForm";
 import { InputMode } from "../enums/InputMode";
+import type { AssetPriceResponse } from "../responses/AssetPriceResponse";
 
 interface AddNewBuyModalProps {
   dialogRef: React.RefObject<HTMLDialogElement | null>;
@@ -20,10 +26,85 @@ interface AddNewBuyModalProps {
 const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProps) => {
   const [form, setForm] = useState<BuyForm>(emptyBuy());
   const [saving, setSaving] = useState<boolean>(false);
-  const portfolioService = PortfolioService.getInstance();
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [priceLoading, setPriceLoading] = useState<boolean>(false);
+  const [fetchedPrice, setFetchedPrice] = useState<number | null>(null);
+  const [autoFilled, setAutoFilled] = useState<boolean>(false);
+  const customAssetDialogRef = useRef<HTMLDialogElement>(null);
+  const portfolioService: PortfolioService = PortfolioService.getInstance();
+  const assetService: AssetService = AssetService.getInstance();
+  const currencyService: CurrencyService = CurrencyService.getInstance();
 
   useEffect(() => {
-    if (props.currencies.length === 0){
+    assetService.getAssets().then(setAssets).catch(() => setAssets([]));
+  }, []);
+
+  // Fetch raw price (in the asset's base currency) when asset or date changes
+  useEffect(() => {
+    if (!form.assetId || !form.date) {
+      setFetchedPrice(null);
+      return;
+    }
+
+    let cancelled: boolean = false;
+    setPriceLoading(true);
+    setAutoFilled(false);
+
+    (async () => {
+      try {
+        const result: AssetPriceResponse | null = await assetService.getAssetPrice(form.assetId, form.date);
+        if (!cancelled) {
+          setFetchedPrice(result ? result.price : null);
+        }
+      }
+      finally {
+        if (!cancelled) {
+          setPriceLoading(false);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [form.assetId, form.date]);
+
+  // Convert price to the selected currency and fill the form field
+  useEffect(() => {
+    if (fetchedPrice == null || !form.currencyId) {
+      return;
+    }
+
+    const selectedAsset: Asset | undefined = assets.find((a) => a.id === form.assetId);
+    const baseCurrencyCode: string | undefined = props.currencies.find((c) => c.uuid === selectedAsset?.baseCurrencyId)?.currencyName;
+    const targetCurrencyCode: string | undefined = props.currencies.find((c) => c.uuid === form.currencyId)?.currencyName;
+
+    const applyPrice = (price: number): void => {
+      if (form.inputMode === InputMode.AMOUNT) {
+        setForm((f) => ({ ...f, amount: String(parseFloat(price.toFixed(4))) }));
+      }
+      else {
+        setForm((f) => ({ ...f, pricePerShare: String(parseFloat(price.toFixed(4))) }));
+      }
+      setAutoFilled(true);
+    };
+
+    if (!baseCurrencyCode || !targetCurrencyCode || baseCurrencyCode === targetCurrencyCode) {
+      applyPrice(fetchedPrice);
+      return;
+    }
+
+    let cancelled: boolean = false;
+    setPriceLoading(true);
+
+    currencyService.convertPrice(baseCurrencyCode, targetCurrencyCode, fetchedPrice)
+      .then((converted) => { if (!cancelled) { applyPrice(converted); } })
+      .catch(() => { if (!cancelled) { applyPrice(fetchedPrice); } })
+      .finally(() => { if (!cancelled) { setPriceLoading(false); } });
+
+    return () => { cancelled = true; };
+  }, [fetchedPrice, form.currencyId, form.assetId, form.inputMode]);
+
+  useEffect(() => {
+    if (props.currencies.length === 0) {
       return;
     }
 
@@ -33,13 +114,15 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
 
   useEffect(() => {
     const dialog: HTMLDialogElement | null = props.dialogRef.current;
-    if (!dialog){
+    if (!dialog) {
       return;
     }
 
     const handleShow = () => {
       const eur: string = props.currencies.find((currency) => currency.currencyName === "EUR")?.uuid ?? props.currencies[0]?.uuid ?? "";
       setForm({ ...emptyBuy(), currencyId: eur });
+      setFetchedPrice(null);
+      setAutoFilled(false);
     };
 
     dialog.addEventListener("show", handleShow);
@@ -53,15 +136,14 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
 
     setSaving(true);
     try {
-      const portfolioId: string = props.portfolioId;
       const createdBuy: AssetBuyResponse = await portfolioService.addAssetBuy({
-        portfolioId,
-        companyName: form.company || undefined,
+        portfolioId: props.portfolioId,
+        assetId: form.assetId || undefined,
         buyCurrencyId: form.currencyId,
         buyDate: form.date,
-        assetBuyAmount: form.amount ? parseFloat(form.amount) : undefined,
-        assetBuyShare: form.shares ? parseFloat(form.shares) : undefined,
-        assetBuyPricePerShare: form.pricePerShare ? parseFloat(form.pricePerShare) : undefined,
+        assetBuyAmount: form.inputMode === InputMode.AMOUNT && form.amount ? parseFloat(form.amount) : undefined,
+        assetBuyShare: form.inputMode !== InputMode.AMOUNT && form.shares ? parseFloat(form.shares) : undefined,
+        assetBuyPricePerShare: form.inputMode !== InputMode.AMOUNT && form.pricePerShare ? parseFloat(form.pricePerShare) : undefined,
       });
 
       props.onSuccess(createdBuy);
@@ -76,7 +158,20 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
     }
   };
 
+  const currencyName: string = props.currencies.find((c) => c.uuid === form.currencyId)?.currencyName ?? "";
+  const isAmountMode: boolean = form.inputMode === InputMode.AMOUNT;
+
+  const computedTotal: number | null = (() => {
+    const shares: number = parseFloat(form.shares);
+    const price: number = parseFloat(form.pricePerShare);
+
+    return !isAmountMode && shares > 0 && price > 0 ? parseFloat((shares * price).toFixed(2)) : null;
+  })();
+
+  const isDisabled: boolean = saving || !form.date || !form.assetId || !form.currencyId || (isAmountMode ? !form.amount : (!form.shares || !form.pricePerShare));
+
   return (
+    <>
     <dialog ref={props.dialogRef} className="modal">
       <div className="modal-box bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl border border-gray-100">
         <div className="flex items-center justify-between mb-5">
@@ -98,33 +193,49 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
             <label className={labelCls}>Date</label>
             <DateInput
               value={form.date}
-              onChange={(value) => setForm((form) => ({ ...form, date: value }))}
+              onChange={(value) => setForm((f) => ({ ...f, date: value }))}
               portalTarget={props.dialogRef.current}
             />
           </div>
           <div>
-            <label className={labelCls}>Company</label>
-            <input
-              type="text"
-              value={form.company}
-              onChange={(e) => setForm((form) => ({ ...form, company: e.target.value }))}
-              placeholder="e.g. Apple Inc."
-              className={inputCls}
+            <label className={labelCls}>Asset</label>
+            <AssetSearchSelect
+              assets={assets}
+              value={form.assetId}
+              onChange={(assetId) => setForm((f) => ({ ...f, assetId }))}
+              portalTarget={props.dialogRef.current}
+              onAddCustomAsset={() => customAssetDialogRef.current?.showModal()}
             />
           </div>
           <div>
             <label className={`${labelCls} mb-1.5`}>Enter by</label>
-            <InputModeToggle value={form.inputMode} onChange={(value) => setForm((form) => ({ ...form, inputMode: value }))} />
+            <InputModeToggle
+              value={form.inputMode}
+              onChange={(value) => setForm((f) => ({ ...f, inputMode: value }))}
+            />
           </div>
-          {form.inputMode === InputMode.AMOUNT ? (
+          {isAmountMode ? (
             <div className="flex gap-2">
               <div className="flex-1">
-                <label className={labelCls}>Amount</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className={labelCls}>Amount</label>
+                  {priceLoading && (
+                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                      <span className="loading loading-spinner loading-xs" /> Fetching…
+                    </span>
+                  )}
+                  {!priceLoading && autoFilled && (
+                    <span className="text-[11px] text-purple-500 font-medium">Auto-filled</span>
+                  )}
+                </div>
                 <input
                   type="number"
                   min={0}
                   value={form.amount}
-                  onChange={(e) => setForm((form) => ({ ...form, amount: e.target.value }))}
+                  onChange={(e) => {
+                    setAutoFilled(false);
+                    setForm((f) => ({ ...f, amount: e.target.value }));
+                  }}
                   placeholder="0.00"
                   className={inputCls}
                 />
@@ -133,7 +244,7 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
                 <label className={labelCls}>Currency</label>
                 <select
                   value={form.currencyId}
-                  onChange={(e) => setForm((form) => ({ ...form, currencyId: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, currencyId: e.target.value }))}
                   className={inputCls}
                 >
                   <option value="">Currency</option>
@@ -144,29 +255,65 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
               </div>
             </div>
           ) : (
-            <div>
-              <label className={labelCls}>Number of shares</label>
-              <input
-                type="number"
-                min={0}
-                value={form.shares}
-                onChange={(e) => setForm((form) => ({ ...form, shares: e.target.value }))}
-                placeholder="0"
-                className={inputCls}
-              />
-            </div>
+            <>
+              <div>
+                <label className={labelCls}>Number of shares</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.shares}
+                  onChange={(e) => setForm((f) => ({ ...f, shares: e.target.value }))}
+                  placeholder="0"
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={labelCls}>Price per share</label>
+                    {priceLoading && (
+                      <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                        <span className="loading loading-spinner loading-xs" /> Fetching…
+                      </span>
+                    )}
+                    {!priceLoading && autoFilled && (
+                      <span className="text-[11px] text-purple-500 font-medium">Auto-filled</span>
+                    )}
+                  </div>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.pricePerShare}
+                    onChange={(e) => {
+                      setAutoFilled(false);
+                      setForm((form) => ({ ...form, pricePerShare: e.target.value }));
+                    }}
+                    placeholder="0.00"
+                    className={inputCls}
+                  />
+                </div>
+                <div className="w-32">
+                  <label className={labelCls}>Currency</label>
+                  <select
+                    value={form.currencyId}
+                    onChange={(e) => setForm((f) => ({ ...f, currencyId: e.target.value }))}
+                    className={inputCls}
+                  >
+                    <option value="">Currency</option>
+                    {props.currencies.map((currency) => (
+                      <option key={currency.uuid} value={currency.uuid}>{currency.currencyName}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {computedTotal != null && (
+                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl text-sm">
+                  <span className="text-gray-500">Total</span>
+                  <span className="font-medium text-gray-900">{computedTotal} {currencyName}</span>
+                </div>
+              )}
+            </>
           )}
-          <div>
-            <label className={labelCls}>Price per share</label>
-            <input
-              type="number"
-              min={0}
-              value={form.pricePerShare}
-              onChange={(e) => setForm((form) => ({ ...form, pricePerShare: e.target.value }))}
-              placeholder="0.00"
-              className={inputCls}
-            />
-          </div>
           <div className="flex gap-2 pt-1">
             <button
               onClick={() => props.dialogRef.current?.close()}
@@ -176,7 +323,7 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
             </button>
             <button
               onClick={handleAdd}
-              disabled={!form.date || !form.company || !form.currencyId || !form.pricePerShare || (form.inputMode === InputMode.AMOUNT ? !form.amount : !form.shares) || saving}
+              disabled={isDisabled}
               className={`flex-1 py-2.5 text-sm text-white ${tabAccent.BUYS.btn} disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium transition-colors cursor-pointer`}
             >
               {saving ? <span className="loading loading-spinner loading-xs text-white" /> : "Add"}
@@ -188,6 +335,15 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props: AddNewBuyModalProp
         <button>close</button>
       </form>
     </dialog>
+
+    <AddCustomAssetModal
+      dialogRef={customAssetDialogRef}
+      onAssetCreated={(newAsset) => {
+        setAssets((prev) => [...prev, newAsset]);
+        setForm((f) => ({ ...f, assetId: newAsset.id }));
+      }}
+    />
+    </>
   );
 }
 

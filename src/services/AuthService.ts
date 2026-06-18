@@ -1,7 +1,7 @@
 import type { LoginPayload } from "../payloads/LoginPayload";
 import type { RegisterPayload } from "../payloads/RegisterPayload";
 import type { AuthResponse } from "../responses/AuthResponse";
-import { BaseService } from "./BaseService";
+import BaseService from "./BaseService";
 
 class AuthService extends BaseService {
   private static instance: AuthService;

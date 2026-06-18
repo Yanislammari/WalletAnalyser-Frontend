@@ -30,6 +30,14 @@ function compareValues(a: string | number | null | undefined, b: string | number
   return dir === SortDir.ASC ? result : -result;
 }
 
+export function computeBuyAmount(row: AssetBuyResponse): number | null {
+  if (row.assetBuyShare != null && row.assetBuyPricePerShare != null) {
+    return row.assetBuyShare * row.assetBuyPricePerShare;
+  }
+  
+  return row.assetBuyAmount ?? null;
+}
+
 export function sortBuys(rows: AssetBuyResponse[], sort: SortState | null): AssetBuyResponse[] {
   if (!sort) {
     return rows;
@@ -43,11 +51,14 @@ export function sortBuys(rows: AssetBuyResponse[], sort: SortState | null): Asse
       case "company": {
         return compareValues(a.companyName ?? "", b.companyName ?? "", sort.dir);
       }
-      case "amount": {
-        return compareValues(a.assetBuyAmount ?? a.assetBuyShare, b.assetBuyAmount ?? b.assetBuyShare, sort.dir);
+      case "shares": {
+        return compareValues(a.assetBuyShare, b.assetBuyShare, sort.dir);
       }
       case "pricePerShare": {
         return compareValues(a.assetBuyPricePerShare, b.assetBuyPricePerShare, sort.dir);
+      }
+      case "amount": {
+        return compareValues(computeBuyAmount(a), computeBuyAmount(b), sort.dir);
       }
       default: {
         return 0;
@@ -91,6 +102,9 @@ export function sortDividends(rows: AssetDividendResponse[], sort: SortState | n
     switch (sort.key) {
       case "date": {
         return compareValues(a.cashflowDate, b.cashflowDate, sort.dir);
+      }
+      case "company": {
+        return compareValues(a.companyName ?? "", b.companyName ?? "", sort.dir);
       }
       case "amount": {
         return compareValues(a.cashflowAmount, b.cashflowAmount, sort.dir);
