@@ -8,15 +8,12 @@ import {
 } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
 import PortfolioService from "../services/PortfolioService";
-import CurrencyService from "../services/CurrencyService";
 import ActivationModal from "../components/ActivationModal";
 import AccountActivatedModal from "../components/AccountActivatedModal";
+import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 import type { MetricResponse, MonthlyDataPoint } from "../responses/MetricResponse";
-import type { Portfolio } from "../models/Portfolio";
-import type { Currency } from "../models/Currency";
 
 const portfolioService = PortfolioService.getInstance();
-const currencyService  = CurrencyService.getInstance();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -137,12 +134,9 @@ const Dashboard: React.FC = () => {
   const [showActivationModal,       setShowActivationModal]       = useState(false);
   const [showAccountActivatedModal, setShowAccountActivatedModal] = useState(false);
 
-  const [portfolios,          setPortfolios]          = useState<Portfolio[]>([]);
-  const [currencies,          setCurrencies]          = useState<Currency[]>([]);
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState("");
-  const [selectedCurrencyId,  setSelectedCurrencyId]  = useState("");
-  const [metrics,             setMetrics]             = useState<MetricResponse | null>(null);
-  const [loading,             setLoading]             = useState(false);
+  const { selectedPortfolioId } = useSelectedPortfolio();
+  const [metrics, setMetrics] = useState<MetricResponse | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user?.activated === false && sessionStorage.getItem("justLoggedIn") === "true") {
@@ -154,27 +148,13 @@ const Dashboard: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!user) return;
-    Promise.all([
-      portfolioService.getAllPortfoliosByUserId(user.id),
-      currencyService.getAll(),
-    ]).then(([p, c]) => {
-      setPortfolios(p);
-      setCurrencies(c);
-      if (p.length > 0) setSelectedPortfolioId(p[0].id);
-      const eur = c.find(x => x.currencyName === "EUR");
-      if (eur) setSelectedCurrencyId(eur.uuid);
-    }).catch(() => {});
-  }, [user]);
-
-  useEffect(() => {
-    if (!selectedPortfolioId || !selectedCurrencyId) return;
+    if (!selectedPortfolioId) return;
     setLoading(true);
-    portfolioService.getMetrics(selectedPortfolioId, selectedCurrencyId)
+    portfolioService.getMetrics(selectedPortfolioId)
       .then(setMetrics)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [selectedPortfolioId, selectedCurrencyId]);
+  }, [selectedPortfolioId]);
 
   const cy = metrics?.currencyName ?? "EUR";
   const hour = new Date().getHours();
@@ -202,24 +182,6 @@ const Dashboard: React.FC = () => {
             {greeting}{user?.firstName ? `, ${user.firstName}` : ""}
           </h2>
           <p className="text-gray-500 text-sm mt-0.5">Here's what's happening with your portfolio today.</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {portfolios.length > 1 && (
-            <select
-              value={selectedPortfolioId}
-              onChange={e => setSelectedPortfolioId(e.target.value)}
-              className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300"
-            >
-              {portfolios.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          )}
-          <select
-            value={selectedCurrencyId}
-            onChange={e => setSelectedCurrencyId(e.target.value)}
-            className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300"
-          >
-            {currencies.map(c => <option key={c.uuid} value={c.uuid}>{c.currencyName}</option>)}
-          </select>
         </div>
       </div>
 

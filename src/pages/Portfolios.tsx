@@ -4,7 +4,9 @@ import { toast } from "sonner";
 import { HiOutlineBriefcase, HiOutlinePlus } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
 import PortfolioService from "../services/PortfolioService";
+import CurrencyService from "../services/CurrencyService";
 import type { Portfolio } from "../models/Portfolio";
+import type { Currency } from "../models/Currency";
 import Loading from "../components/Loading";
 import PortfolioCard from "../components/PortfolioCard";
 import NewPortfolioCard from "../components/NewPortfolioCard";
@@ -20,7 +22,9 @@ const Portfolios: React.FC = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const portfolioService = PortfolioService.getInstance();
+  const currencyService = CurrencyService.getInstance();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [page, setPage] = useState<number>(() => { const p = parseInt(searchParams.get("page") ?? "1"); return isNaN(p) || p < 1 ? 1 : p; });
   const [search, setSearch] = useState<string>(() => searchParams.get("search") ?? "");
@@ -28,6 +32,7 @@ const Portfolios: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [creating, setCreating] = useState<boolean>(false);
   const [newName, setNewName] = useState<string>("");
+  const [newCurrencyId, setNewCurrencyId] = useState<string>("");
   const [reloadTrigger, setReloadTrigger] = useState<number>(0);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const isSearching: boolean = !!debouncedSearch;
@@ -56,6 +61,10 @@ const Portfolios: React.FC = () => {
   }, [page, debouncedSearch]);
 
   useEffect(() => {
+    currencyService.getAll().then(setCurrencies).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
 
     const fetchPortfolios = async () => {
@@ -78,6 +87,7 @@ const Portfolios: React.FC = () => {
 
   const openModal = () => {
     setNewName("");
+    setNewCurrencyId("");
     dialogRef.current?.showModal();
   };
 
@@ -98,17 +108,17 @@ const Portfolios: React.FC = () => {
       return;
     }
 
-    const handleClose = () => setNewName("");
+    const handleClose = () => { setNewName(""); setNewCurrencyId(""); };
     dialog.addEventListener("close", handleClose);
     return () => dialog.removeEventListener("close", handleClose);
   }, []);
 
   const handleCreate = async () => {
-    if (!newName.trim() || !user) return;
+    if (!newName.trim() || !newCurrencyId || !user) return;
 
     setCreating(true);
     try {
-      const createdPortfolio: Portfolio = await portfolioService.createPortfolio({ userId: user.id, name: newName.trim() });
+      const createdPortfolio: Portfolio = await portfolioService.createPortfolio({ userId: user.id, name: newName.trim(), displayCurrencyId: newCurrencyId });
       closeModal();
       toast.success(`Portfolio "${createdPortfolio.name}" created!`);
       const newTotal: number = total + 1;
@@ -210,7 +220,10 @@ const Portfolios: React.FC = () => {
       <CreatePortfolioModal
         dialogRef={dialogRef}
         newName={newName}
+        newCurrencyId={newCurrencyId}
+        currencies={currencies}
         onNameChange={setNewName}
+        onCurrencyChange={setNewCurrencyId}
         creating={creating}
         onCreate={handleCreate}
         onClose={closeModal}
