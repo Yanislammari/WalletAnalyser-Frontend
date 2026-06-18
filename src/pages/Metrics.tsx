@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import {
   HiOutlineArrowTrendingUp, HiOutlineArrowTrendingDown,
   HiOutlineChartBar, HiOutlineBanknotes, HiOutlineClock,
-  HiOutlineScale, HiOutlineSparkles, HiOutlineInformationCircle,
+  HiOutlineScale, HiOutlineSparkles, HiOutlineInformationCircle, HiOutlineBriefcase,
 } from "react-icons/hi2";
+import { useNavigate } from "react-router";
 import { useAuth } from "../providers/AuthProvider";
 import PortfolioService from "../services/PortfolioService";
 import CurrencyService from "../services/CurrencyService";
+import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 import type { MetricResponse, MonthlyDataPoint } from "../responses/MetricResponse";
-import type { Portfolio } from "../models/Portfolio";
 import type { Currency } from "../models/Currency";
 
 const portfolioService = PortfolioService.getInstance();
@@ -120,9 +121,9 @@ const PALETTE = ["#8b5cf6", "#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6
 
 const Metrics: React.FC = () => {
   const { user } = useAuth();
-  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const navigate = useNavigate();
+  const { selectedPortfolioId, portfoliosLoaded } = useSelectedPortfolio();
   const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>("");
   const [selectedCurrencyId, setSelectedCurrencyId] = useState<string>("");
   const [metrics, setMetrics] = useState<MetricResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -130,13 +131,8 @@ const Metrics: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([
-      portfolioService.getAllPortfoliosByUserId(user.id),
-      currencyService.getAll(),
-    ]).then(([p, c]) => {
-      setPortfolios(p);
+    currencyService.getAll().then((c) => {
       setCurrencies(c);
-      if (p.length > 0) setSelectedPortfolioId(p[0].id);
       const eur = c.find(x => x.currencyName === "EUR");
       if (eur) setSelectedCurrencyId(eur.uuid);
     }).catch(() => {});
@@ -146,7 +142,7 @@ const Metrics: React.FC = () => {
     if (!selectedPortfolioId || !selectedCurrencyId) return;
     setLoading(true);
     setError(null);
-    portfolioService.getMetrics(selectedPortfolioId, selectedCurrencyId)
+    portfolioService.getMetrics(selectedPortfolioId)
       .then(setMetrics)
       .catch(() => setError("Failed to load metrics"))
       .finally(() => setLoading(false));
@@ -162,23 +158,32 @@ const Metrics: React.FC = () => {
           <h2 className="text-gray-900 text-xl font-bold tracking-tight">Performance Metrics</h2>
           <p className="text-gray-500 text-sm mt-0.5">In-depth analysis of your portfolio's performance.</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <select
-            value={selectedPortfolioId}
-            onChange={e => setSelectedPortfolioId(e.target.value)}
-            className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300"
-          >
-            {portfolios.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          <select
-            value={selectedCurrencyId}
-            onChange={e => setSelectedCurrencyId(e.target.value)}
-            className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300"
-          >
-            {currencies.map(c => <option key={c.uuid} value={c.uuid}>{c.currencyName}</option>)}
-          </select>
-        </div>
+        <select
+          value={selectedCurrencyId}
+          onChange={e => setSelectedCurrencyId(e.target.value)}
+          className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer"
+        >
+          {currencies.map(c => <option key={c.uuid} value={c.uuid}>{c.currencyName}</option>)}
+        </select>
       </div>
+
+      {portfoliosLoaded && !selectedPortfolioId && (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-purple-50 flex items-center justify-center">
+            <HiOutlineBriefcase className="text-purple-400" size={28} />
+          </div>
+          <div className="text-center">
+            <p className="text-gray-800 font-semibold text-base">No portfolio yet</p>
+            <p className="text-gray-400 text-sm mt-1">Create your first portfolio to start tracking your investments.</p>
+          </div>
+          <button
+            onClick={() => navigate("/home/portfolio", { state: { openCreateModal: true } })}
+            className="mt-1 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-xl transition-colors cursor-pointer"
+          >
+            Create a portfolio
+          </button>
+        </div>
+      )}
 
       {loading && (
         <div className="flex items-center justify-center py-20">

@@ -1,16 +1,22 @@
 import React from "react";
 import { HiOutlineBriefcase, HiOutlineXMark } from "react-icons/hi2";
+import type { Currency } from "../models/Currency";
 
 interface CreatePortfolioModalProps {
   dialogRef: React.RefObject<HTMLDialogElement | null>;
   newName: string;
+  newCurrencyId: string;
+  currencies: Currency[];
   creating: boolean;
   onNameChange: (value: string) => void;
+  onCurrencyChange: (value: string) => void;
   onClose: () => void;
   onCreate: () => void;
 }
 
 const CreatePortfolioModal: React.FC<CreatePortfolioModalProps> = (props: CreatePortfolioModalProps) => {
+  const canCreate = props.newName.trim() && props.newCurrencyId && !props.creating;
+
   return (
     <dialog ref={props.dialogRef} className="modal">
       <div className="modal-box bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl border border-gray-100">
@@ -38,11 +44,29 @@ const CreatePortfolioModal: React.FC<CreatePortfolioModalProps> = (props: Create
               type="text"
               value={props.newName}
               onChange={(e) => props.onNameChange(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && props.onCreate()}
+              onKeyDown={(e) => e.key === "Enter" && canCreate && props.onCreate()}
               placeholder="e.g. Long-term growth"
               className="w-full px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition"
               autoFocus
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Base currency <span className="text-red-400">*</span>
+            </label>
+            <select
+              value={props.newCurrencyId}
+              onChange={(e) => props.onCurrencyChange(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition cursor-pointer"
+            >
+              <option value="">Select a currency…</option>
+              {props.currencies.map((c) => (
+                <option key={c.uuid} value={c.uuid}>
+                  {c.currencyName}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-1">All portfolio values will be converted to this currency.</p>
           </div>
           <div className="flex gap-2 pt-1">
             <button
@@ -55,7 +79,7 @@ const CreatePortfolioModal: React.FC<CreatePortfolioModalProps> = (props: Create
             <button
               onClick={props.onCreate}
               type="button"
-              disabled={!props.newName.trim() || props.creating}
+              disabled={!canCreate}
               className="flex-1 py-2.5 text-sm text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium transition-colors cursor-pointer"
             >
               {props.creating ? (

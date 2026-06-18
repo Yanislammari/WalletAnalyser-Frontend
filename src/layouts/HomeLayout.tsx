@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Outlet } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "../providers/AuthProvider";
+import { SelectedPortfolioProvider } from "../providers/SelectedPortfolioProvider";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import ActivationBanner from "../components/ActivationBanner";
@@ -48,6 +49,7 @@ const HomeLayout: React.FC = () => {
   }, [sidebarOpen]);
 
   return (
+    <SelectedPortfolioProvider>
     <div className="min-h-screen bg-[#f5f4fb]">
       {sidebarOpen && (
         <div
@@ -75,6 +77,7 @@ const HomeLayout: React.FC = () => {
         </main>
       </div>
     </div>
+    </SelectedPortfolioProvider>
   );
 }
 
