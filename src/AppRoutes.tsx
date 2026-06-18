@@ -15,6 +15,9 @@ import Transactions from "./pages/Transactions";
 import ActivateAccount from "./pages/ActivateAccount";
 import PublicRoute from "./guards/PublicRoute";
 import PrivateRoute from "./guards/PrivateRoute";
+import Badges from "./pages/Badges";
+import Analysis from "./pages/Analysis";
+import AnalysisDetail from "./pages/AnalysisDetail";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -39,6 +42,9 @@ const AppRoutes: React.FC = () => {
           <Route path="portfolio" element={<Portfolios />} />
           <Route path="portfolio/:portfolioId/transactions" element={<Transactions />} />
           <Route path="import" element={<ImportData />} />
+          <Route path="badges" element={<Badges/>} />
+          <Route path="analysis" element={<Analysis />} />
+          <Route path="analysis/:uuid" element={<AnalysisDetail/>} />
         </Route>
         
       </Routes>
