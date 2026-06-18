@@ -238,7 +238,7 @@ const Badges: React.FC = () => {
               onClick={() => setShowNoReward(false)}
             >
               <div
-                className="flex flex-col items-center gap-4 p-10 rounded-3xl border-2 border-zinc-200 bg-white shadow-2xl cursor-pointer select-none"
+                className="flex flex-col items-center gap-4 p-10 rounded-3xl border-2 border-zinc-200 bg-white shadow-2xl select-none"
                 style={{ minWidth: 260 }}
                 onClick={e => e.stopPropagation()}
               >
@@ -246,7 +246,7 @@ const Badges: React.FC = () => {
                 <h2 className="text-xl font-bold text-zinc-700">No new badges</h2>
                 <p className="text-sm text-zinc-500 text-center">You didn't unlock anything new this time. Keep going!</p>
                 <button
-                  className="mt-2 px-6 py-2 rounded-full bg-zinc-900 text-white text-sm font-semibold hover:bg-zinc-700 transition-colors"
+                  className="mt-2 px-6 py-2 rounded-full bg-zinc-900 text-white text-sm font-semibold hover:bg-zinc-700 cursor-pointer transition-colors"
                   onClick={() => setShowNoReward(false)}
                 >
                   Got it
