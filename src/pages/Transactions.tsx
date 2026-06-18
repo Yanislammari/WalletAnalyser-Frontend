@@ -43,7 +43,6 @@ const Transactions: React.FC = () => {
   const [reloadTrigger, setReloadTrigger] = useState<number>(0);
   const [portfolioTotal, setPortfolioTotal] = useState<PortfolioTotalResponse | null>(null);
   const [totalLoading, setTotalLoading] = useState<boolean>(false);
-  const [totalCurrencyId, setTotalCurrencyId] = useState<string>("");
   const buyDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
   const sellDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
   const dividendDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
@@ -110,12 +109,6 @@ const Transactions: React.FC = () => {
         setPortfolio(fetchedPortfolio);
         setCurrencies(fetchedCurrencies);
         setCompanies(fetchedCompanies);
-
-        // Init total currency: use portfolio display currency or first available
-        const defaultCurrency = fetchedPortfolio.displayCurrencyId
-          ?? fetchedCurrencies[0]?.uuid
-          ?? "";
-        setTotalCurrencyId((prev) => prev || defaultCurrency);
       }
       catch {
         toast.error("Failed to load portfolio data.");
@@ -125,14 +118,14 @@ const Transactions: React.FC = () => {
     loadStatic();
   }, [portfolioId]);
 
-  // Load portfolio total whenever portfolioId, currency, or transactions change
+  // Load portfolio total whenever portfolioId or transactions change
   useEffect(() => {
-    if (!portfolioId || !totalCurrencyId) return;
+    if (!portfolioId) return;
 
     const loadTotal = async () => {
       setTotalLoading(true);
       try {
-        const total = await portfolioService.getPortfolioTotal(portfolioId, totalCurrencyId);
+        const total = await portfolioService.getPortfolioTotal(portfolioId);
         setPortfolioTotal(total);
       }
       catch {
@@ -144,7 +137,7 @@ const Transactions: React.FC = () => {
     };
 
     loadTotal();
-  }, [portfolioId, totalCurrencyId, reloadTrigger]);
+  }, [portfolioId, reloadTrigger]);
 
   useEffect(() => {
     if (!portfolioId) {
@@ -269,7 +262,7 @@ const Transactions: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/home/portfolio")}
             className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
             <HiOutlineArrowLeft size={16} className="text-gray-600" />
@@ -290,26 +283,20 @@ const Transactions: React.FC = () => {
       <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <h3 className="text-gray-800 font-semibold text-sm">Portfolio Summary</h3>
-          <select
-            value={totalCurrencyId}
-            onChange={(e) => setTotalCurrencyId(e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer"
-          >
-            {currencies.map((c) => (
-              <option key={c.uuid} value={c.uuid}>
-                {c.currencyName}
-              </option>
-            ))}
-          </select>
+          {portfolio?.displayCurrencyName && (
+            <span className="text-xs font-semibold px-2 py-1 rounded-lg bg-purple-50 text-purple-600 border border-purple-100">
+              {portfolio.displayCurrencyName}
+            </span>
+          )}
         </div>
         {totalLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-pulse">
-            {[...Array(4)].map((_, i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 animate-pulse">
+            {[...Array(6)].map((_, i) => (
               <div key={i} className="bg-gray-100 h-14 rounded-xl" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div className="bg-gray-50 rounded-xl p-3">
               <p className="text-xs text-gray-500 mb-1">Invested</p>
               <p className="text-lg font-bold text-gray-900">
@@ -337,14 +324,38 @@ const Transactions: React.FC = () => {
                 <span className="text-xs font-medium text-gray-400 ml-1">{portfolioTotal?.currencyName ?? ""}</span>
               </p>
             </div>
-            <div className={`rounded-xl p-3 ${portfolioTotal && portfolioTotal.netTotal >= 0 ? "bg-green-50" : "bg-red-50"}`}>
-              <p className="text-xs text-gray-500 mb-1">Net P&amp;L</p>
-              <p className={`text-lg font-bold ${portfolioTotal && portfolioTotal.netTotal >= 0 ? "text-green-700" : "text-red-600"}`}>
+            <div className="bg-blue-50 rounded-xl p-3">
+              <p className="text-xs text-gray-500 mb-1">Portfolio Value</p>
+              <p className="text-lg font-bold text-blue-700">
                 {portfolioTotal
-                  ? (portfolioTotal.netTotal >= 0 ? "+" : "") + portfolioTotal.netTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  ? portfolioTotal.portfolioMarketValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                   : "—"}
                 <span className="text-xs font-medium opacity-60 ml-1">{portfolioTotal?.currencyName ?? ""}</span>
               </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Value of held positions</p>
+            </div>
+            <div className="bg-purple-50 rounded-xl p-3">
+              <p className="text-xs text-gray-500 mb-1">Total Value</p>
+              <p className="text-lg font-bold text-purple-700">
+                {portfolioTotal
+                  ? portfolioTotal.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  : "—"}
+                <span className="text-xs font-medium opacity-60 ml-1">{portfolioTotal?.currencyName ?? ""}</span>
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Portfolio value + Sells + Dividends</p>
+            </div>
+            <div className={`rounded-xl p-3 ${portfolioTotal && (portfolioTotal.totalValue - portfolioTotal.totalInvested) >= 0 ? "bg-green-50" : "bg-red-50"}`}>
+              <p className="text-xs text-gray-500 mb-1">Total P&amp;L</p>
+              <p className={`text-lg font-bold ${portfolioTotal && (portfolioTotal.totalValue - portfolioTotal.totalInvested) >= 0 ? "text-green-700" : "text-red-600"}`}>
+                {portfolioTotal
+                  ? (() => {
+                      const pnl = portfolioTotal.totalValue - portfolioTotal.totalInvested;
+                      return (pnl >= 0 ? "+" : "") + pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    })()
+                  : "—"}
+                <span className="text-xs font-medium opacity-60 ml-1">{portfolioTotal?.currencyName ?? ""}</span>
+              </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Including unrealized gains</p>
             </div>
           </div>
         )}

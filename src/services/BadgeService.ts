@@ -1,5 +1,5 @@
 import type { UserBadgesResponse } from "../responses/UserBadgesResponse";
-import { BaseService } from "./BaseService";
+import BaseService from "./BaseService";
 
 class BadgeService extends BaseService {
   private static instance: BadgeService;
