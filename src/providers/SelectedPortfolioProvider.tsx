@@ -1,17 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "./AuthProvider";
 import PortfolioService from "../services/PortfolioService";
 import type { Portfolio } from "../models/Portfolio";
 
 interface SelectedPortfolioContextValue {
   portfolios: Portfolio[];
+  portfoliosLoaded: boolean;
   selectedPortfolioId: string;
   setSelectedPortfolioId: (id: string) => void;
 }
 
 const SelectedPortfolioContext = createContext<SelectedPortfolioContextValue>({
   portfolios: [],
+  portfoliosLoaded: false,
   selectedPortfolioId: "",
   setSelectedPortfolioId: () => {},
 });
@@ -20,10 +21,9 @@ export const useSelectedPortfolio = () => useContext(SelectedPortfolioContext);
 
 export const SelectedPortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
   const portfolioService = PortfolioService.getInstance();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [portfoliosLoaded, setPortfoliosLoaded] = useState<boolean>(false);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>("");
 
   useEffect(() => {
@@ -32,17 +32,14 @@ export const SelectedPortfolioProvider: React.FC<{ children: React.ReactNode }> 
       .getAllPortfoliosByUserId(user.id)
       .then((p) => {
         setPortfolios(p);
-        if (p.length > 0) {
-          setSelectedPortfolioId(p[0].id);
-        } else if (location.pathname !== "/home/portfolio") {
-          navigate("/home/portfolio", { replace: true });
-        }
+        setPortfoliosLoaded(true);
+        if (p.length > 0) setSelectedPortfolioId(p[0].id);
       })
-      .catch(() => {});
+      .catch(() => { setPortfoliosLoaded(true); });
   }, [user]);
 
   return (
-    <SelectedPortfolioContext.Provider value={{ portfolios, selectedPortfolioId, setSelectedPortfolioId }}>
+    <SelectedPortfolioContext.Provider value={{ portfolios, portfoliosLoaded, selectedPortfolioId, setSelectedPortfolioId }}>
       {children}
     </SelectedPortfolioContext.Provider>
   );

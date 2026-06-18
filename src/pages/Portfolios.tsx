@@ -92,11 +92,12 @@ const Portfolios: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!loading && location.state?.openCreateModal) {
-      openModal();
+    if (location.state?.openCreateModal) {
       window.history.replaceState({}, "");
+      const t = setTimeout(() => openModal(), 50);
+      return () => clearTimeout(t);
     }
-  }, [loading, location.state]);
+  }, []);
 
   const closeModal = () => {
     dialogRef.current?.close();

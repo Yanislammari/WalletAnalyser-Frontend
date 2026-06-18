@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import {
   HiOutlineArrowTrendingUp, HiOutlineArrowTrendingDown,
   HiOutlineBanknotes, HiOutlineChartBar, HiOutlineSparkles,
-  HiOutlineScale, HiOutlineArrowRightCircle,
+  HiOutlineScale, HiOutlineArrowRightCircle, HiOutlineBriefcase,
 } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
 import PortfolioService from "../services/PortfolioService";
@@ -134,7 +134,7 @@ const Dashboard: React.FC = () => {
   const [showActivationModal,       setShowActivationModal]       = useState(false);
   const [showAccountActivatedModal, setShowAccountActivatedModal] = useState(false);
 
-  const { selectedPortfolioId } = useSelectedPortfolio();
+  const { selectedPortfolioId, portfoliosLoaded } = useSelectedPortfolio();
   const [metrics, setMetrics] = useState<MetricResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -185,8 +185,27 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* No portfolio state */}
+      {portfoliosLoaded && !selectedPortfolioId && (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-purple-50 flex items-center justify-center">
+            <HiOutlineBriefcase className="text-purple-400" size={28} />
+          </div>
+          <div className="text-center">
+            <p className="text-gray-800 font-semibold text-base">No portfolio yet</p>
+            <p className="text-gray-400 text-sm mt-1">Create your first portfolio to start tracking your investments.</p>
+          </div>
+          <button
+            onClick={() => navigate("/home/portfolio", { state: { openCreateModal: true } })}
+            className="mt-1 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-xl transition-colors cursor-pointer"
+          >
+            Create a portfolio
+          </button>
+        </div>
+      )}
+
       {/* Stat cards */}
-      {loading ? (
+      {portfoliosLoaded && selectedPortfolioId && loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)}
         </div>

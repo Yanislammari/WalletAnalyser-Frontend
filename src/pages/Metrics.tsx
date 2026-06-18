@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import {
   HiOutlineArrowTrendingUp, HiOutlineArrowTrendingDown,
   HiOutlineChartBar, HiOutlineBanknotes, HiOutlineClock,
-  HiOutlineScale, HiOutlineSparkles, HiOutlineInformationCircle,
+  HiOutlineScale, HiOutlineSparkles, HiOutlineInformationCircle, HiOutlineBriefcase,
 } from "react-icons/hi2";
+import { useNavigate } from "react-router";
 import { useAuth } from "../providers/AuthProvider";
 import PortfolioService from "../services/PortfolioService";
 import CurrencyService from "../services/CurrencyService";
@@ -120,7 +121,8 @@ const PALETTE = ["#8b5cf6", "#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6
 
 const Metrics: React.FC = () => {
   const { user } = useAuth();
-  const { selectedPortfolioId } = useSelectedPortfolio();
+  const navigate = useNavigate();
+  const { selectedPortfolioId, portfoliosLoaded } = useSelectedPortfolio();
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [selectedCurrencyId, setSelectedCurrencyId] = useState<string>("");
   const [metrics, setMetrics] = useState<MetricResponse | null>(null);
@@ -164,6 +166,24 @@ const Metrics: React.FC = () => {
           {currencies.map(c => <option key={c.uuid} value={c.uuid}>{c.currencyName}</option>)}
         </select>
       </div>
+
+      {portfoliosLoaded && !selectedPortfolioId && (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-purple-50 flex items-center justify-center">
+            <HiOutlineBriefcase className="text-purple-400" size={28} />
+          </div>
+          <div className="text-center">
+            <p className="text-gray-800 font-semibold text-base">No portfolio yet</p>
+            <p className="text-gray-400 text-sm mt-1">Create your first portfolio to start tracking your investments.</p>
+          </div>
+          <button
+            onClick={() => navigate("/home/portfolio", { state: { openCreateModal: true } })}
+            className="mt-1 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-xl transition-colors cursor-pointer"
+          >
+            Create a portfolio
+          </button>
+        </div>
+      )}
 
       {loading && (
         <div className="flex items-center justify-center py-20">
