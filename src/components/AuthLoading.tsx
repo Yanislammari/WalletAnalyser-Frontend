@@ -1,6 +1,6 @@
 import type React from "react";
-import Background from "../components/Background";
-import Loading from "../components/Loading";
+import Background from "./Background";
+import Loading from "./Loading";
 
 const AuthLoading: React.FC = () => {
   return (

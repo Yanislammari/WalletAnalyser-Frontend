@@ -9,6 +9,7 @@ import type { Currency } from "../models/Currency";
 import type { AssetBuyResponse } from "../responses/AssetBuyResponse";
 import type { AssetSellResponse } from "../responses/AssetSellResponse";
 import type { AssetDividendResponse } from "../responses/AssetDividendResponse";
+import type { PortfolioTotalResponse } from "../responses/PortfolioTotalResponse";
 import TransactionTable from "../components/TransactionTable";
 import AddNewBuyModal from "../components/AddNewBuyModal";
 import AddNewSellModal from "../components/AddNewSellModal";
@@ -40,6 +41,9 @@ const Transactions: React.FC = () => {
   const [hasAnySells, setHasAnySells] = useState<boolean>(false);
   const [hasAnyDividends, setHasAnyDividends] = useState<boolean>(false);
   const [reloadTrigger, setReloadTrigger] = useState<number>(0);
+  const [portfolioTotal, setPortfolioTotal] = useState<PortfolioTotalResponse | null>(null);
+  const [totalLoading, setTotalLoading] = useState<boolean>(false);
+  const [totalCurrencyId, setTotalCurrencyId] = useState<string>("");
   const buyDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
   const sellDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
   const dividendDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
@@ -106,6 +110,12 @@ const Transactions: React.FC = () => {
         setPortfolio(fetchedPortfolio);
         setCurrencies(fetchedCurrencies);
         setCompanies(fetchedCompanies);
+
+        // Init total currency: use portfolio display currency or first available
+        const defaultCurrency = fetchedPortfolio.displayCurrencyId
+          ?? fetchedCurrencies[0]?.uuid
+          ?? "";
+        setTotalCurrencyId((prev) => prev || defaultCurrency);
       }
       catch {
         toast.error("Failed to load portfolio data.");
@@ -114,6 +124,27 @@ const Transactions: React.FC = () => {
 
     loadStatic();
   }, [portfolioId]);
+
+  // Load portfolio total whenever portfolioId, currency, or transactions change
+  useEffect(() => {
+    if (!portfolioId || !totalCurrencyId) return;
+
+    const loadTotal = async () => {
+      setTotalLoading(true);
+      try {
+        const total = await portfolioService.getPortfolioTotal(portfolioId, totalCurrencyId);
+        setPortfolioTotal(total);
+      }
+      catch {
+        // silently fail — total is non-critical
+      }
+      finally {
+        setTotalLoading(false);
+      }
+    };
+
+    loadTotal();
+  }, [portfolioId, totalCurrencyId, reloadTrigger]);
 
   useEffect(() => {
     if (!portfolioId) {
@@ -255,6 +286,69 @@ const Transactions: React.FC = () => {
           <HiOutlinePlus size={15} /> Add a row
         </button>
       </div>
+      {/* Portfolio Summary Card */}
+      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h3 className="text-gray-800 font-semibold text-sm">Portfolio Summary</h3>
+          <select
+            value={totalCurrencyId}
+            onChange={(e) => setTotalCurrencyId(e.target.value)}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer"
+          >
+            {currencies.map((c) => (
+              <option key={c.uuid} value={c.uuid}>
+                {c.currencyName}
+              </option>
+            ))}
+          </select>
+        </div>
+        {totalLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-pulse">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-gray-100 h-14 rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs text-gray-500 mb-1">Invested</p>
+              <p className="text-lg font-bold text-gray-900">
+                {portfolioTotal
+                  ? portfolioTotal.totalInvested.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  : "—"}
+                <span className="text-xs font-medium text-gray-400 ml-1">{portfolioTotal?.currencyName ?? ""}</span>
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs text-gray-500 mb-1">Sells</p>
+              <p className="text-lg font-bold text-gray-900">
+                {portfolioTotal
+                  ? portfolioTotal.totalSells.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  : "—"}
+                <span className="text-xs font-medium text-gray-400 ml-1">{portfolioTotal?.currencyName ?? ""}</span>
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs text-gray-500 mb-1">Dividends</p>
+              <p className="text-lg font-bold text-gray-900">
+                {portfolioTotal
+                  ? portfolioTotal.totalDividends.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  : "—"}
+                <span className="text-xs font-medium text-gray-400 ml-1">{portfolioTotal?.currencyName ?? ""}</span>
+              </p>
+            </div>
+            <div className={`rounded-xl p-3 ${portfolioTotal && portfolioTotal.netTotal >= 0 ? "bg-green-50" : "bg-red-50"}`}>
+              <p className="text-xs text-gray-500 mb-1">Net P&amp;L</p>
+              <p className={`text-lg font-bold ${portfolioTotal && portfolioTotal.netTotal >= 0 ? "text-green-700" : "text-red-600"}`}>
+                {portfolioTotal
+                  ? (portfolioTotal.netTotal >= 0 ? "+" : "") + portfolioTotal.netTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  : "—"}
+                <span className="text-xs font-medium opacity-60 ml-1">{portfolioTotal?.currencyName ?? ""}</span>
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
       <TransactionTable
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -299,6 +393,7 @@ const Transactions: React.FC = () => {
             dialogRef={sellDialogRef}
             currencies={currencies}
             portfolioId={portfolioId}
+            ownedCompanies={companies}
             onSuccess={handleSellSuccess}
           />
           <AddNewDividendModal

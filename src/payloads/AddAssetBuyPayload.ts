@@ -1,7 +1,6 @@
 export interface AddAssetBuyPayload {
   portfolioId: string;
-  companyName?: string;
-  assetPriceId?: string;
+  assetId?: string;
   buyCurrencyId: string;
   buyDate: string;
   assetBuyAmount?: number;
