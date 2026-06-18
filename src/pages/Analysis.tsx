@@ -12,12 +12,13 @@ const Analysis: React.FC = () => {
   const analysisService = AnalysisService.getInstance();
   const [clusters, setClusters] = useState<SectorCardDataProps[]>([]);
   const [sectors, setSectors] = useState<SectorCardDataProps[]>([]);
+  const [countries, setCountries] = useState<SectorCardDataProps[]>([]);
   const [userStocks, setUserStocks] = useState<UserStocksRankingProps[]>([]);
   const navigate: NavigateFunction = useNavigate();
   const [search, setSearch] = useState<string>("");
   const [loading, setLoading] = useState(false)
   const [hasError, setHasError] = useState(false)
-  const [view, setView] = useState<"cluster" | "sector" | "my_stocks">("sector");
+  const [view, setView] = useState<"cluster" | "sector" | "my_stocks" | "countries">("my_stocks");
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -105,7 +106,7 @@ const Analysis: React.FC = () => {
             <h2 className="text-gray-900 text-xl font-bold tracking-tight">
               Analysis
             </h2>
-            <p className="text-gray-500 text-sm mt-0.5">See which sector, AI clustering or personnal assets is doing great for the last year.</p>
+            <p className="text-gray-500 text-sm mt-0.5">See each assets ranking compared to peers in the past year.</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <SearchBar
@@ -117,22 +118,28 @@ const Analysis: React.FC = () => {
         </div>
         <div className="flex items-center bg-zinc-100 rounded-xl p-1 w-fit mb-6">
           <button
+            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${view === "my_stocks" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"}`}
+            onClick={() => setView("my_stocks")}
+          >
+            My stocks
+          </button>
+          <button
             className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${view === "sector" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"}`}
             onClick={() => setView("sector")}
           >
-            Sector
+            Sectors
+          </button>
+          <button
+            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${view === "countries" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"}`}
+            onClick={() => setView("countries")}
+          >
+            Countries
           </button>
           <button
             className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${view === "cluster" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"}`}
             onClick={() => setView("cluster")}
           >
-            Cluster
-          </button>
-          <button
-            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${view === "my_stocks" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"}`}
-            onClick={() => setView("my_stocks")}
-          >
-            My stocks
+            AI regrouping
           </button>
         </div>
         {view === "my_stocks" && (
@@ -144,15 +151,29 @@ const Analysis: React.FC = () => {
           </div>
         )}
 
-        {view !== "my_stocks" && (
+        {view === "cluster" && (
           <div className="grid grid-cols-2 gap-6 items-start">
-            {view === "cluster"
-              ? clusters.filter(c => c.name?.toLowerCase()?.includes(search.toLowerCase())).length === 0
-                ? <p className="text-sm text-zinc-400 text-center py-6 col-span-2">No clusters found</p>
-                : clusters.filter(c => c.name?.toLowerCase()?.includes(search.toLowerCase())).map(c => <CardSectorPerf key={c.name} {...c} />)
-              : sectors.filter(c => c.name?.toLowerCase()?.startsWith(search.toLowerCase())).length === 0
-                ? <p className="text-sm text-zinc-400 text-center py-6 col-span-2">No sectors found</p>
-                : sectors.filter(c => c.name?.toLowerCase()?.startsWith(search.toLowerCase())).map(s => <CardSectorPerf key={s.name} {...s} />)
+            {clusters.filter(c => c.name?.toLowerCase()?.includes(search.toLowerCase())).length === 0
+              ? <p className="text-sm text-zinc-400 text-center py-6 col-span-2">No clusters found</p>
+              : clusters.filter(c => c.name?.toLowerCase()?.includes(search.toLowerCase())).map(c => <CardSectorPerf key={c.name} {...c} />)
+            }
+          </div>
+        )}
+
+        {view === "sector" && (
+          <div className="grid grid-cols-2 gap-6 items-start">
+            {sectors.filter(c => c.name?.toLowerCase()?.startsWith(search.toLowerCase())).length === 0
+              ? <p className="text-sm text-zinc-400 text-center py-6 col-span-2">No sectors found</p>
+              : sectors.filter(c => c.name?.toLowerCase()?.startsWith(search.toLowerCase())).map(s => <CardSectorPerf key={s.name} {...s} />)
+            }
+          </div>
+        )}
+
+        {view === "countries" && (
+          <div className="grid grid-cols-2 gap-6 items-start">
+            {countries.filter(c => c.name?.toLowerCase()?.startsWith(search.toLowerCase())).length === 0
+              ? <p className="text-sm text-zinc-400 text-center py-6 col-span-2">No countries found</p>
+              : countries.filter(c => c.name?.toLowerCase()?.startsWith(search.toLowerCase())).map(c => <CardSectorPerf key={c.name} {...c} />)
             }
           </div>
         )}
