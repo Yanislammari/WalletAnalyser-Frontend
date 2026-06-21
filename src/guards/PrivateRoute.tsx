@@ -1,6 +1,7 @@
 import type React from "react";
-import { Navigate } from "react-router";
+import { Navigate, useLocation } from "react-router";
 import { useAuth } from "../providers/AuthProvider";
+import { toast } from "sonner";
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -8,9 +9,11 @@ interface PrivateRouteProps {
 
 const PrivateRoute: React.FC<PrivateRouteProps> = (props: PrivateRouteProps) => {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    toast.info("Your session has expired please login again")
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{props.children}</>;

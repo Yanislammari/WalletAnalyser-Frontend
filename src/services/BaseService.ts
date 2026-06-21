@@ -24,6 +24,13 @@ abstract class BaseService {
 
     if (!res.ok) {
       const error = await res.json().catch(() => ({ message: "Request failed" }));
+      const isAuthError =
+        (res.status === 401 && error?.type === "NO_AUTH") ||
+        (res.status === 400 && error?.type === "NO_AUTH")
+      if (isAuthError) {
+        window.dispatchEvent(new Event("auth:logout"));
+        throw new Error(error.message || "Your session has expired. Please login again.");
+      }
       throw new Error(error.message || "Request failed");
     }
 

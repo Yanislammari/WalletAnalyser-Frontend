@@ -18,36 +18,41 @@ import PrivateRoute from "./guards/PrivateRoute";
 import Badges from "./pages/Badges";
 import Analysis from "./pages/Analysis";
 import AnalysisDetail from "./pages/AnalysisDetail";
+import { AuthProvider } from "./providers/AuthProvider";
+import { UnauthenticatedNotFoundPage, ConnectedNotFoundPage } from "./pages/DefaultPage";
 
 const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Public Routes — redirect in Home if user is already connected */}
-        <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
-        <Route path="/main" element={<PublicRoute><Main /></PublicRoute>} />
-        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <AuthProvider>
+        <Routes>
+          {/* Public Routes — redirect in Home if user is already connected */}
+          <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+          <Route path="/main" element={<PublicRoute><Main /></PublicRoute>} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
-        {/* Routes Full Access */}
-        <Route path="/forgotten-password" element={<ForgottenPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/activate-account" element={<ActivateAccount />} />
+          {/* Routes Full Access */}
+          <Route path="/forgotten-password" element={<ForgottenPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/activate-account" element={<ActivateAccount />} />
 
-        {/* Private Routes - redirect in Landing Page if user is not connected */}
-        <Route path="/home" element={<PrivateRoute><HomeLayout /></PrivateRoute>}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="metrics" element={<Metrics />} />
-          <Route path="portfolio" element={<Portfolios />} />
-          <Route path="portfolio/:portfolioId/transactions" element={<Transactions />} />
-          <Route path="import" element={<ImportData />} />
-          <Route path="badges" element={<Badges/>} />
-          <Route path="analysis" element={<Analysis />} />
-          <Route path="analysis/:uuid" element={<AnalysisDetail/>} />
-        </Route>
-        
-      </Routes>
+          {/* Private Routes - redirect in Landing Page if user is not connected */}
+          <Route path="/home" element={<PrivateRoute><HomeLayout /></PrivateRoute>}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="metrics" element={<Metrics />} />
+            <Route path="portfolio" element={<Portfolios />} />
+            <Route path="portfolio/:portfolioId/transactions" element={<Transactions />} />
+            <Route path="import" element={<ImportData />} />
+            <Route path="badges" element={<Badges/>} />
+            <Route path="analysis" element={<Analysis />} />
+            <Route path="analysis/:uuid" element={<AnalysisDetail/>} />
+            <Route path="*" element={<ConnectedNotFoundPage />} />
+          </Route>
+          <Route path="*" element={<UnauthenticatedNotFoundPage />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 };
