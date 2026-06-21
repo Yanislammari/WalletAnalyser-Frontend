@@ -22,6 +22,12 @@ class AnalysisService extends BaseService {
     });
   }
 
+  public async getCountriesMetaData(): Promise<AssetAnalysisResponse> {
+    return this.request<AssetAnalysisResponse>(this.url + "countries", {
+        method: "GET" 
+    });
+  }
+
   public async getClustersMetaData(): Promise<AssetAnalysisResponse> {
     return this.request<AssetAnalysisResponse>(this.url + "clusters", {
         method: "GET" 

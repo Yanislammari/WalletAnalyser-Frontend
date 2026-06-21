@@ -25,11 +25,13 @@ const Analysis: React.FC = () => {
 
   useEffect(() => {
     const fetchAll = async () => {
+      console.log(JSON.stringify(selectedPortfolioId), typeof selectedPortfolioId)
       setLoading(true)
       try{
-        const [sectorsMetaData, clusterMetaData, userStocksMetaData] = await Promise.all([
+        const [sectorsMetaData, clusterMetaData, countriesMetaData, userStocksMetaData] = await Promise.all([
           analysisService.getSectorsMetaData(),
           analysisService.getClustersMetaData(),
+          analysisService.getCountriesMetaData(),
           selectedPortfolioId ? analysisService.getUserStocksMetaData(selectedPortfolioId) : Promise.resolve(null)
         ])
         const mappingSectors = sectorsMetaData.sectorsData.map((sector)=>{ 
@@ -68,6 +70,24 @@ const Analysis: React.FC = () => {
           return mapped
         })
         setClusters(mappingClusters)
+        const mappingCountries = countriesMetaData.sectorsData.map((country)=>{
+          const mapped : SectorCardDataProps = {
+            name : country.country?.country_name ?? "",
+            perf52w : country.mean_perf,
+            top: country.best_performers.map(p => ({
+              name: p.asset.display_name ?? "",
+              perf: p.perf
+            })),
+            worst: country.worst_performers.map(p => ({
+              name: p.asset.display_name ?? "",
+              perf: p.perf
+            })),
+            length : country.length,
+            onClick : () => {navigate("/home/analysis/"+ country.country?.uuid + "?type=countries")}
+          }
+          return mapped
+        })
+        setCountries(mappingCountries)
         const userStocksMapped = userStocksMetaData?.sectorsData.map((userStock) =>{
           const mapped : UserStocksRankingProps = {
             onClick : () => { navigate("/home/analysis/" + userStock.asset.sector_uuid + `?type=sector&offset=${userStock.rank_position}`)},
@@ -140,13 +160,14 @@ const Analysis: React.FC = () => {
             className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${view === "cluster" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"}`}
             onClick={() => setView("cluster")}
           >
-            AI regrouping
+            Group by characteristic
           </button>
         </div>
 
         {view === "my_stocks" && (
           <div className="grid grid-cols-1 gap-3 items-start">
-            {!selectedPortfolioId
+            {(() => { console.log("RENDER CHECK:", JSON.stringify(selectedPortfolioId)); return null })()}
+            {!selectedPortfolioId || selectedPortfolioId === ""
               ? <NoPortfolioSelected />
               : userStocks.filter(c => c.display_name?.toLowerCase()?.startsWith(search.toLowerCase())).length === 0
                 ? <p className="text-sm text-zinc-400 text-center py-6">No stocks found</p>

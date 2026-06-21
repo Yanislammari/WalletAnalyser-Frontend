@@ -20,6 +20,7 @@ interface Performer {
 interface SectorData {
   sector?: Sector;
   unique_key?: number;
+  country?: Country;
   length: number;
   mean_perf: number;
   best_performers: Performer[];
