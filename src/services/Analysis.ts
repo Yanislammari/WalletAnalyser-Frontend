@@ -1,3 +1,4 @@
+import type { RankingType } from "../enums/RankType";
 import type { AssetAnalysisResponse, AssetRankingResponse, SectorNameResponse } from "../responses/AssetAnalysisResponse";
 import BaseService from "./BaseService";
 
@@ -40,8 +41,8 @@ class AnalysisService extends BaseService {
     });
   }
 
-  public async getWholeSectorsDetailMetaData(type : string, sector_uuid : string): Promise<AssetRankingResponse>{
-    return this.request<AssetRankingResponse>(this.url + `sector_detail?type=${type}&sector_uuid=${sector_uuid}`, {
+  public async getWholeSectorsDetailMetaData(type : RankingType, uuid : string): Promise<AssetRankingResponse>{
+    return this.request<AssetRankingResponse>(this.url + `sector_detail?type=${type}&uuid=${uuid}`, {
         method: "GET" 
     });
   }

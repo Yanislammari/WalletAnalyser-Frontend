@@ -1,5 +1,5 @@
 import { useNavigate, type NavigateFunction } from "react-router-dom";
-import CardSectorPerf, { CardUserStocksPerf, type SectorCardDataProps, type UserStocksRankingProps } from "../components/CardSectorPerf";
+import CardSectorPerf, { type SectorCardDataProps } from "../components/CardSectorPerf";
 import AnalysisService from "../services/Analysis"
 import React, { useEffect, useState } from "react"
 import ErrorCardInApp from "../components/ErrorCardInApp";
@@ -8,14 +8,17 @@ import Loading from "../components/Loading";
 import SearchBar from "../components/SearchBar";
 import { clusterName } from "../utils/ClusterNaming";
 import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
-import NoPortfolioSelected from "../components/Error/NoPortfolioSelected";
+import NoPortfolioSelected from '../components/Error/NoPortfolioSelected';
+import type { AssetRankingResponse } from "../responses/AssetAnalysisResponse";
+import { StocksDetail } from "./AnalysisDetail";
+import { RankingType } from "../enums/RankType";
 
 const Analysis: React.FC = () => {
   const analysisService = AnalysisService.getInstance();
   const [clusters, setClusters] = useState<SectorCardDataProps[]>([]);
   const [sectors, setSectors] = useState<SectorCardDataProps[]>([]);
   const [countries, setCountries] = useState<SectorCardDataProps[]>([]);
-  const [userStocks, setUserStocks] = useState<UserStocksRankingProps[]>([]);
+  const [userStocks, setUserStocks] = useState<AssetRankingResponse | null>(null);
   const navigate: NavigateFunction = useNavigate();
   const [search, setSearch] = useState<string>("");
   const [loading, setLoading] = useState(false)
@@ -25,7 +28,6 @@ const Analysis: React.FC = () => {
 
   useEffect(() => {
     const fetchAll = async () => {
-      console.log(JSON.stringify(selectedPortfolioId), typeof selectedPortfolioId)
       setLoading(true)
       try{
         const [sectorsMetaData, clusterMetaData, countriesMetaData, userStocksMetaData] = await Promise.all([
@@ -47,7 +49,7 @@ const Analysis: React.FC = () => {
               perf: p.perf
             })),
             length : sector.length,
-            onClick : () => {navigate("/home/analysis/"+ sector.sector?.uuid + "?type=sector")}
+            onClick : () => {navigate("/home/analysis/"+ sector.sector?.uuid + `?type=${RankingType.SECTORS}`)}
           }
           return mapped
         })
@@ -65,7 +67,7 @@ const Analysis: React.FC = () => {
               perf: p.perf
             })),
             length : cluster.length,
-            onClick : () => {navigate("/home/analysis/"+ cluster.unique_key + "?type=cluster")}
+            onClick : () => {navigate("/home/analysis/"+ cluster.unique_key + `?type=${RankingType.CLUSTERS}`)}
           }
           return mapped
         })
@@ -83,25 +85,15 @@ const Analysis: React.FC = () => {
               perf: p.perf
             })),
             length : country.length,
-            onClick : () => {navigate("/home/analysis/"+ country.country?.uuid + "?type=countries")}
+            onClick : () => {navigate("/home/analysis/"+ country.country?.uuid + `?type=${RankingType.COUNTRIES}`)}
           }
           return mapped
         })
         setCountries(mappingCountries)
-        const userStocksMapped = userStocksMetaData?.sectorsData.map((userStock) =>{
-          const mapped : UserStocksRankingProps = {
-            onClick : () => { navigate("/home/analysis/" + userStock.asset.sector_uuid + `?type=sector&offset=${userStock.rank_position}`)},
-            ranking : userStock.rank,
-            sector_name : userStock.asset.sector.sector_name,
-            country_name : userStock.asset.country.country_name,
-            perf52w : userStock.perf,
-            display_name : userStock.asset.display_name
-          }
-          return mapped
-        })
-        setUserStocks(userStocksMapped ?? [])
+        setUserStocks(userStocksMetaData)
       }
       catch(error : any) {
+        console.log(error)
         setHasError(true)
       } finally {
          setLoading(false)
@@ -109,6 +101,16 @@ const Analysis: React.FC = () => {
     }
     fetchAll()
   }, []);
+
+  useEffect(() => {
+    if (!selectedPortfolioId) return;
+    setLoading(true);
+    setHasError(false);
+    analysisService.getUserStocksMetaData(selectedPortfolioId) 
+      .then(setUserStocks)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [selectedPortfolioId]);
 
   if ( loading ) {
     return <Loading />
@@ -165,17 +167,24 @@ const Analysis: React.FC = () => {
         </div>
 
         {view === "my_stocks" && (
-          <div className="grid grid-cols-1 gap-3 items-start">
-            {(() => { console.log("RENDER CHECK:", JSON.stringify(selectedPortfolioId)); return null })()}
-            {!selectedPortfolioId || selectedPortfolioId === ""
-              ? <NoPortfolioSelected />
-              : userStocks.filter(c => c.display_name?.toLowerCase()?.startsWith(search.toLowerCase())).length === 0
-                ? <p className="text-sm text-zinc-400 text-center py-6">No stocks found</p>
-                : userStocks
-                    .filter(c => c.display_name?.toLowerCase()?.startsWith(search.toLowerCase()))
-                    .map((s) => <CardUserStocksPerf key={s.display_name} {...s} />)
-            }
-          </div>
+          !selectedPortfolioId || selectedPortfolioId === ""
+            ? <NoPortfolioSelected />
+            : (
+              <div className="mt-6 bg-white border border-zinc-200 rounded-xl">
+                {userStocks == null || userStocks.sectorsData.filter(p => p.asset.display_name?.toLowerCase()?.includes(search.toLowerCase())).length === 0
+                  ? <p className="text-sm text-zinc-400 text-center py-6">No stocks found</p>
+                  : userStocks.sectorsData
+                      .filter(p => p.asset.display_name?.toLowerCase()?.includes(search.toLowerCase()))
+                      .map(p => {
+                        return (
+                          <div key={p.asset.uuid}>
+                            <StocksDetail rankAsset={p} mainRank={"sectors"} />
+                          </div>
+                        );
+                      })
+                }
+              </div>
+            )
         )}
 
         {view === "cluster" && (

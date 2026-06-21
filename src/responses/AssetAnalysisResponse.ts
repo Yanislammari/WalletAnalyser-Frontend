@@ -1,8 +1,11 @@
 interface Sector {
   uuid: string;
   sector_name: string;
-  created_at: string;
-  updated_at: string;
+}
+
+interface Country {
+  uuid: string;
+  country_name: string;
 }
 
 interface Asset {
@@ -31,33 +34,32 @@ export interface AssetAnalysisResponse {
   sectorsData: SectorData[];
 }
 
-interface Country {
-  uuid: string;
-  country_name: string;
-  created_at: string;
-  updated_at: string;
+interface Cluster {
+  asset_uuid : string
+  cluster : number
 }
 
 interface DetailedAsset {
   uuid: string;
-  base_currency_uuid: string;
   asset_type: string;
   ticker_name: string;
-  official_name: string;
   display_name: string;
   sector_uuid: string;
   country_uuid: string;
-  created_at: string;
-  updated_at: string;
-  sector: Sector;
-  country: Country;
+  sector: Sector | null;
+  country: Country | null;
+  cluster : Cluster | null
 }
 
 export interface RankedAsset {
   asset: DetailedAsset;
-  rank: string;
-  rank_position : number;
-  perf: number;
+  perf : number
+  rank_sector : number | null
+  rank_sector_position : string | null
+  rank_country : number | null
+  rank_country_position : string | null
+  rank_cluster : number | null
+  rank_cluster_position : string | null
 }
 
 export interface AssetRankingResponse {
