@@ -62,8 +62,8 @@ export const StocksDetail = (rankAssetProps: RankedProps) => {
     })();
 
   const handleTagClick = (type: RankingType, position: number, id : string | number | undefined) => {
-    if(!id) {
-      toast.info("Cannot go there")
+    if(!id && id != 0) {
+      toast.info(`We dont have access to this`)
       return
     }
     const params = new URLSearchParams(location.search);
@@ -134,7 +134,7 @@ const AnalysisDetail: React.FC = () => {
   const [sectorMetaData, setSectorMetaData] = useState<AssetRankingResponse | null>(null)
   const { uuid } = useParams();
   const [searchParams] = useSearchParams();
-  const rawType = searchParams.get("type") ?? "sectors";
+  const rawType = searchParams.get("type") ?? RankingType.SECTORS;
   const type: RankingType = rawType as RankingType
   
   const offset = parseInt(searchParams.get("offset") ?? "0", 10);
@@ -185,7 +185,7 @@ const AnalysisDetail: React.FC = () => {
   if ( loading ) {
     return <Loading />
   }
-  else if ( hasError || sectorMetaData == null ) {
+  else if ( hasError || sectorMetaData == null || sectorMetaData.sectorsData == null ) {
     return <ErrorCardInApp
           iconBg="bg-gray-100"
           icon={<HiOutlineXCircle className="w-8 h-8 text-gray-400" />}

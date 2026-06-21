@@ -1,5 +1,5 @@
 import type { RankingType } from "../enums/RankType";
-import type { AssetAnalysisResponse, AssetRankingResponse, SectorNameResponse } from "../responses/AssetAnalysisResponse";
+import type { AssetAnalysisResponse, AssetRankingResponse, CountryNameResponse, SectorNameResponse } from "../responses/AssetAnalysisResponse";
 import BaseService from "./BaseService";
 
 class AnalysisService extends BaseService {
@@ -49,6 +49,12 @@ class AnalysisService extends BaseService {
 
   public async getSectorName(sector_uuid : string): Promise<SectorNameResponse>{
     return this.request<SectorNameResponse>(this.url + `name/${sector_uuid}`, {
+        method: "GET" 
+    });
+  }
+
+  public async getCountryName(country_uuid : string): Promise<CountryNameResponse>{
+    return this.request<CountryNameResponse>(this.url + `country_name/${country_uuid}`, {
         method: "GET" 
     });
   }

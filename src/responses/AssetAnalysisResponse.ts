@@ -79,3 +79,7 @@ export interface AssetPerformanceResponse {
 export interface SectorNameResponse {
   sectorName: string;
 }
+
+export interface CountryNameResponse {
+  countryName: string;
+}
