@@ -1,12 +1,9 @@
 import { useState } from "react";
+import type { RankedAsset } from "../responses/AssetAnalysisResponse";
 
 export interface UserStocksRankingProps {
   onClick : () => void,
-  ranking : string | null,
-  sector_name : string | null,
-  country_name : string | null,
-  perf52w : number | null,
-  display_name : string | null,
+  rankAsset: RankedAsset
 }
 
 export interface SectorCardDataProps {
@@ -111,41 +108,6 @@ const CardSectorPerf = (sector: SectorCardDataProps) => {
           </div>
         </>
       )}
-    </div>
-  );
-};
-
-export const CardUserStocksPerf = (userStocksRanking: UserStocksRankingProps) => {
-  const isPositive = (userStocksRanking?.perf52w ?? 0) >= 0;
-
-  return (
-    <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
-      <div className={`flex items-center gap-3 px-4 py-3 border-b cursor-pointer ${(userStocksRanking?.perf52w ?? 0) >= 0 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"}`}
-        onClick={(e) => { e.stopPropagation(); userStocksRanking.onClick()}}
-      >
-
-        {/* Name */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-zinc-900 truncate">{userStocksRanking.display_name ? userStocksRanking.display_name.length > 40 ? userStocksRanking.display_name.slice(0, 40) + "…" : userStocksRanking.display_name: ""}</p>
-          <p className="text-xs text-zinc-500 mt-1">{userStocksRanking.ranking}</p>
-        </div>
-
-        {/* Tags */}
-        <div className="flex items-center gap-6">
-          <span className="text-[13px] font-medium px-5 py-1 rounded border border-zinc-300 text-black bg-white w-36 text-center truncate">
-            {userStocksRanking?.country_name}
-          </span>
-          <span className="text-[13px] font-medium px-5 py-1 rounded border border-zinc-300 text-black bg-white w-36 text-center truncate">
-            {userStocksRanking?.sector_name}
-          </span>
-        </div>
-
-        {/* Perf */}
-        <span className={`text-sm font-semibold tabular-nums mr-5 ${isPositive ? "text-green-800" : "text-red-800"}`}>
-          {isPositive ? "+" : ""}{userStocksRanking?.perf52w ? userStocksRanking?.perf52w.toFixed(1) : "-"}%
-        </span>
-
-      </div>
     </div>
   );
 };

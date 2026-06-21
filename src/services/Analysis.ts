@@ -1,4 +1,5 @@
-import type { AssetAnalysisResponse, AssetRankingResponse, SectorNameResponse } from "../responses/AssetAnalysisResponse";
+import type { RankingType } from "../enums/RankType";
+import type { AssetAnalysisResponse, AssetRankingResponse, CountryNameResponse, SectorNameResponse } from "../responses/AssetAnalysisResponse";
 import BaseService from "./BaseService";
 
 class AnalysisService extends BaseService {
@@ -22,26 +23,38 @@ class AnalysisService extends BaseService {
     });
   }
 
+  public async getCountriesMetaData(): Promise<AssetAnalysisResponse> {
+    return this.request<AssetAnalysisResponse>(this.url + "countries", {
+        method: "GET" 
+    });
+  }
+
   public async getClustersMetaData(): Promise<AssetAnalysisResponse> {
     return this.request<AssetAnalysisResponse>(this.url + "clusters", {
         method: "GET" 
     });
   }
 
-  public async getUserStocksMetaData(): Promise<AssetRankingResponse>{
-    return this.request<AssetRankingResponse>(this.url + "user_stocks", {
+  public async getUserStocksMetaData(portolio_id : string): Promise<AssetRankingResponse>{
+    return this.request<AssetRankingResponse>(this.url + "user_stocks/"+portolio_id, {
         method: "GET" 
     });
   }
 
-  public async getWholeSectorsDetailMetaData(type : string, sector_uuid : string): Promise<AssetRankingResponse>{
-    return this.request<AssetRankingResponse>(this.url + `sector_detail?type=${type}&sector_uuid=${sector_uuid}`, {
+  public async getWholeSectorsDetailMetaData(type : RankingType, uuid : string): Promise<AssetRankingResponse>{
+    return this.request<AssetRankingResponse>(this.url + `sector_detail?type=${type}&uuid=${uuid}`, {
         method: "GET" 
     });
   }
 
   public async getSectorName(sector_uuid : string): Promise<SectorNameResponse>{
     return this.request<SectorNameResponse>(this.url + `name/${sector_uuid}`, {
+        method: "GET" 
+    });
+  }
+
+  public async getCountryName(country_uuid : string): Promise<CountryNameResponse>{
+    return this.request<CountryNameResponse>(this.url + `country_name/${country_uuid}`, {
         method: "GET" 
     });
   }
