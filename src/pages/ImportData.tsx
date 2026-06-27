@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useNavigate, type NavigateFunction } from "react-router";
-import { HiOutlinePencilSquare, HiOutlineTableCells } from "react-icons/hi2";
+import { HiOutlinePencilSquare, HiOutlineTableCells, HiOutlineArrowDownTray, HiOutlineLockClosed } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
 import PortfolioService from "../services/PortfolioService";
 import ImportService from "../services/ImportService";
@@ -39,8 +39,25 @@ const TEMPLATES_FORMATS: TemplateFormatUI[] = [
   }
 ];
 
+const ProPaywall: React.FC<{ feature: string }> = ({ feature }) => (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
+    <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mb-5">
+      <HiOutlineLockClosed size={32} className="text-purple-600" />
+    </div>
+    <h2 className="text-2xl font-bold text-gray-900 mb-2">{feature} is a Pro feature</h2>
+    <p className="text-gray-500 text-sm max-w-sm mb-6">
+      Upgrade to Pro to unlock CSV/Excel imports, full historical analysis, and much more.
+    </p>
+    <a href="/home/subscription" className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm transition-colors">
+      Upgrade to Pro — €29.99/mo
+    </a>
+  </div>
+);
+
 const ImportData: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isPro } = useAuth();
+
+  if (!isPro) return <ProPaywall feature="Import Data" />;
   const navigate: NavigateFunction = useNavigate();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);

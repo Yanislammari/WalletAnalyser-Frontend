@@ -14,7 +14,8 @@ const pageTitles: Record<string, string> = {
   "/home/import": "Import Data",
   "/home/portfolio": "Portfolio",
   "/home/badges": "Badges",
-  "/home/analysis": "Analysis"
+  "/home/analysis": "Analysis",
+  "/home/comparisons": "Comparisons"
 };
 
 const TRANSACTION_RE: RegExp = /^\/home\/portfolio\/([^/]+)\/transactions/;
@@ -22,9 +23,10 @@ const ANALYSIS_DETAIL_RE: RegExp = /^\/home\/analysis\/([^/]+)/;
 
 interface NavbarProps {
   onMenuClick: () => void;
+  sidebarCollapsed?: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = (props: NavbarProps) => {
+const Navbar: React.FC<NavbarProps> = (props) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -35,7 +37,7 @@ const Navbar: React.FC<NavbarProps> = (props: NavbarProps) => {
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [portfolioName, setPortfolioName] = useState<string | null>(null);
 
-  const showPortfolioSelect = location.pathname !== "/home/portfolio";
+  const showPortfolioSelect = location.pathname !== "/home/portfolio" && location.pathname !== "/home/comparisons";
   const [analysisClusterName, setAnalysisClusterName] = useState<string | null>(null);
   const avatarRef: React.RefObject<HTMLButtonElement | null> = useRef<HTMLButtonElement | null>(null);
 
@@ -92,7 +94,7 @@ const Navbar: React.FC<NavbarProps> = (props: NavbarProps) => {
 
   return (
     <div>
-      <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 z-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center px-4 sm:px-6 gap-3">
+      <header className={`fixed top-0 left-0 ${props.sidebarCollapsed ? "lg:left-16" : "lg:left-64"} right-0 h-16 z-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center px-4 sm:px-6 gap-3 transition-all duration-300`}>
         <button
           onClick={props.onMenuClick}
           className="lg:hidden w-9 h-9 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors cursor-pointer shrink-0"

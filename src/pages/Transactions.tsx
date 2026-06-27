@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams, type NavigateFunction } from "react-router";
 import { toast } from "sonner";
 import { HiOutlineArrowLeft, HiOutlinePlus } from "react-icons/hi2";
+import PortfolioNotFound from "./PortfolioNotFound";
 import PortfolioService from "../services/PortfolioService";
 import CurrencyService from "../services/CurrencyService";
 import type { Portfolio } from "../models/Portfolio";
@@ -43,9 +44,16 @@ const Transactions: React.FC = () => {
   const [reloadTrigger, setReloadTrigger] = useState<number>(0);
   const [portfolioTotal, setPortfolioTotal] = useState<PortfolioTotalResponse | null>(null);
   const [totalLoading, setTotalLoading] = useState<boolean>(false);
+  const [portfolioNotFound, setPortfolioNotFound] = useState<boolean>(false);
   const buyDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
   const sellDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
   const dividendDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
+  const editBuyDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
+  const editSellDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
+  const editDividendDialogRef: React.RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
+  const [editingBuy, setEditingBuy] = useState<AssetBuyResponse | null>(null);
+  const [editingSell, setEditingSell] = useState<AssetSellResponse | null>(null);
+  const [editingDividend, setEditingDividend] = useState<AssetDividendResponse | null>(null);
 
   const parseTab = (raw: string | null): TabType => {
     const upper: string | undefined = raw?.toUpperCase();
@@ -111,7 +119,9 @@ const Transactions: React.FC = () => {
         setCompanies(fetchedCompanies);
       }
       catch {
-        toast.error("Failed to load portfolio data.");
+        // Any failure loading the portfolio (404, malformed ID, 500) → show not-found state.
+        // There is no point displaying an empty transactions page without a valid portfolio.
+        setPortfolioNotFound(true);
       }
     };
 
@@ -150,7 +160,7 @@ const Transactions: React.FC = () => {
         const [buyResult, sellResult, dividendResult] = await Promise.all([
           portfolioService.getBuysByPortfolioId(portfolioId, buyPage, PAGE_SIZE, dateFrom || undefined, dateTo || undefined, selectedCompany || undefined),
           portfolioService.getSellsByPortfolioId(portfolioId, sellPage, PAGE_SIZE, dateFrom || undefined, dateTo || undefined, selectedCompany || undefined),
-          portfolioService.getDividendsByPortfolioId(portfolioId, dividendPage, PAGE_SIZE, dateFrom || undefined, dateTo || undefined),
+          portfolioService.getDividendsByPortfolioId(portfolioId, dividendPage, PAGE_SIZE, dateFrom || undefined, dateTo || undefined, selectedCompany || undefined),
         ]);
 
         setBuys(buyResult.data);
@@ -167,7 +177,12 @@ const Transactions: React.FC = () => {
         }
       }
       catch {
-        toast.error("Failed to load transactions.");
+        // Only show a toast when the portfolio itself loaded fine — if the portfolio
+        // was not found, loadStatic already set portfolioNotFound and the toast
+        // would be confusing noise on top of the not-found UI.
+        if (!portfolioNotFound) {
+          toast.error("Failed to load transactions.");
+        }
       }
       finally {
         setLoading(false);
@@ -222,6 +237,21 @@ const Transactions: React.FC = () => {
     setReloadTrigger((prev) => prev + 1);
   };
 
+  const handleEditBuy = (buy: AssetBuyResponse): void => {
+    setEditingBuy(buy);
+    setTimeout(() => editBuyDialogRef.current?.showModal(), 0);
+  };
+
+  const handleEditSell = (sell: AssetSellResponse): void => {
+    setEditingSell(sell);
+    setTimeout(() => editSellDialogRef.current?.showModal(), 0);
+  };
+
+  const handleEditDividend = (dividend: AssetDividendResponse): void => {
+    setEditingDividend(dividend);
+    setTimeout(() => editDividendDialogRef.current?.showModal(), 0);
+  };
+
   const handleBuySuccess = (buy: AssetBuyResponse): void => {
     setHasAnyBuys(true);
     if (buy.companyName && !companies.includes(buy.companyName)) {
@@ -256,6 +286,10 @@ const Transactions: React.FC = () => {
       dividendDialogRef.current?.showModal();
     }
   };
+
+  if (portfolioNotFound) {
+    return <PortfolioNotFound />;
+  }
 
   return (
     <div className="space-y-5">
@@ -380,6 +414,9 @@ const Transactions: React.FC = () => {
         onDeleteBuy={handleDeleteBuy}
         onDeleteSell={handleDeleteSell}
         onDeleteDividend={handleDeleteDividend}
+        onEditBuy={handleEditBuy}
+        onEditSell={handleEditSell}
+        onEditDividend={handleEditDividend}
         currencyName={(uuid) => currencies.find((c) => c.uuid === uuid)?.currencyName ?? uuid}
         companies={companies}
         selectedCompany={selectedCompany}
@@ -412,6 +449,29 @@ const Transactions: React.FC = () => {
             currencies={currencies}
             portfolioId={portfolioId}
             onSuccess={handleDividendSuccess}
+          />
+          {/* Edit modals */}
+          <AddNewBuyModal
+            dialogRef={editBuyDialogRef}
+            currencies={currencies}
+            portfolioId={portfolioId}
+            onSuccess={() => setReloadTrigger((p) => p + 1)}
+            editTransaction={editingBuy ?? undefined}
+          />
+          <AddNewSellModal
+            dialogRef={editSellDialogRef}
+            currencies={currencies}
+            portfolioId={portfolioId}
+            ownedCompanies={companies}
+            onSuccess={() => setReloadTrigger((p) => p + 1)}
+            editTransaction={editingSell ?? undefined}
+          />
+          <AddNewDividendModal
+            dialogRef={editDividendDialogRef}
+            currencies={currencies}
+            portfolioId={portfolioId}
+            onSuccess={() => setReloadTrigger((p) => p + 1)}
+            editTransaction={editingDividend ?? undefined}
           />
         </div>
       )}

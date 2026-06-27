@@ -18,6 +18,17 @@ import PrivateRoute from "./guards/PrivateRoute";
 import Badges from "./pages/Badges";
 import Analysis from "./pages/Analysis";
 import AnalysisDetail from "./pages/AnalysisDetail";
+import Comparisons from "./pages/Comparisons";
+import Subscription from "./pages/Subscription";
+import NotFound from "./pages/NotFound";
+import NotFoundPage from "./pages/NotFoundPage";
+import { useParams } from "react-router";
+
+/** Redirect /home/portfolio/:id → /home/portfolio/:id/transactions?tab=buys */
+const PortfolioRedirect: React.FC = () => {
+  const { portfolioId } = useParams<{ portfolioId: string }>();
+  return <Navigate to={`/home/portfolio/${portfolioId}/transactions?tab=buys`} replace />;
+};
 
 const AppRoutes: React.FC = () => {
   return (
@@ -40,13 +51,20 @@ const AppRoutes: React.FC = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="metrics" element={<Metrics />} />
           <Route path="portfolio" element={<Portfolios />} />
+          <Route path="portfolio/:portfolioId" element={<PortfolioRedirect />} />
           <Route path="portfolio/:portfolioId/transactions" element={<Transactions />} />
           <Route path="import" element={<ImportData />} />
           <Route path="badges" element={<Badges/>} />
           <Route path="analysis" element={<Analysis />} />
           <Route path="analysis/:uuid" element={<AnalysisDetail/>} />
+          <Route path="comparisons" element={<Comparisons />} />
+          <Route path="subscription" element={<Subscription />} />
+          {/* Catch-all inside the authenticated layout (has sidebar + navbar) */}
+          <Route path="*" element={<NotFound />} />
         </Route>
-        
+
+        {/* Global catch-all — unknown public URLs (no layout) */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
