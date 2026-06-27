@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../providers/AuthProvider";
 import PortfolioService from "../services/PortfolioService";
 import ProfileBlock from "./ProfileBlock";
@@ -8,6 +8,7 @@ import PortfolioSelect from "./PortfolioSelect";
 import AnalysisService from "../services/Analysis";
 import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 import { clusterName } from "../utils/ClusterNaming";
+import { RankingType } from "../enums/RankType";
 
 const pageTitles: Record<string, string> = {
   "/home/dashboard": "Dashboard",
@@ -46,6 +47,9 @@ const Navbar: React.FC<NavbarProps> = (props) => {
 
   const analysisDetailMatch = ANALYSIS_DETAIL_RE.exec(location.pathname);
   const analysisDetailId = analysisDetailMatch?.[1] ?? null;
+  const searchParams = new URLSearchParams(location.search);
+  const analysisType = searchParams.get("type") ?? RankingType.SECTORS;
+  
 
   useEffect(() => {
     if (!portfolioId) {
@@ -64,7 +68,13 @@ const Navbar: React.FC<NavbarProps> = (props) => {
       setAnalysisClusterName(clusterName(Number(analysisDetailId)))
     }
     else {
-      analysisService.getSectorName(analysisDetailId).then((p) => setAnalysisClusterName(p.sectorName)).catch(() => setPortfolioName(null));
+      console.log("TYPE",analysisType)
+      if(analysisType === RankingType.SECTORS) {
+        analysisService.getSectorName(analysisDetailId).then((p) => setAnalysisClusterName(p.sectorName)).catch(() => setPortfolioName(null));
+      }
+      else {
+        analysisService.getCountryName(analysisDetailId).then((p) => setAnalysisClusterName(p.countryName)).catch(() => setPortfolioName(null));
+      }
     }
   }, [analysisDetailId]);
 

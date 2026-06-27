@@ -5,6 +5,8 @@ import AuthService from "../services/AuthService";
 import SubscriptionService from "../services/SubscriptionService";
 import type { RegisterPayload } from "../payloads/RegisterPayload";
 import type { AuthResponse } from "../responses/AuthResponse";
+import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
@@ -45,6 +47,8 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderProps) => {
   const authService = AuthService.getInstance();
   const subscriptionService = SubscriptionService.getInstance();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [user, setUser] = useState<User | null>(() => {
     try {
@@ -173,11 +177,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
     setUser(null);
     setToken(null);
     setIsAuthLoading(false);
+    const PUBLIC_PATHS = ["/", "/main", "/login", "/register"];
+    console.log(location.pathname)
+    console.log(!PUBLIC_PATHS.includes(location.pathname))
+    if (!PUBLIC_PATHS.includes(location.pathname)) {
+      toast.info("Your session has expired please login again")
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("justLoggedIn");
+      sessionStorage.removeItem("showActivationBanner");
+      navigate("/login", { replace: true, state: { from: location } });
+    }
+  }, []);
 
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("justLoggedIn");
-    sessionStorage.removeItem("showActivationBanner");
+  useEffect(() => {
+    const handler = () => logout();
+    window.addEventListener("auth:logout", handler);
+    return () => window.removeEventListener("auth:logout", handler);
   }, []);
 
   // Refresh subscription status from backend (called after Stripe redirect)

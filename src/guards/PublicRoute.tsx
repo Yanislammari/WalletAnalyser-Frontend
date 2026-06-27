@@ -1,5 +1,5 @@
 import type React from "react";
-import { Navigate } from "react-router";
+import { Navigate, useLocation } from "react-router";
 import { useAuth } from "../providers/AuthProvider";
 import AuthLoading from "../components/AuthLoading";
 
@@ -9,6 +9,8 @@ interface PublicRouteProps {
 
 const PublicRoute: React.FC<PublicRouteProps> = (props: PublicRouteProps) => {
   const { isAuthenticated, isAuthLoading } = useAuth();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/home/dashboard";
 
   if (isAuthLoading) {
     return (
@@ -17,7 +19,7 @@ const PublicRoute: React.FC<PublicRouteProps> = (props: PublicRouteProps) => {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/home/dashboard" replace />;
+    return <Navigate to={from} replace />;
   }
 
   return <>{props.children}</>;
