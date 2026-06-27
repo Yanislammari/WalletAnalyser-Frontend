@@ -61,7 +61,7 @@ const HomeLayout: React.FC = () => {
 
   return (
     <SelectedPortfolioProvider>
-    <div className="min-h-screen bg-[#f5f4fb]">
+    <div className="min-h-screen layout-bg">
       {sidebarOpen && (
         <div
           className="lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"

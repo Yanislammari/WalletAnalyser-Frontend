@@ -5,6 +5,7 @@ import { HiOutlineBriefcase } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
 import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 import PortfolioService from "../services/PortfolioService";
+
 import ActivationModal from "../components/ActivationModal";
 import AccountActivatedModal from "../components/AccountActivatedModal";
 import DmStatCard from "../components/DmStatCard";
@@ -12,10 +13,8 @@ import DmLineChart from "../components/DmLineChart";
 import SectorBreakdown from "../components/SectorBreakdown";
 import MetricStrip from "../components/MetricStrip";
 import type { DmStatUI } from "../models/UI/DmStatUI";
-import type { MetricResponse } from "../responses/MetricResponse";
-import type { PortfolioTotalResponse } from "../responses/PortfolioTotalResponse";
-import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 import type { MetricResponse, MonthlyDataPoint } from "../responses/MetricResponse";
+import type { PortfolioTotalResponse } from "../responses/PortfolioTotalResponse";
 import NoPortfolioSelected from "../components/Error/NoPortfolioSelected";
 
 const portfolioService = PortfolioService.getInstance();
@@ -141,48 +140,6 @@ const DashboardPage: React.FC = () => {
               + Add transaction
             </button>
           </div>
-      {/* No portfolio state */}
-      {portfoliosLoaded && !selectedPortfolioId && (
-        <NoPortfolioSelected />
-      )}
-
-      {/* Stat cards */}
-      {portfoliosLoaded && selectedPortfolioId && loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)}
-        </div>
-      ) : metrics ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard
-            label="Net Gain"
-            value={fmt(metrics.gain, cy)}
-            sub={fmtPct(metrics.gainPercent)}
-            positive={isPos(metrics.gain)}
-            icon={isPos(metrics.gain) ? <HiOutlineArrowTrendingUp size={16} /> : <HiOutlineArrowTrendingDown size={16} />}
-            sparkline={metrics.monthlyData}
-          />
-          <StatCard
-            label="Total Invested"
-            value={fmt(metrics.totalInvested, cy)}
-            sub={`Since ${metrics.firstBuyDate ?? "—"}`}
-            neutral
-            icon={<HiOutlineChartBar size={16} />}
-          />
-          <StatCard
-            label="Sharpe Ratio"
-            value={metrics.sharpeRatio.toFixed(2)}
-            sub={`CAGR ${fmtPct(metrics.cagr)} / yr`}
-            positive={metrics.sharpeRatio >= 1}
-            neutral={metrics.sharpeRatio > 0 && metrics.sharpeRatio < 1}
-            icon={<HiOutlineSparkles size={16} />}
-          />
-          <StatCard
-            label="Volatility"
-            value={`${metrics.volatility.toFixed(1)}%`}
-            sub="annualized"
-            neutral
-            icon={<HiOutlineScale size={16} />}
-          />
         </div>
 
         {/* No portfolio */}

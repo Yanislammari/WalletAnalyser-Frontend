@@ -7,7 +7,7 @@ import ForgottenPassword from "./pages/ForgottenPassword";
 import ResetPassword from "./pages/ResetPassword";
 import LandingPage from "./pages/LandingPage";
 import HomeLayout from "./layouts/HomeLayout";
-import Dashboard from "./pages/Dashboard";
+import DashboardPage from "./pages/Dashboard";
 import Metrics from "./pages/Metrics";
 import ImportData from "./pages/ImportData";
 import Portfolios from "./pages/Portfolios";
@@ -49,7 +49,7 @@ const AppRoutes: React.FC = () => {
           {/* Private Routes - redirect in Landing Page if user is not connected */}
           <Route path="/home" element={<PrivateRoute><HomeLayout /></PrivateRoute>}>
             <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="dashboard" element={<DashboardPage />} />
             <Route path="metrics" element={<Metrics />} />
             <Route path="portfolio" element={<Portfolios />} />
             <Route path="portfolio/:portfolioId" element={<PortfolioRedirect />} />

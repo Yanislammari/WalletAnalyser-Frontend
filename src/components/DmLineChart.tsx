@@ -65,8 +65,7 @@ const DmLineChart: React.FC<DmLineChartProps> = ({ data, currency }) => {
 
   // Portfolio value = invested + netGain (cumulative returns at each month)
   const portfolioVals = sliced.map(d => d.invested + d.netGain);
-  const investedVals  = sliced.map(d => d.invested);
-  const allVals       = [...portfolioVals, ...investedVals];
+  const allVals       = [...portfolioVals];
   const minV          = Math.min(...allVals);
   const maxV          = Math.max(...allVals);
   const range         = maxV - minV || 1;
@@ -76,7 +75,6 @@ const DmLineChart: React.FC<DmLineChartProps> = ({ data, currency }) => {
   const toY = (v: number) => PAD.top + cH - ((v - (minV - pad)) / (range + 2 * pad)) * cH;
 
   const pCoords: [number, number][] = portfolioVals.map((v, i) => [toX(i), toY(v)]);
-  const iCoords: [number, number][] = investedVals.map((v, i)  => [toX(i), toY(v)]);
 
   const ptStr = (cs: [number, number][]) => cs.map(([x, y]) => `${x},${y}`).join(" ");
 
@@ -162,9 +160,6 @@ const DmLineChart: React.FC<DmLineChartProps> = ({ data, currency }) => {
         {/* Area fill */}
         <path d={areaPath} fill="url(#areaGrad)" />
 
-        {/* Cost basis (dashed) */}
-        <polyline points={ptStr(iCoords)} fill="none" stroke="#e5e7eb" strokeWidth="1.5" strokeDasharray="4 3" strokeLinejoin="round" />
-
         {/* Portfolio value line */}
         <polyline points={ptStr(pCoords)} fill="none" stroke={lineColor} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
 
@@ -183,7 +178,6 @@ const DmLineChart: React.FC<DmLineChartProps> = ({ data, currency }) => {
           <>
             <line x1={toX(h)} x2={toX(h)} y1={PAD.top} y2={PAD.top + cH} stroke={lineColor} strokeWidth="1" strokeDasharray="3 2" opacity="0.4" />
             <circle cx={pCoords[h][0]} cy={pCoords[h][1]} r="4" fill={lineColor} />
-            <circle cx={iCoords[h][0]} cy={iCoords[h][1]} r="3" fill="white" stroke="#e5e7eb" strokeWidth="1.5" />
           </>
         )}
       </svg>
@@ -193,10 +187,6 @@ const DmLineChart: React.FC<DmLineChartProps> = ({ data, currency }) => {
         <div className="flex items-center gap-1.5">
           <div className="w-5 h-0.5 rounded" style={{ backgroundColor: lineColor }} />
           <span className="text-[9px] text-gray-400">Net returns</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <svg width="18" height="5"><line x1="0" y1="2.5" x2="18" y2="2.5" stroke="#e5e7eb" strokeWidth="1.5" strokeDasharray="4 3" /></svg>
-          <span className="text-[9px] text-gray-400">Cost basis</span>
         </div>
       </div>
     </>

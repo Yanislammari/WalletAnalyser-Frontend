@@ -171,9 +171,9 @@ const Analysis: React.FC = () => {
             ? <NoPortfolioSelected />
             : (
               <div className="mt-6 bg-white border border-zinc-200 rounded-xl">
-                {userStocks == null || userStocks.sectorsData.filter(p => p.asset.display_name?.toLowerCase()?.includes(search.toLowerCase())).length === 0
+                {userStocks == null || (userStocks.sectorsData ?? []).filter(p => p.asset.display_name?.toLowerCase()?.includes(search.toLowerCase())).length === 0
                   ? <p className="text-sm text-zinc-400 text-center py-6">No stocks found</p>
-                  : userStocks.sectorsData
+                  : (userStocks.sectorsData ?? [])
                       .filter(p => p.asset.display_name?.toLowerCase()?.includes(search.toLowerCase()))
                       .map(p => {
                         return (

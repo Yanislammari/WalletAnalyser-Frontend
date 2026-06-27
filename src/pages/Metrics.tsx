@@ -275,6 +275,11 @@ const Metrics: React.FC = () => {
   // Monthly data is already period-scoped from the backend — use as-is for charts
   const filteredMonthly = useMemo(() => metrics?.monthlyData ?? [], [metrics]);
 
+  // Realized metrics (Realized P&L, CAGR, TWR, XIRR, Volatility, Sharpe, Sortino)
+  // are only meaningful when the user has at least one sell transaction.
+  // totalReturned = totalSells + totalDividends — if equal to totalDividends → no sells.
+  const hasSells = (metrics?.totalReturned ?? 0) - (metrics?.totalDividends ?? 0) > 0.01;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -376,58 +381,15 @@ const Metrics: React.FC = () => {
             </div>
           </div>
 
-          {/* ── Returns ────────────────────────────────────────────────────── */}
+          {/* ── Dividend income (always shown) ─────────────────────────────── */}
           <div>
-            <SectionHeader title="Returns" subtitle="How much value you created from your investments" />
+            <SectionHeader title="Income" subtitle="Dividends received from your holdings" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
-              <MetricCard
-                label="Realized P&L"
-                value={fmtPct(metrics.gainPercent)}
-                subtitle={`${metrics.gain >= 0 ? "+" : ""}${fmt(metrics.gain, cy, 0)} · cash flows only`}
-                description="Return on capital computed from realized cash flows only: (sells + dividends − buys) / buys × 100. Does NOT include the current market value of positions still held. See the Total P&L banner above for the full picture."
-                icon={pos(metrics.gainPercent) ? <HiOutlineArrowTrendingUp size={18} /> : <HiOutlineArrowTrendingDown size={18} />}
-                positive={pos(metrics.gainPercent)}
-              />
-              <MetricCard
-                label="CAGR"
-                value={fmtPct(metrics.cagr)}
-                subtitle="per year, compounded"
-                description="Compound Annual Growth Rate — the equivalent fixed annual return that would take your invested capital to the realized return over the same period. Meaningful only with 1+ year of history."
-                icon={<HiOutlineChartBar size={18} />}
-                positive={pos(metrics.cagr)}
-              />
-              <MetricCard
-                label="TWR"
-                value={fmtPct(metrics.twr)}
-                subtitle={`${fmtPct(metrics.twrAnnualized)} / yr`}
-                description="Time-Weighted Return — chains monthly sub-period returns together so new deposits don't distort the measure. Better than simple gain% when cash flows are irregular. Annualized = equivalent fixed yearly rate."
-                icon={<HiOutlineArrowPath size={18} />}
-                positive={pos(metrics.twr)}
-                tag="chain-linked"
-              />
-              <MetricCard
-                label="Log Return (TWR)"
-                value={`${metrics.logTwr.toFixed(1)}%`}
-                subtitle="continuously compounded"
-                description="ln(1 + TWR/100) × 100. The continuously compounded equivalent of the TWR. Useful for comparing returns across periods because log returns are additive over time."
-                icon={<HiOutlineCalculator size={18} />}
-                positive={pos(metrics.logTwr)}
-                tag="continuous"
-              />
-              <MetricCard
-                label="XIRR"
-                value={fmtPct(metrics.xirr)}
-                subtitle="per year, time-weighted cash flows"
-                description="Internal Rate of Return accounting for the exact dates of every buy, sell, and dividend. Finds the annual rate r such that the NPV of all cash flows equals zero. More accurate than CAGR when flows are irregular."
-                icon={<HiOutlineCalculator size={18} />}
-                positive={pos(metrics.xirr)}
-                tag="IRR"
-              />
               <MetricCard
                 label="Dividend Income"
                 value={fmt(metrics.totalDividends, cy, 0)}
                 subtitle={`Yield: ${metrics.dividendYield.toFixed(2)}%`}
-                description="Total dividends received, converted to your target currency. Yield = dividends ÷ total invested. Dividends are included in gain calculations above."
+                description="Total dividends received, converted to your target currency. Yield = dividends ÷ total invested."
                 icon={<HiOutlineBanknotes size={18} />}
                 positive={metrics.totalDividends > 0}
                 neutral={metrics.totalDividends === 0}
@@ -435,84 +397,121 @@ const Metrics: React.FC = () => {
             </div>
           </div>
 
-          {/* ── Risk ───────────────────────────────────────────────────────── */}
-          <div>
-            <SectionHeader title="Risk" subtitle="How much your portfolio fluctuates and how well you are compensated for it" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
-              <MetricCard
-                label="Volatility"
-                value={`${metrics.volatility.toFixed(1)}%`}
-                subtitle="annualized, monthly std dev"
-                description="Standard deviation of monthly returns × √12. Measures how much your realized returns swing up and down each month. Lower = more stable. Computed only from cash flow months, not calendar gaps."
-                icon={<HiOutlineScale size={18} />}
-                neutral
-              />
-              <MetricCard
-                label="Sharpe Ratio"
-                value={metrics.sharpeRatio.toFixed(1)}
-                subtitle={`(CAGR − 4% rf) ÷ volatility`}
-                description="Risk-adjusted return: (CAGR − risk-free rate) ÷ annualized volatility. Above 1 = good, above 2 = excellent, below 0 = risk isn't compensated. Uses 4% as the risk-free rate (10-year bond approximation)."
-                icon={<HiOutlineSparkles size={18} />}
-                positive={metrics.sharpeRatio >= 1}
-                neutral={metrics.sharpeRatio > 0 && metrics.sharpeRatio < 1}
-                tag="risk-adj."
-              />
-              <MetricCard
-                label="Sortino Ratio"
-                value={metrics.sortinoRatio.toFixed(1)}
-                subtitle="downside deviation only"
-                description="Like Sharpe but divides by downside deviation — only months where return is below the risk-free rate count as 'risk'. Penalizes harmful volatility, not upside swings. Higher is better."
-                icon={<HiOutlineSparkles size={18} />}
-                positive={metrics.sortinoRatio >= 1}
-                neutral={metrics.sortinoRatio > 0 && metrics.sortinoRatio < 1}
-                tag="risk-adj."
-              />
-              <MetricCard
-                label="Period"
-                value={metrics.firstBuyDate ? formatPeriod(metrics.firstBuyDate) : "—"}
-                subtitle={metrics.firstBuyDate ? `Since ${metrics.firstBuyDate}` : "No buys yet"}
-                description="Time window of the selected period. The longer the period, the more reliable all other metrics become — especially CAGR, Sharpe, and Sortino."
-                icon={<HiOutlineClock size={18} />}
-                neutral
-              />
-              <MetricCard
-                label="Max Drawdown"
-                value={`-${metrics.maxDrawdown.toFixed(1)}%`}
-                subtitle={metrics.maxDrawdownDurationMonths > 0 ? `${metrics.maxDrawdownDurationMonths} month${metrics.maxDrawdownDurationMonths !== 1 ? "s" : ""} duration` : "—"}
-                description="The largest peak-to-trough decline in your realized portfolio value (invested + net gain curve). Measures worst-case loss before a new high was reached. Based on monthly cash-flow data."
-                icon={<HiOutlineArrowTrendingDown size={18} />}
-                positive={metrics.maxDrawdown === 0}
-                neutral={metrics.maxDrawdown > 0 && metrics.maxDrawdown < 10}
-              />
-            </div>
-          </div>
-
-          {/* ── Gain chart ─────────────────────────────────────────────────── */}
-          {filteredMonthly.length > 1 && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-              <SectionHeader
-                title="Cumulative net gain over time"
-                subtitle="Bars above zero = profit · below zero = loss"
-              />
-              <GainChart data={filteredMonthly} currency={cy} />
-            </div>
-          )}
-
-          {/* ── Drawdown chart ─────────────────────────────────────────────── */}
-          {filteredMonthly.length > 2 && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-              <SectionHeader
-                title="Drawdown"
-                subtitle="% below running peak in realized portfolio value — deeper = greater loss before recovery"
-              />
-              <div className="mt-3">
-                <DrawdownChart data={filteredMonthly} />
+          {/* ── Returns + Risk — only shown when there are sell transactions ── */}
+          {hasSells ? (
+            <>
+              <div>
+                <SectionHeader title="Returns" subtitle="How much value you created from your investments" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
+                  <MetricCard
+                    label="Realized P&L"
+                    value={fmtPct(metrics.gainPercent)}
+                    subtitle={`${metrics.gain >= 0 ? "+" : ""}${fmt(metrics.gain, cy, 0)} · cash flows only`}
+                    description="Return on capital computed from realized cash flows only: (sells + dividends − buys) / buys × 100. Does NOT include the current market value of positions still held."
+                    icon={pos(metrics.gainPercent) ? <HiOutlineArrowTrendingUp size={18} /> : <HiOutlineArrowTrendingDown size={18} />}
+                    positive={pos(metrics.gainPercent)}
+                  />
+                  <MetricCard
+                    label="CAGR"
+                    value={fmtPct(metrics.cagr)}
+                    subtitle="per year, compounded"
+                    description="Compound Annual Growth Rate — the equivalent fixed annual return that would take your invested capital to the realized return over the same period. Meaningful only with 1+ year of history."
+                    icon={<HiOutlineChartBar size={18} />}
+                    positive={pos(metrics.cagr)}
+                  />
+                  <MetricCard
+                    label="TWR"
+                    value={fmtPct(metrics.twr)}
+                    subtitle={`${fmtPct(metrics.twrAnnualized)} / yr`}
+                    description="Time-Weighted Return — chains monthly sub-period returns together so new deposits don't distort the measure. Annualized = equivalent fixed yearly rate."
+                    icon={<HiOutlineArrowPath size={18} />}
+                    positive={pos(metrics.twr)}
+                    tag="chain-linked"
+                  />
+                  <MetricCard
+                    label="Log Return (TWR)"
+                    value={`${metrics.logTwr.toFixed(1)}%`}
+                    subtitle="continuously compounded"
+                    description="ln(1 + TWR/100) × 100. The continuously compounded equivalent of the TWR. Log returns are additive over time."
+                    icon={<HiOutlineCalculator size={18} />}
+                    positive={pos(metrics.logTwr)}
+                    tag="continuous"
+                  />
+                  <MetricCard
+                    label="XIRR"
+                    value={fmtPct(metrics.xirr)}
+                    subtitle="per year, time-weighted cash flows"
+                    description="Internal Rate of Return accounting for the exact dates of every buy, sell, and dividend. More accurate than CAGR when flows are irregular."
+                    icon={<HiOutlineCalculator size={18} />}
+                    positive={pos(metrics.xirr)}
+                    tag="IRR"
+                  />
+                </div>
               </div>
-              <div className="mt-3 flex items-center gap-6 text-xs text-gray-500">
-                <span>Max: <strong className="text-rose-500">-{metrics.maxDrawdown.toFixed(1)}%</strong></span>
-                {metrics.maxDrawdownDurationMonths > 0 && (
-                  <span>Duration: <strong>{metrics.maxDrawdownDurationMonths} month{metrics.maxDrawdownDurationMonths !== 1 ? "s" : ""}</strong></span>
-                )}
+
+              <div>
+                <SectionHeader title="Risk" subtitle="How much your portfolio fluctuates and how well you are compensated for it" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
+                  <MetricCard
+                    label="Volatility"
+                    value={`${metrics.volatility.toFixed(1)}%`}
+                    subtitle="annualized, monthly std dev"
+                    description="Standard deviation of monthly returns × √12. Measures how much your realized returns swing up and down each month. Lower = more stable."
+                    icon={<HiOutlineScale size={18} />}
+                    neutral
+                  />
+                  <MetricCard
+                    label="Sharpe Ratio"
+                    value={metrics.sharpeRatio.toFixed(1)}
+                    subtitle="(TWR − 4% rf) ÷ volatility"
+                    description="Risk-adjusted return: (annualized TWR − risk-free rate) ÷ annualized volatility. Above 1 = good, above 2 = excellent, below 0 = risk isn't compensated."
+                    icon={<HiOutlineSparkles size={18} />}
+                    positive={metrics.sharpeRatio >= 1}
+                    neutral={metrics.sharpeRatio > 0 && metrics.sharpeRatio < 1}
+                    tag="risk-adj."
+                  />
+                  <MetricCard
+                    label="Sortino Ratio"
+                    value={metrics.sortinoRatio.toFixed(1)}
+                    subtitle="downside deviation only"
+                    description="Like Sharpe but divides by downside deviation — only months below the risk-free rate count as 'risk'. Penalizes harmful volatility, not upside swings."
+                    icon={<HiOutlineSparkles size={18} />}
+                    positive={metrics.sortinoRatio >= 1}
+                    neutral={metrics.sortinoRatio > 0 && metrics.sortinoRatio < 1}
+                    tag="risk-adj."
+                  />
+                  <MetricCard
+                    label="Period"
+                    value={metrics.firstBuyDate ? formatPeriod(metrics.firstBuyDate) : "—"}
+                    subtitle={metrics.firstBuyDate ? `Since ${metrics.firstBuyDate}` : "No buys yet"}
+                    description="Time window of the selected period. The longer the period, the more reliable all other metrics become — especially CAGR, Sharpe, and Sortino."
+                    icon={<HiOutlineClock size={18} />}
+                    neutral
+                  />
+                  <MetricCard
+                    label="Max Drawdown"
+                    value={`-${metrics.maxDrawdown.toFixed(1)}%`}
+                    subtitle={metrics.maxDrawdownDurationMonths > 0 ? `${metrics.maxDrawdownDurationMonths} month${metrics.maxDrawdownDurationMonths !== 1 ? "s" : ""} duration` : "—"}
+                    description="The largest peak-to-trough decline in your realized portfolio value. Measures worst-case loss before a new high was reached."
+                    icon={<HiOutlineArrowTrendingDown size={18} />}
+                    positive={metrics.maxDrawdown === 0}
+                    neutral={metrics.maxDrawdown > 0 && metrics.maxDrawdown < 10}
+                  />
+                </div>
+              </div>
+            </>
+          ) : (
+            /* ── No sells placeholder ──────────────────────────────────────── */
+            <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center">
+                <HiOutlineArrowTrendingUp className="text-purple-400" size={24} />
+              </div>
+              <div>
+                <p className="text-gray-800 font-semibold text-sm">Sell transactions required</p>
+                <p className="text-gray-400 text-xs mt-1 max-w-xs leading-relaxed">
+                  Realized P&L, CAGR, TWR, XIRR, Volatility, Sharpe and Sortino are computed from
+                  cash flows only. Add at least one sell transaction to unlock these metrics.
+                </p>
               </div>
             </div>
           )}
@@ -522,11 +521,9 @@ const Metrics: React.FC = () => {
             <HiOutlineInformationCircle className="text-amber-500 shrink-0 mt-0.5" size={16} />
             <p className="text-xs text-amber-700 leading-relaxed">
               <strong>Total P&L, CAGR, and XIRR</strong> (banner above) include the current market value
-              of held positions — this is the true economic performance. <strong>Realized P&L</strong> below
-              counts only cash already received (sells + dividends). <strong>TWR, Sharpe, Sortino, and
-              Volatility</strong> are computed from cash-flow data only to avoid distorting the monthly
-              return series with a single end-of-period mark-to-market spike.
-              All amounts are converted to {cy}.
+              of held positions — this is the true economic performance.
+              {hasSells && <> <strong>Realized P&L</strong> counts only cash already received (sells + dividends).</>}
+              {" "}All amounts are converted to {cy}.
             </p>
           </div>
         </>

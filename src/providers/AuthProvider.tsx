@@ -20,6 +20,7 @@ interface AuthContextType {
   logout: () => void;
   sendActivationEmail: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateLocalUser: (userResponse: UserResponse) => void;
 }
 
 const mapUserResponseToUser = (userResponse: UserResponse): User => ({
@@ -196,6 +197,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
     return () => window.removeEventListener("auth:logout", handler);
   }, []);
 
+  const updateLocalUser = useCallback((userResponse: UserResponse) => {
+    const mappedUser = mapUserResponseToUser(userResponse);
+    setUser(mappedUser);
+    localStorage.setItem("user", JSON.stringify(mappedUser));
+  }, []);
+
   // Refresh subscription status from backend (called after Stripe redirect)
   const refreshUser = useCallback(async () => {
     if (!token) return;
@@ -221,7 +228,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
   }, [logout]);
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, isAuthLoading, isPro, login, register, loginWithGoogle, logout, sendActivationEmail, refreshUser }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, isAuthLoading, isPro, login, register, loginWithGoogle, logout, sendActivationEmail, refreshUser, updateLocalUser }}>
       {props.children}
     </AuthContext.Provider>
   );
