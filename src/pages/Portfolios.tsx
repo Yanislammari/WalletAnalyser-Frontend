@@ -3,6 +3,7 @@ import { useLocation, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { HiOutlineBriefcase, HiOutlinePlus } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
+import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 import PortfolioService from "../services/PortfolioService";
 import CurrencyService from "../services/CurrencyService";
 import type { Portfolio } from "../models/Portfolio";
@@ -19,6 +20,7 @@ const PAGE_SIZE: number = 9;
 
 const Portfolios: React.FC = () => {
   const { user } = useAuth();
+  const { refreshPortfolios, setSelectedPortfolioId } = useSelectedPortfolio();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const portfolioService = PortfolioService.getInstance();
@@ -127,6 +129,8 @@ const Portfolios: React.FC = () => {
       const lastPage: number = Math.ceil((newTotal + 1) / PAGE_SIZE);
       setPage(lastPage);
       setReloadTrigger((prev) => prev + 1);
+      setSelectedPortfolioId(createdPortfolio.id);
+      await refreshPortfolios();
     }
     catch {
       toast.error("Failed to create portfolio.");

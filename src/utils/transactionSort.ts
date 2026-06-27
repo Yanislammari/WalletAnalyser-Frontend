@@ -67,6 +67,13 @@ export function sortBuys(rows: AssetBuyResponse[], sort: SortState | null): Asse
   });
 }
 
+function computeSellPricePerShare(row: AssetSellResponse): number | null {
+  if (row.assetSellAmount != null && row.assetSellShare != null && row.assetSellShare > 0) {
+    return row.assetSellAmount / row.assetSellShare;
+  }
+  return null;
+}
+
 export function sortSells(rows: AssetSellResponse[], sort: SortState | null): AssetSellResponse[] {
   if (!sort) {
     return rows;
@@ -80,8 +87,14 @@ export function sortSells(rows: AssetSellResponse[], sort: SortState | null): As
       case "company": {
         return compareValues(a.companyName ?? "", b.companyName ?? "", sort.dir);
       }
+      case "shares": {
+        return compareValues(a.assetSellShare, b.assetSellShare, sort.dir);
+      }
+      case "pricePerShare": {
+        return compareValues(computeSellPricePerShare(a), computeSellPricePerShare(b), sort.dir);
+      }
       case "amount": {
-        return compareValues(a.assetSellAmount ?? a.assetSellShare, b.assetSellAmount ?? b.assetSellShare, sort.dir);
+        return compareValues(a.assetSellAmount, b.assetSellAmount, sort.dir);
       }
       case "gain": {
         return compareValues(a.assetSellGain, b.assetSellGain, sort.dir);

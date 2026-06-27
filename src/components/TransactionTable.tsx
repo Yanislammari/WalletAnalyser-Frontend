@@ -37,6 +37,9 @@ interface TransactionTableProps {
   onDeleteBuy: (id: string) => Promise<void>;
   onDeleteSell: (id: string) => Promise<void>;
   onDeleteDividend: (id: string) => Promise<void>;
+  onEditBuy: (row: AssetBuyResponse) => void;
+  onEditSell: (row: AssetSellResponse) => void;
+  onEditDividend: (row: AssetDividendResponse) => void;
   currencyName: (id: string) => string;
   companies: string[];
   selectedCompany: string | null;
@@ -163,6 +166,7 @@ const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTab
                           row={row}
                           currencyName={props.currencyName}
                           onDelete={() => props.onDeleteBuy(row.id)}
+                          onEdit={props.onEditBuy}
                         />
                       ))}
                     </tbody>
@@ -204,6 +208,18 @@ const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTab
                           onSort={handleSellSort}
                         />
                         <SortableHeader
+                          label="Shares"
+                          columnKey="shares"
+                          sortState={sellSortState}
+                          onSort={handleSellSort}
+                        />
+                        <SortableHeader
+                          label="Price / share"
+                          columnKey="pricePerShare"
+                          sortState={sellSortState}
+                          onSort={handleSellSort}
+                        />
+                        <SortableHeader
                           label="Amount"
                           columnKey="amount"
                           sortState={sellSortState}
@@ -226,6 +242,7 @@ const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTab
                           row={row}
                           currencyName={props.currencyName}
                           onDelete={() => props.onDeleteSell(row.id)}
+                          onEdit={props.onEditSell}
                         />
                       ))}
                     </tbody>
@@ -289,6 +306,7 @@ const TransactionTable: React.FC<TransactionTableProps> = (props: TransactionTab
                           row={row}
                           currencyName={props.currencyName}
                           onDelete={() => props.onDeleteDividend(row.id)}
+                          onEdit={props.onEditDividend}
                         />
                       ))}
                     </tbody>

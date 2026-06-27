@@ -3,4 +3,5 @@ export interface DmStatUI {
   value: string;
   delta: string;
   up: boolean;
+  neutral?: boolean;
 }

@@ -23,6 +23,9 @@ abstract class BaseService {
     });
 
     if (!res.ok) {
+      if (res.status === 401) {
+        window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+      }
       const error = await res.json().catch(() => ({ message: "Request failed" }));
       const isAuthError =
         (res.status === 401 && error?.type === "NO_AUTH") ||
