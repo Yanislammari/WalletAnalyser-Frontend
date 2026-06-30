@@ -58,7 +58,7 @@ export const StocksDetail = (rankAssetProps: RankedProps) => {
   ? "Position not found"
   : (() => {
       const pct = Math.round((value / total) * 100);
-      return isPositive ? `Top ${pct}%` : `Bottom ${100 - pct}%`;
+      return isPositive ? `Top ${pct == 0 ? 1 : pct}%` : `Bottom ${100 - pct}%`;
     })();
 
   const handleTagClick = (type: RankingType, position: number, id : string | number | undefined) => {
