@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LevelBadge } from "../enums/LevelBadge";
 import type { UserBadgesResponse } from "../responses/UserBadgesResponse";
 import BadgeService from "../services/BadgeService";
