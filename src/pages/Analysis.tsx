@@ -25,6 +25,7 @@ const Analysis: React.FC = () => {
   const [hasError, setHasError] = useState(false)
   const [view, setView] = useState<"cluster" | "sector" | "my_stocks" | "countries">("my_stocks");
   const { selectedPortfolioId } = useSelectedPortfolio();
+  const didMountRef = React.useRef(false);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -103,13 +104,17 @@ const Analysis: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return; // skip initial mount, effect #1 already handles it
+    }
     if (!selectedPortfolioId) return;
     setLoading(true);
     setHasError(false);
     analysisService.getUserStocksMetaData(selectedPortfolioId) 
       .then(setUserStocks)
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => {setLoading(false)});
   }, [selectedPortfolioId]);
 
   if ( loading ) {
