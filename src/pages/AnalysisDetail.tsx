@@ -129,7 +129,7 @@ const AnalysisDetail: React.FC = () => {
   const navigate: NavigateFunction = useNavigate();
   const analysisService = AnalysisService.getInstance();
   const [search, setSearch] = useState<string>("");
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [sectorMetaData, setSectorMetaData] = useState<AssetRankingResponse | null>(null)
   const { uuid } = useParams();
@@ -170,7 +170,6 @@ const AnalysisDetail: React.FC = () => {
         if(type == null || !uuid) {
           throw Error()
         }
-        console.log(type,uuid)
         const response = await analysisService.getWholeSectorsDetailMetaData(type, uuid)
         setSectorMetaData(response)
       } catch(e) {
