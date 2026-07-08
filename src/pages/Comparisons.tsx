@@ -301,7 +301,7 @@ const Comparisons: React.FC = () => {
     { label: "Sharpe Ratio",  pf: (m) => m.sharpeRatio,  bm: (s) => s.sharpe,      fmt: fmtNum,              good: (v) => v > 1,   higherIsBetter: true  },
     { label: "Max Drawdown",  pf: (m) => m.maxDrawdown,  bm: (s) => s.maxDrawdown, fmt: (v) => `-${fmtNum(v)}%`, good: (v) => v < 15, higherIsBetter: false },
     { label: "Sortino Ratio", pf: (m) => m.sortinoRatio, bm: (s) => s.sharpe,      fmt: fmtNum,              good: (v) => v > 1,   higherIsBetter: true,  pfOnly: true },
-    { label: "XIRR",          pf: (m) => m.xirr,         bm: (s) => s.cagr,        fmt: fmtPct,              good: (v) => v >= 0,  higherIsBetter: true,  pfOnly: true },
+    { label: "XIRR",          pf: (m) => m.xirrMtm,      bm: (s) => s.cagr,        fmt: fmtPct,              good: (v) => v >= 0,  higherIsBetter: true,  pfOnly: true },
   ];
 
   return (
@@ -378,7 +378,7 @@ const Comparisons: React.FC = () => {
                 <tr className="border-b-2 border-gray-100">
                   {/* Sticky metric-name column */}
                   <th className="sticky left-0 bg-white z-10 px-5 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-widest w-36 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-gray-100" />
-                  {pfColumns.map((id, idx) => {
+                  {pfColumns.map((id) => {
                     const pf    = portfolios.find((p) => p.id === id);
                     const color = PORTFOLIO_COLORS[selectedPfIds.indexOf(id) % PORTFOLIO_COLORS.length];
                     return (

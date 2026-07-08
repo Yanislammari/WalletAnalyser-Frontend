@@ -14,9 +14,8 @@ import SectorBreakdown from "../components/SectorBreakdown";
 import AllocationBreakdown from "../components/AllocationBreakdown";
 import MetricStrip from "../components/MetricStrip";
 import type { DmStatUI } from "../models/UI/DmStatUI";
-import type { MetricResponse, MonthlyDataPoint } from "../responses/MetricResponse";
+import type { MetricResponse } from "../responses/MetricResponse";
 import type { PortfolioTotalResponse } from "../responses/PortfolioTotalResponse";
-import NoPortfolioSelected from "../components/Error/NoPortfolioSelected";
 
 const portfolioService = PortfolioService.getInstance();
 
@@ -83,15 +82,15 @@ const DashboardPage: React.FC = () => {
   const dashStats: DmStatUI[] = metrics ? [
     {
       label: "Portfolio value",
-      value: total ? fmt(total.totalValue, cy) : "—",
-      delta: `${fmtPct(metrics.gainPercent)} all time`,
-      up:    metrics.gain >= 0,
+      value: fmt(metrics.portfolioMarketValue, cy),
+      delta: `${fmtPct(metrics.gainPercentMtm)} all time`,
+      up:    metrics.gainMtm >= 0,
     },
     {
       label: "Net gain",
-      value: fmt(metrics.gain, cy),
-      delta: `${fmtPct(metrics.gainPercent)} on invested`,
-      up:    metrics.gain >= 0,
+      value: fmt(metrics.gainMtm, cy),
+      delta: `${fmtPct(metrics.gainPercentMtm)} on invested`,
+      up:    metrics.gainMtm >= 0,
     },
     {
       label: "Sharpe ratio",
