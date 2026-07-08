@@ -8,27 +8,18 @@ const pricingPlans: PricingPlanUI[] = [
     price: "€0",
     period: "/month",
     description: "Everything you need to start tracking.",
-    features: ["1 portfolio", "CSV & Excel import", "Portfolio overview", "Basic metrics"],
+    features: ["1 portfolio", "Portfolio overview", "Basic metrics", "Last 12 months of data"],
     featured: false,
     cta: "Get started",
   },
   {
     name: "Pro",
-    price: "€9",
+    price: "€29.99",
     period: "/month",
     description: "Full depth for the serious investor.",
-    features: ["Unlimited portfolios", "Benchmark comparison", "All advanced metrics", "Historical analysis", "AI clustering", "Stress test scenarios"],
+    features: ["Unlimited portfolios", "CSV & Excel import", "Benchmark comparison", "All advanced metrics", "5+ years of historical data", "AI clustering"],
     featured: true,
-    cta: "Start free trial",
-  },
-  {
-    name: "Teams",
-    price: "€29",
-    period: "/month",
-    description: "For advisors managing multiple portfolios.",
-    features: ["Everything in Pro", "Up to 10 users", "Admin dashboard", "Priority support"],
-    featured: false,
-    cta: "Contact us",
+    cta: "Upgrade to Pro",
   },
 ];
 
@@ -44,7 +35,7 @@ const PricingSection: React.FC = () => {
           <h2 className="text-4xl font-bold text-white tracking-tight">Simple, transparent pricing</h2>
           <p className="text-white/40 mt-3 text-[15px]">Start free. Upgrade when you need more depth.</p>
         </div>
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-2 gap-5 max-w-2xl mx-auto">
           {pricingPlans.map((plan) => (
             <PricingPlanCard key={plan.name} plan={plan} />
           ))}

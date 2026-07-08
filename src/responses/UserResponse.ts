@@ -10,6 +10,7 @@ export interface UserResponse {
   ban: boolean;
   userType: UserType;
   timeMsGift: number;
+  subscribe: boolean;
   activated: boolean;
   createdAt: Date;
   updatedAt: Date;

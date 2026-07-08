@@ -78,6 +78,26 @@ class AuthService extends BaseService {
       body: JSON.stringify({ token }),
     });
   }
+
+  public async updateProfile(data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  }): Promise<import("../responses/UserResponse").UserResponse> {
+    return this.request("/auth/profile", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async sendContact(subject: string, message: string): Promise<void> {
+    await this.request("/auth/contact", {
+      method: "POST",
+      body: JSON.stringify({ subject, message }),
+    });
+  }
 }
 
 export default AuthService;

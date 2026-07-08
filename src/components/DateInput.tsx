@@ -7,6 +7,8 @@ interface DateInputProps {
   value: string;
   onChange: (value: string) => void;
   portalTarget?: HTMLElement | null;
+  /** Earliest selectable date (YYYY-MM-DD). Dates before this are disabled. */
+  minDate?: string;
 }
 
 const MONTHS: string[] = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -34,6 +36,7 @@ const formatDisplay = (date: Date): string => {
 
 const DateInput: React.FC<DateInputProps> = (props: DateInputProps) => {
   const today: Date = new Date();
+  const minDateParsed: Date | null = props.minDate ? parseLocalDate(props.minDate) : null;
   const [open, setOpen] = useState<boolean>(false);
   const [viewYear, setViewYear] = useState<number>(today.getFullYear());
   const [viewMonth, setViewMonth] = useState<number>(today.getMonth());
@@ -100,9 +103,8 @@ const DateInput: React.FC<DateInputProps> = (props: DateInputProps) => {
 
   const handleSelectDay = (day: number) => {
     const date: Date = new Date(viewYear, viewMonth, day);
-    if (date > today) {
-      return;
-    }
+    if (date > today) return;
+    if (minDateParsed && date < minDateParsed) return;
 
     props.onChange(toYMD(date));
     setOpen(false);
@@ -174,6 +176,8 @@ const DateInput: React.FC<DateInputProps> = (props: DateInputProps) => {
               const day: number = index + 1;
               const date: Date = new Date(viewYear, viewMonth, day);
               const isFuture: boolean = date > today;
+              const isTooEarly: boolean = !!minDateParsed && date < minDateParsed;
+              const isDisabled: boolean = isFuture || isTooEarly;
               const isToday: boolean = date.getTime() === today.getTime();
               const isSelected: boolean | null = selected && date.getTime() === selected.getTime();
 
@@ -181,13 +185,13 @@ const DateInput: React.FC<DateInputProps> = (props: DateInputProps) => {
                 <button
                   key={day}
                   type="button"
-                  disabled={isFuture}
+                  disabled={isDisabled}
                   onClick={() => handleSelectDay(day)}
                   className={`
                     h-8 w-full rounded-lg text-xs font-medium transition-colors
                     ${isSelected
                       ? "bg-purple-600 text-white"
-                      : isFuture
+                      : isDisabled
                       ? "text-gray-200 cursor-not-allowed"
                       : isToday
                       ? "text-purple-600 font-bold hover:bg-purple-50 cursor-pointer"

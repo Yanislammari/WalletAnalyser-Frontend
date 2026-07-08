@@ -1,20 +1,26 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import type { UserResponse } from "../responses/UserResponse";
 import type { User } from "../models/User";
 import AuthService from "../services/AuthService";
+import SubscriptionService from "../services/SubscriptionService";
 import type { RegisterPayload } from "../payloads/RegisterPayload";
 import type { AuthResponse } from "../responses/AuthResponse";
+import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   isAuthLoading: boolean;
+  isPro: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<User>;
   loginWithGoogle: (idToken: string) => Promise<User>;
   logout: () => void;
   sendActivationEmail: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+  updateLocalUser: (userResponse: UserResponse) => void;
 }
 
 const mapUserResponseToUser = (userResponse: UserResponse): User => ({
@@ -26,7 +32,7 @@ const mapUserResponseToUser = (userResponse: UserResponse): User => ({
   googlePictureUrl: userResponse.googlePictureUrl,
   ban: userResponse.ban,
   userType: userResponse.userType,
-  subscribe: false,
+  subscribe: userResponse.subscribe ?? false,
   activated: userResponse.activated,
   timeMsGift: userResponse.timeMsGift,
   createdAt: new Date(userResponse.createdAt),
@@ -41,6 +47,9 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderProps) => {
   const authService = AuthService.getInstance();
+  const subscriptionService = SubscriptionService.getInstance();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [user, setUser] = useState<User | null>(() => {
     try {
@@ -67,6 +76,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
 
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
   const isAuthenticated: boolean = !!token;
+  const isPro: boolean = user?.subscribe ?? false;
+
+  // Re-sync subscription status from server when user is authenticated
+  useEffect(() => {
+    if (!token) return;
+    subscriptionService.getStatus()
+      .then((status) => {
+        setUser((prev) => {
+          if (!prev) return prev;
+          const updated = { ...prev, subscribe: status.isPro };
+          localStorage.setItem("user", JSON.stringify(updated));
+          return updated;
+        });
+      })
+      .catch(() => {});
+  }, [token]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
@@ -153,15 +178,57 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
     setUser(null);
     setToken(null);
     setIsAuthLoading(false);
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("justLoggedIn");
-    sessionStorage.removeItem("showActivationBanner");
+    const PUBLIC_PATHS = ["/", "/main", "/login", "/register"];
+    console.log(location.pathname)
+    console.log(!PUBLIC_PATHS.includes(location.pathname))
+    if (!PUBLIC_PATHS.includes(location.pathname)) {
+      toast.info("Your session has expired please login again")
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("justLoggedIn");
+      sessionStorage.removeItem("showActivationBanner");
+      navigate("/login", { replace: true, state: { from: location } });
+    }
   }, []);
 
+  useEffect(() => {
+    const handler = () => logout();
+    window.addEventListener("auth:logout", handler);
+    return () => window.removeEventListener("auth:logout", handler);
+  }, []);
+
+  const updateLocalUser = useCallback((userResponse: UserResponse) => {
+    const mappedUser = mapUserResponseToUser(userResponse);
+    setUser(mappedUser);
+    localStorage.setItem("user", JSON.stringify(mappedUser));
+  }, []);
+
+  // Refresh subscription status from backend (called after Stripe redirect)
+  const refreshUser = useCallback(async () => {
+    if (!token) return;
+    try {
+      const status = await subscriptionService.getStatus();
+      setUser((prev) => {
+        if (!prev) return prev;
+        const updated = { ...prev, subscribe: status.isPro };
+        localStorage.setItem("user", JSON.stringify(updated));
+        return updated;
+      });
+    } catch {
+      // ignore
+    }
+  }, [token, subscriptionService]);
+
+  // Auto-logout on 401: any service dispatches "auth:unauthorized" when the
+  // token is rejected by the backend. We catch it here and call logout().
+  useEffect(() => {
+    const handle = () => logout();
+    window.addEventListener("auth:unauthorized", handle);
+    return () => window.removeEventListener("auth:unauthorized", handle);
+  }, [logout]);
+
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, isAuthLoading, login, register, loginWithGoogle, logout, sendActivationEmail }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, isAuthLoading, isPro, login, register, loginWithGoogle, logout, sendActivationEmail, refreshUser, updateLocalUser }}>
       {props.children}
     </AuthContext.Provider>
   );
@@ -172,6 +239,6 @@ export const useAuth = (): AuthContextType => {
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-  
+
   return context;
 };

@@ -10,7 +10,18 @@ import ActivationBanner from "../components/ActivationBanner";
 const HomeLayout: React.FC = () => {
   const { user, sendActivationEmail } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem("sidebar-collapsed") === "true";
+  });
   const [bannerVisible, setBannerVisible] = useState<boolean>(false);
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((v) => {
+      const next = !v;
+      localStorage.setItem("sidebar-collapsed", String(next));
+      return next;
+    });
+  };
 
   const handleSendActivationEmail = async () => {
     try {
@@ -50,7 +61,7 @@ const HomeLayout: React.FC = () => {
 
   return (
     <SelectedPortfolioProvider>
-    <div className="min-h-screen bg-[#f5f4fb]">
+    <div className="min-h-screen layout-bg">
       {sidebarOpen && (
         <div
           className="lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
@@ -60,9 +71,14 @@ const HomeLayout: React.FC = () => {
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapsed}
       />
-      <Navbar onMenuClick={() => setSidebarOpen((v) => !v)} />
-      <div className="lg:ml-64 pt-16 min-h-[calc(100vh-4rem)] flex flex-col">
+      <Navbar
+        onMenuClick={() => setSidebarOpen((v) => !v)}
+        sidebarCollapsed={sidebarCollapsed}
+      />
+      <div className={`${sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"} pt-16 min-h-[calc(100vh-4rem)] flex flex-col transition-all duration-300`}>
         <main className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5">
           {bannerVisible && (
             <ActivationBanner

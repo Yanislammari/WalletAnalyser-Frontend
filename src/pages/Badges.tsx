@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LevelBadge } from "../enums/LevelBadge";
 import type { UserBadgesResponse } from "../responses/UserBadgesResponse";
 import BadgeService from "../services/BadgeService";
@@ -23,11 +23,15 @@ const LEVEL_BADGE_LABEL: Record<LevelBadge, string> = {
   [LevelBadge.EXPERT]:       "bg-amber-100 text-amber-700",
 };
 
-const BadgeCard = ({ badge }: { badge: UserBadge | null }) => {
+const BadgeCard = ({ badge, index }: { badge: UserBadge | null, index : number }) => {
   const [hovered, setHovered] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const styles = badge ? LEVEL_STYLES[badge.level_badge] : null;
   const isUnlocked = badge !== null;
+  const columns = 5;
+  const isFirstInRow = index % columns === 0;
+  const isLastInRow = index % columns === columns - 1;
 
   useEffect(() => {
     if(!isUnlocked) return;
@@ -78,9 +82,22 @@ const BadgeCard = ({ badge }: { badge: UserBadge | null }) => {
       </span>
 
       {hovered && (
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shadow-lg bg-zinc-900 text-white pointer-events-none">
+        <div
+          ref={tooltipRef}
+          className={`absolute -top-12 z-10 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shadow-lg bg-zinc-900 text-white pointer-events-none ${
+            isFirstInRow
+              ? "left-0"
+              : isLastInRow
+              ? "right-0"
+              : "left-1/2 -translate-x-1/2"
+          }`}
+        >
           {isUnlocked ? badge.badge.badge_label : "Not unlocked yet"}
-          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-900" />
+          <div
+            className={`absolute top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-900 ${
+              isFirstInRow ? "left-20" : isLastInRow ? "right-20" : "left-1/2 -translate-x-1/2"
+            }`}
+          />
         </div>
       )}
     </div>
@@ -238,7 +255,7 @@ const Badges: React.FC = () => {
               onClick={() => setShowNoReward(false)}
             >
               <div
-                className="flex flex-col items-center gap-4 p-10 rounded-3xl border-2 border-zinc-200 bg-white shadow-2xl cursor-pointer select-none"
+                className="flex flex-col items-center gap-4 p-10 rounded-3xl border-2 border-zinc-200 bg-white shadow-2xl select-none"
                 style={{ minWidth: 260 }}
                 onClick={e => e.stopPropagation()}
               >
@@ -246,7 +263,7 @@ const Badges: React.FC = () => {
                 <h2 className="text-xl font-bold text-zinc-700">No new badges</h2>
                 <p className="text-sm text-zinc-500 text-center">You didn't unlock anything new this time. Keep going!</p>
                 <button
-                  className="mt-2 px-6 py-2 rounded-full bg-zinc-900 text-white text-sm font-semibold hover:bg-zinc-700 transition-colors"
+                  className="mt-2 px-6 py-2 rounded-full bg-zinc-900 text-white text-sm font-semibold hover:bg-zinc-700 cursor-pointer transition-colors"
                   onClick={() => setShowNoReward(false)}
                 >
                   Got it
@@ -255,7 +272,7 @@ const Badges: React.FC = () => {
             </div>
           )}
           <div className="grid grid-cols-5 gap-6 pt-15">
-            {badgesMetaData.allBadges.map(badge => <BadgeCard key={badge} badge={badgesMetaData.userBadge.find(b => b.badge.uuid === badge) ?? null}/>)}
+            {badgesMetaData.allBadges.map((badge,index) => <BadgeCard key={badge} index={index} badge={badgesMetaData.userBadge.find(b => b.badge.uuid === badge) ?? null}/>)}
           </div>
           <p className="text-center text-xs text-zinc-400 mt-6">
             {badgesMetaData.userBadge.length} / {badgesMetaData.allBadges.length} unlocked

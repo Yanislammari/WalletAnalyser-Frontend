@@ -7,7 +7,7 @@ import ForgottenPassword from "./pages/ForgottenPassword";
 import ResetPassword from "./pages/ResetPassword";
 import LandingPage from "./pages/LandingPage";
 import HomeLayout from "./layouts/HomeLayout";
-import Dashboard from "./pages/Dashboard";
+import DashboardPage from "./pages/Dashboard";
 import Metrics from "./pages/Metrics";
 import ImportData from "./pages/ImportData";
 import Portfolios from "./pages/Portfolios";
@@ -18,36 +18,56 @@ import PrivateRoute from "./guards/PrivateRoute";
 import Badges from "./pages/Badges";
 import Analysis from "./pages/Analysis";
 import AnalysisDetail from "./pages/AnalysisDetail";
+import Comparisons from "./pages/Comparisons";
+import Subscription from "./pages/Subscription";
+import { AuthProvider } from "./providers/AuthProvider";
+import { UnauthenticatedNotFoundPage, ConnectedNotFoundPage } from "./pages/DefaultPage";
+import { useParams } from "react-router";
+
+/** Redirect /home/portfolio/:id → /home/portfolio/:id/transactions?tab=buys */
+const PortfolioRedirect: React.FC = () => {
+  const { portfolioId } = useParams<{ portfolioId: string }>();
+  return <Navigate to={`/home/portfolio/${portfolioId}/transactions?tab=buys`} replace />;
+};
 
 const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Public Routes — redirect in Home if user is already connected */}
-        <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
-        <Route path="/main" element={<PublicRoute><Main /></PublicRoute>} />
-        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <AuthProvider>
+        <Routes>
+          {/* Public Routes — redirect in Home if user is already connected */}
+          <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+          <Route path="/main" element={<PublicRoute><Main /></PublicRoute>} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
-        {/* Routes Full Access */}
-        <Route path="/forgotten-password" element={<ForgottenPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/activate-account" element={<ActivateAccount />} />
+          {/* Routes Full Access */}
+          <Route path="/forgotten-password" element={<ForgottenPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/activate-account" element={<ActivateAccount />} />
 
-        {/* Private Routes - redirect in Landing Page if user is not connected */}
-        <Route path="/home" element={<PrivateRoute><HomeLayout /></PrivateRoute>}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="metrics" element={<Metrics />} />
-          <Route path="portfolio" element={<Portfolios />} />
-          <Route path="portfolio/:portfolioId/transactions" element={<Transactions />} />
-          <Route path="import" element={<ImportData />} />
-          <Route path="badges" element={<Badges/>} />
-          <Route path="analysis" element={<Analysis />} />
-          <Route path="analysis/:uuid" element={<AnalysisDetail/>} />
-        </Route>
-        
-      </Routes>
+          {/* Private Routes - redirect in Landing Page if user is not connected */}
+          <Route path="/home" element={<PrivateRoute><HomeLayout /></PrivateRoute>}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="metrics" element={<Metrics />} />
+            <Route path="portfolio" element={<Portfolios />} />
+            <Route path="portfolio/:portfolioId" element={<PortfolioRedirect />} />
+            <Route path="portfolio/:portfolioId/transactions" element={<Transactions />} />
+            <Route path="import" element={<ImportData />} />
+            <Route path="badges" element={<Badges />} />
+            <Route path="analysis" element={<Analysis />} />
+            <Route path="analysis/:uuid" element={<AnalysisDetail />} />
+            <Route path="comparisons" element={<Comparisons />} />
+            <Route path="subscription" element={<Subscription />} />
+            {/* Catch-all inside the authenticated layout (has sidebar + navbar) */}
+            <Route path="*" element={<ConnectedNotFoundPage />} />
+          </Route>
+
+          {/* Global catch-all — unknown public URLs (no layout) */}
+          <Route path="*" element={<UnauthenticatedNotFoundPage />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 };
