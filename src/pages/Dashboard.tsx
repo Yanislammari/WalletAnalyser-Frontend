@@ -11,6 +11,7 @@ import AccountActivatedModal from "../components/AccountActivatedModal";
 import DmStatCard from "../components/DmStatCard";
 import DmLineChart from "../components/DmLineChart";
 import SectorBreakdown from "../components/SectorBreakdown";
+import AllocationBreakdown from "../components/AllocationBreakdown";
 import MetricStrip from "../components/MetricStrip";
 import type { DmStatUI } from "../models/UI/DmStatUI";
 import type { MetricResponse, MonthlyDataPoint } from "../responses/MetricResponse";
@@ -192,6 +193,33 @@ const DashboardPage: React.FC = () => {
               </div>
               <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
                 <SectorBreakdown holdings={metrics.topHoldings} />
+              </div>
+            </div>
+          )
+        )}
+
+        {/* Sector + country breakdown */}
+        {portfoliosLoaded && selectedPortfolioId && (
+          loading ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Skeleton className="h-52" />
+              <Skeleton className="h-52" />
+            </div>
+          ) : metrics && (metrics.sectorBreakdown.length > 0 || metrics.countryBreakdown.length > 0) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
+                <AllocationBreakdown
+                  title="Sector exposure"
+                  items={metrics.sectorBreakdown}
+                  currency={cy}
+                />
+              </div>
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
+                <AllocationBreakdown
+                  title="Geographic exposure"
+                  items={metrics.countryBreakdown}
+                  currency={cy}
+                />
               </div>
             </div>
           )

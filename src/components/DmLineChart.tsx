@@ -63,13 +63,29 @@ const DmLineChart: React.FC<DmLineChartProps> = ({ data, currency }) => {
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top  - PAD.bottom;
 
-  // Portfolio value = invested + netGain (cumulative returns at each month)
-  const portfolioVals = sliced.map(d => d.invested + d.netGain);
-  const allVals       = [...portfolioVals];
-  const minV          = Math.min(...allVals);
-  const maxV          = Math.max(...allVals);
-  const range         = maxV - minV || 1;
-  const pad           = range * 0.1;
+  // ── Real portfolio value from historical prices ────────────────────────────
+  // marketValue = Σ(shares × price) from backend. Forward-fill when a month has
+  // no price data (marketValue === 0 but holdings exist).
+  let lastKnown = 0;
+  const portfolioVals = sliced.map(d => {
+    if (d.marketValue > 0) {
+      lastKnown = d.marketValue;
+      return d.marketValue;
+    }
+    // No holdings (fully sold or nothing bought yet) → 0
+    if (d.netCostBasis === 0) {
+      lastKnown = 0;
+      return 0;
+    }
+    // Holdings exist but no price this month → forward-fill
+    return lastKnown > 0 ? lastKnown : d.netCostBasis;
+  });
+
+  const allVals = [...portfolioVals];
+  const minV    = Math.min(...allVals);
+  const maxV    = Math.max(...allVals);
+  const range   = maxV - minV || 1;
+  const pad     = range * 0.1;
 
   const toX = (i: number) => PAD.left + (i / (sliced.length - 1)) * cW;
   const toY = (v: number) => PAD.top + cH - ((v - (minV - pad)) / (range + 2 * pad)) * cH;
@@ -86,15 +102,16 @@ const DmLineChart: React.FC<DmLineChartProps> = ({ data, currency }) => {
     "Z",
   ].join(" ");
 
-  const lastGain  = sliced[sliced.length - 1].netGain;
-  const lineColor = lastGain >= 0 ? "#7c3aed" : "#f43f5e";
+  const currentVal  = portfolioVals[portfolioVals.length - 1];
+  const firstVal    = portfolioVals[0];
+  const lineColor   = currentVal >= firstVal ? "#7c3aed" : "#f43f5e";
 
   // Y axis: 3 ticks
   const yTicks = [minV, (minV + maxV) / 2, maxV];
 
   // X labels: at most 5, evenly spaced
-  const xStep    = Math.max(1, Math.floor((sliced.length - 1) / 4));
-  const xIdxSet  = new Set<number>([0, sliced.length - 1]);
+  const xStep   = Math.max(1, Math.floor((sliced.length - 1) / 4));
+  const xIdxSet = new Set<number>([0, sliced.length - 1]);
   for (let i = xStep; i < sliced.length - 1; i += xStep) xIdxSet.add(i);
 
   const h = hovered;
@@ -108,10 +125,7 @@ const DmLineChart: React.FC<DmLineChartProps> = ({ data, currency }) => {
           {h !== null && (
             <p className="text-[11px] text-gray-600 font-semibold mt-0.5">
               {fmtMonth(sliced[h].month)} &nbsp;·&nbsp;
-              {fmt(sliced[h].invested + sliced[h].netGain)}
-              <span className={`ml-1.5 ${sliced[h].netGain >= 0 ? "text-emerald-600" : "text-rose-500"}`}>
-                ({sliced[h].netGain >= 0 ? "+" : ""}{fmt(sliced[h].netGain)})
-              </span>
+              <span>{fmt(portfolioVals[h])}</span>
             </p>
           )}
         </div>
@@ -186,7 +200,7 @@ const DmLineChart: React.FC<DmLineChartProps> = ({ data, currency }) => {
       <div className="flex items-center gap-4 mt-1">
         <div className="flex items-center gap-1.5">
           <div className="w-5 h-0.5 rounded" style={{ backgroundColor: lineColor }} />
-          <span className="text-[9px] text-gray-400">Net returns</span>
+          <span className="text-[9px] text-gray-400">Estimated portfolio value</span>
         </div>
       </div>
     </>
