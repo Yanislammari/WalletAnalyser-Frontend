@@ -3,7 +3,6 @@ import { HiOutlineXMark, HiOutlineUser, HiOutlineEnvelope } from "react-icons/hi
 import { toast } from "sonner";
 import { useAuth } from "../providers/AuthProvider";
 import AuthService from "../services/AuthService";
-import Avatar from "./Avatar";
 
 interface ProfileModalProps {
   open: boolean;

@@ -14,18 +14,18 @@ const dashboardMockupStats: DmStatUI[] = [
 ];
 
 const mockMonthlyData: MonthlyDataPoint[] = [
-  { month: "2023-01", netGain: -800,  invested: 10000 },
-  { month: "2023-02", netGain: -400,  invested: 12000 },
-  { month: "2023-03", netGain: 200,   invested: 14000 },
-  { month: "2023-04", netGain: 800,   invested: 16000 },
-  { month: "2023-05", netGain: 1400,  invested: 18000 },
-  { month: "2023-06", netGain: 900,   invested: 20000 },
-  { month: "2023-07", netGain: 1800,  invested: 22000 },
-  { month: "2023-08", netGain: 2600,  invested: 24000 },
-  { month: "2023-09", netGain: 2100,  invested: 26000 },
-  { month: "2023-10", netGain: 3200,  invested: 28000 },
-  { month: "2023-11", netGain: 4000,  invested: 30000 },
-  { month: "2023-12", netGain: 5180,  invested: 32000 },
+  { month: "2023-01", netGain: -800,  invested: 10000, netCostBasis: 10000, marketValue:  9200 },
+  { month: "2023-02", netGain: -400,  invested: 12000, netCostBasis: 12000, marketValue: 11600 },
+  { month: "2023-03", netGain: 200,   invested: 14000, netCostBasis: 14000, marketValue: 14200 },
+  { month: "2023-04", netGain: 800,   invested: 16000, netCostBasis: 16000, marketValue: 16800 },
+  { month: "2023-05", netGain: 1400,  invested: 18000, netCostBasis: 18000, marketValue: 19400 },
+  { month: "2023-06", netGain: 900,   invested: 20000, netCostBasis: 20000, marketValue: 20900 },
+  { month: "2023-07", netGain: 1800,  invested: 22000, netCostBasis: 22000, marketValue: 23800 },
+  { month: "2023-08", netGain: 2600,  invested: 24000, netCostBasis: 24000, marketValue: 26600 },
+  { month: "2023-09", netGain: 2100,  invested: 26000, netCostBasis: 26000, marketValue: 28100 },
+  { month: "2023-10", netGain: 3200,  invested: 28000, netCostBasis: 28000, marketValue: 31200 },
+  { month: "2023-11", netGain: 4000,  invested: 30000, netCostBasis: 30000, marketValue: 34000 },
+  { month: "2023-12", netGain: 5180,  invested: 32000, netCostBasis: 32000, marketValue: 37180 },
 ];
 
 const mockHoldings: TopHolding[] = [
@@ -39,6 +39,7 @@ const mockHoldings: TopHolding[] = [
 const mockMetrics: MetricResponse = {
   totalInvested: 42140, totalReturned: 47320,
   gain: 5180, gainPercent: 12.4,
+  portfolioMarketValue: 47320, gainMtm: 5180, gainPercentMtm: 12.4, cagrMtm: 8.2, xirrMtm: 9.8,
   cagr: 8.2, volatility: 11.2, sharpeRatio: 1.43,
   sortinoRatio: 1.87,
   twr: 10.6, twrAnnualized: 10.4, logTwr: 10.1,
@@ -47,6 +48,7 @@ const mockMetrics: MetricResponse = {
   totalDividends: 980, dividendYield: 2.3,
   firstBuyDate: "2023-01-15", periodYears: 1.0,
   topHoldings: mockHoldings,
+  sectorBreakdown: [], countryBreakdown: [], monthlyTwr: [],
   monthlyData: mockMonthlyData,
   currencyId: "eur-id", currencyName: "EUR",
 };

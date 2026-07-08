@@ -6,10 +6,9 @@ import {
   HiOutlineArrowPath, HiOutlineCalculator,
 } from "react-icons/hi2";
 import { useNavigate } from "react-router";
-import { useAuth } from "../providers/AuthProvider";
 import PortfolioService from "../services/PortfolioService";
 import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
-import type { MetricResponse, MonthlyDataPoint } from "../responses/MetricResponse";
+import type { MetricResponse } from "../responses/MetricResponse";
 
 const portfolioService = PortfolioService.getInstance();
 
@@ -64,41 +63,6 @@ const presetToFromDate = (preset: PeriodPreset): string | undefined => {
   return d.toISOString().split("T")[0];
 };
 
-// ─── Bar chart ────────────────────────────────────────────────────────────────
-
-const GainChart: React.FC<{ data: MonthlyDataPoint[]; currency: string }> = ({ data, currency }) => {
-  if (data.length < 2) return <p className="text-xs text-gray-300 text-center py-6">Not enough data</p>;
-
-  const gains = data.map(d => d.netGain);
-  const max   = Math.max(...gains.map(Math.abs), 1);
-  const W = 100, H = 60, barW = Math.max(1.5, (W / data.length) - 0.5);
-
-  return (
-    <div className="mt-3">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-24" preserveAspectRatio="none">
-        <line x1={0} y1={H / 2} x2={W} y2={H / 2} stroke="#e5e7eb" strokeWidth="0.5" />
-        {data.map((d, i) => {
-          const isPosBar = d.netGain >= 0;
-          const pct  = Math.abs(d.netGain) / max;
-          const barH = Math.max(pct * (H / 2 - 2), 0.5);
-          const x    = i * (W / data.length);
-          const y    = isPosBar ? H / 2 - barH : H / 2;
-          return (
-            <rect key={d.month} x={x} y={y} width={barW} height={barH}
-              fill={isPosBar ? "#8b5cf6" : "#f43f5e"} opacity={0.8} rx={0.4}>
-              <title>{d.month}: {fmt(d.netGain, currency)}</title>
-            </rect>
-          );
-        })}
-      </svg>
-      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-        <span>{data[0]?.month}</span>
-        <span>{data[data.length - 1]?.month}</span>
-      </div>
-    </div>
-  );
-};
-
 // ─── Metric card ──────────────────────────────────────────────────────────────
 
 interface MetricCardProps {
@@ -146,79 +110,6 @@ const MetricCard: React.FC<MetricCardProps> = ({
   );
 };
 
-// ─── Drawdown chart ───────────────────────────────────────────────────────────
-
-const DrawdownChart: React.FC<{ data: MonthlyDataPoint[] }> = ({ data }) => {
-  if (data.length < 2) return null;
-
-  // Build drawdown series: % below running peak
-  const values = data.map(d => d.invested + d.netGain);
-  let peak = -Infinity;
-  const ddSeries = values.map(v => {
-    if (v > peak) peak = v;
-    return peak > 0 ? ((v - peak) / peak) * 100 : 0;
-  });
-
-  const minDD = Math.min(...ddSeries);
-  const W = 600, H = 80;
-  const PAD = { left: 40, right: 8, top: 8, bottom: 20 };
-  const cW  = W - PAD.left - PAD.right;
-  const cH  = H - PAD.top  - PAD.bottom;
-  const toX = (i: number) => PAD.left + (i / (data.length - 1)) * cW;
-  const toY = (v: number) => PAD.top + ((0 - v) / (0 - minDD + 0.1)) * cH;
-
-  const coords = ddSeries.map((v, i) => [toX(i), toY(v)] as [number, number]);
-  const areaPath = [
-    `M${coords[0][0]},${PAD.top}`,
-    ...coords.map(([x, y]) => `L${x},${y}`),
-    `L${coords[coords.length - 1][0]},${PAD.top}`,
-    "Z",
-  ].join(" ");
-
-  // X labels
-  const step = Math.max(1, Math.floor((data.length - 1) / 5));
-  const xIdxs = new Set<number>([0, data.length - 1]);
-  for (let i = step; i < data.length - 1; i += step) xIdxs.add(i);
-
-  const fmtM = (key: string) => {
-    const [y, m] = key.split("-");
-    return `${["J","F","M","A","M","J","J","A","S","O","N","D"][Number(m)-1]}${y.slice(2)}`;
-  };
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ userSelect: "none" }}>
-      <defs>
-        <linearGradient id="ddGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.02" />
-        </linearGradient>
-      </defs>
-      {/* Zero line */}
-      <line x1={PAD.left} x2={W - PAD.right} y1={PAD.top} y2={PAD.top} stroke="#e5e7eb" strokeWidth="1" />
-      {/* Area */}
-      <path d={areaPath} fill="url(#ddGrad)" />
-      {/* Line */}
-      <polyline
-        points={coords.map(([x, y]) => `${x},${y}`).join(" ")}
-        fill="none" stroke="#f43f5e" strokeWidth="1.5" strokeLinejoin="round"
-      />
-      {/* Y label */}
-      <text x={PAD.left - 4} y={PAD.top + cH / 2 + 4} fontSize="9" fill="#d1d5db" textAnchor="end" fontFamily="sans-serif">
-        {minDD.toFixed(1)}%
-      </text>
-      <text x={PAD.left - 4} y={PAD.top + 4} fontSize="9" fill="#d1d5db" textAnchor="end" fontFamily="sans-serif">
-        0%
-      </text>
-      {/* X labels */}
-      {data.map((d, i) => !xIdxs.has(i) ? null : (
-        <text key={i} x={toX(i)} y={H - 4} fontSize="9" fill="#d1d5db" textAnchor="middle" fontFamily="sans-serif">
-          {fmtM(d.month)}
-        </text>
-      ))}
-    </svg>
-  );
-};
-
 // ─── Section header ───────────────────────────────────────────────────────────
 
 const SectionHeader: React.FC<{ title: string; subtitle?: string }> = ({ title, subtitle }) => (
@@ -231,7 +122,6 @@ const SectionHeader: React.FC<{ title: string; subtitle?: string }> = ({ title, 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 const Metrics: React.FC = () => {
-  const { user }    = useAuth();
   const navigate    = useNavigate();
   const { selectedPortfolioId, portfoliosLoaded } = useSelectedPortfolio();
   const [metrics, setMetrics]               = useState<MetricResponse | null>(null);
@@ -271,9 +161,6 @@ const Metrics: React.FC = () => {
   }, [portfolioStartDate]);
 
   const cy = metrics?.currencyName ?? "EUR";
-
-  // Monthly data is already period-scoped from the backend — use as-is for charts
-  const filteredMonthly = useMemo(() => metrics?.monthlyData ?? [], [metrics]);
 
   // Realized metrics (Realized P&L, CAGR, TWR, XIRR, Volatility, Sharpe, Sortino)
   // are only meaningful when the user has at least one sell transaction.
@@ -453,11 +340,11 @@ const Metrics: React.FC = () => {
                   />
                   <MetricCard
                     label="XIRR"
-                    value={fmtPct(metrics.xirr)}
-                    subtitle="per year, time-weighted cash flows"
-                    description="Internal Rate of Return accounting for the exact dates of every buy, sell, and dividend. More accurate than CAGR when flows are irregular."
+                    value={fmtPct(metrics.xirrMtm)}
+                    subtitle="per year, including current market value"
+                    description="Internal Rate of Return accounting for the exact dates of every buy, sell, and dividend, plus the current market value of open positions. More accurate than CAGR when flows are irregular."
                     icon={<HiOutlineCalculator size={18} />}
-                    positive={pos(metrics.xirr)}
+                    positive={pos(metrics.xirrMtm)}
                     tag="IRR"
                   />
                 </div>

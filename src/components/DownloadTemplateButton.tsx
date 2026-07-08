@@ -15,7 +15,7 @@ const DownloadTemplateButton: React.FC<DownloadTemplateButtonProps> = (props: Do
     <button
       onClick={() => props.handleDownloadTemplate(props.templateFormat.dl)}
       disabled={!!props.downloadingFormat}
-      className={`flex flex-col items-center justify-center gap-2 py-5 transition-colors cursor-pointer ${props.templateFormat.hover} group disabled:opacity-60 disabled:cursor-not-allowed`}
+      className={`w-full flex flex-col items-center justify-center gap-2 py-5 transition-colors cursor-pointer ${props.templateFormat.hover} group disabled:opacity-60 disabled:cursor-not-allowed`}
     >
       <div className={`w-9 h-9 rounded-xl ${props.templateFormat.bg} flex items-center justify-center ${!props.downloadingFormat ? "group-hover:scale-110" : ""} transition-transform`}>
         {props.isLoading ? (
