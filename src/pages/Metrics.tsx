@@ -280,6 +280,11 @@ const Metrics: React.FC = () => {
   // totalReturned = totalSells + totalDividends — if equal to totalDividends → no sells.
   const hasSells = (metrics?.totalReturned ?? 0) - (metrics?.totalDividends ?? 0) > 0.01;
 
+  // If the portfolio still has open positions, realized metrics are incomplete:
+  // they exclude the current market value of held shares, making CAGR/XIRR appear
+  // artificially negative (e.g. -86% over 6 months with half the portfolio still held).
+  const hasOpenPositions = (metrics?.portfolioMarketValue ?? 0) > 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -400,6 +405,15 @@ const Metrics: React.FC = () => {
           {/* ── Returns + Risk — only shown when there are sell transactions ── */}
           {hasSells ? (
             <>
+              {/* Warning when open positions make realized metrics misleading */}
+              {hasOpenPositions && (
+                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
+                  <HiOutlineInformationCircle className="text-blue-400 shrink-0 mt-0.5" size={16} />
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    <strong>Open positions detected.</strong> Realized P&L, CAGR, and XIRR are computed from cash flows only and exclude the current market value of your held shares — they may look misleadingly negative. The <strong>Total P&L</strong> banner above gives the full picture.
+                  </p>
+                </div>
+              )}
               <div>
                 <SectionHeader title="Returns" subtitle="How much value you created from your investments" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">

@@ -1,7 +1,8 @@
 import React, { useState, useRef } from "react";
 import { useNavigate, type NavigateFunction } from "react-router";
-import { HiOutlinePencilSquare, HiOutlineTableCells, HiOutlineArrowDownTray, HiOutlineLockClosed } from "react-icons/hi2";
+import { HiOutlinePencilSquare, HiOutlineTableCells, HiOutlineLockClosed } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
+import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 import PortfolioService from "../services/PortfolioService";
 import ImportService from "../services/ImportService";
 import type { Portfolio } from "../models/Portfolio";
@@ -13,22 +14,6 @@ import DownloadTemplateButton from "../components/DownloadTemplateButton";
 import type { Format } from "../enums/Format";
 
 const TEMPLATES_FORMATS: TemplateFormatUI[] = [
-  {
-    format: "XLSX",
-    ext: ".xlsx",
-    dl: "xlsx" as const,
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-    hover: "hover:bg-emerald-50/60"
-  },
-  {
-    format: "XLS",
-    ext: ".xls",
-    dl: "xls" as const,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    hover: "hover:bg-blue-50/60"
-  },
   {
     format: "CSV",
     ext: ".csv",
@@ -56,13 +41,16 @@ const ProPaywall: React.FC<{ feature: string }> = ({ feature }) => (
 
 const ImportData: React.FC = () => {
   const { user, isPro } = useAuth();
-
-  if (!isPro) return <ProPaywall feature="Import Data" />;
+  const { selectedPortfolioId } = useSelectedPortfolio();
   const navigate: NavigateFunction = useNavigate();
+
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [loadingPortfolios, setLoadingPortfolios] = useState<boolean>(false);
   const [downloadingFormat, setDownloadingFormat] = useState<string | null>(null);
+  const [importRefreshKey, setImportRefreshKey] = useState<number>(0);
+
+  if (!isPro) return <ProPaywall feature="Import Data" />;
 
   const openManualModal = async () => {
     if (!user) {
@@ -116,7 +104,10 @@ const ImportData: React.FC = () => {
         <h2 className="text-gray-900 text-xl font-bold tracking-tight">Import Data</h2>
         <p className="text-gray-500 text-sm mt-0.5">Upload your portfolio file or enter transactions manually.</p>
       </div>
-      <ImportDataDropzone />
+      <ImportDataDropzone
+        portfolioId={selectedPortfolioId || null}
+        onImportComplete={() => setImportRefreshKey((k) => k + 1)}
+      />
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
@@ -127,7 +118,7 @@ const ImportData: React.FC = () => {
             <p className="text-xs text-gray-400 mt-0.5">Format your transactions using one of these templates before importing.</p>
           </div>
         </div>
-        <div className="grid grid-cols-3 divide-x divide-gray-100">
+        <div className="divide-x divide-gray-100">
           {TEMPLATES_FORMATS.map((templateFormat) => {
             const isLoading: boolean = downloadingFormat === templateFormat.dl;
             return (
@@ -154,7 +145,7 @@ const ImportData: React.FC = () => {
         <HiOutlinePencilSquare size={18} className="text-purple-500" />
         Enter manually
       </button>
-      <RecentImportsPanel /> {/* TODO: Plug reals recent imports later */}
+      <RecentImportsPanel portfolioId={selectedPortfolioId || null} refreshKey={importRefreshKey} />
       <PortfolioSelectorModal
         dialogRef={dialogRef}
         portfolios={portfolios}

@@ -4,10 +4,18 @@ export interface TopHolding {
   allocation: number;
 }
 
+export interface AllocationItem {
+  name: string;
+  value: number;
+  allocation: number;
+}
+
 export interface MonthlyDataPoint {
   month: string;
   netGain: number;
   invested: number;
+  netCostBasis: number;
+  marketValue: number;
 }
 
 export interface MonthlyTwrPoint {
@@ -53,6 +61,8 @@ export interface MetricResponse {
 
   // Breakdown
   topHoldings: TopHolding[];
+  sectorBreakdown: AllocationItem[];
+  countryBreakdown: AllocationItem[];
   monthlyData: MonthlyDataPoint[];
   monthlyTwr: MonthlyTwrPoint[];
 

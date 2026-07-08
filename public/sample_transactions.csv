@@ -1,0 +1,11 @@
+ticker,type,date,shares,amount
+AAPL,buy,2024-01-15,10,
+NVDA,buy,2024-02-20,5,
+MSFT,buy,2024-03-05,,1500.00
+TTE.PA,buy,2024-04-10,8,
+AMZN,buy,2024-05-12,2,
+AAPL,sell,2024-06-01,4,
+NVDA,buy,2024-07-15,3,
+TTE.PA,sell,2024-08-20,3,
+MC.PA,buy,2024-09-10,1,
+MSFT,sell,2024-10-05,2,
