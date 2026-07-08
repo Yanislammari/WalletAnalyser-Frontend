@@ -23,16 +23,18 @@ abstract class BaseService {
     });
 
     if (!res.ok) {
-      if (res.status === 401) {
-        window.dispatchEvent(new CustomEvent("auth:unauthorized"));
-      }
       const error = await res.json().catch(() => ({ message: "Request failed" }));
       const isAuthError =
         (res.status === 401 && error?.type === "NO_AUTH") ||
         (res.status === 400 && error?.type === "NO_AUTH")
+      const isSuvbscribeError = 
+        (res.status === 401 && error?.type === "NOT_SUBSCRIBE") ||
+        (res.status === 400 && error?.type === "NOT_SUBSCRIBE")
       if (isAuthError) {
         window.dispatchEvent(new Event("auth:logout"));
         throw new Error(error.message || "Your session has expired. Please login again.");
+      } else if (isSuvbscribeError) {
+        throw new Error(error.message || "You need to subscribe to access this feature.");
       }
       throw new Error(error.message || "Request failed");
     }
