@@ -3,6 +3,8 @@ import { useAuth } from "./AuthProvider";
 import PortfolioService from "../services/PortfolioService";
 import type { Portfolio } from "../models/Portfolio";
 
+const STORAGE_KEY = "wa_selected_portfolio";
+
 interface SelectedPortfolioContextValue {
   portfolios: Portfolio[];
   portfoliosLoaded: boolean;
@@ -26,7 +28,14 @@ export const SelectedPortfolioProvider: React.FC<{ children: React.ReactNode }> 
   const portfolioService = PortfolioService.getInstance();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [portfoliosLoaded, setPortfoliosLoaded] = useState<boolean>(false);
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>("");
+  const [selectedPortfolioId, setSelectedPortfolioIdState] = useState<string>(
+    () => localStorage.getItem(STORAGE_KEY) ?? ""
+  );
+
+  const setSelectedPortfolioId = useCallback((id: string) => {
+    localStorage.setItem(STORAGE_KEY, id);
+    setSelectedPortfolioIdState(id);
+  }, []);
 
   const fetchPortfolios = useCallback(async (currentSelectedId?: string) => {
     if (!user) return;
@@ -35,14 +44,20 @@ export const SelectedPortfolioProvider: React.FC<{ children: React.ReactNode }> 
       setPortfolios(p);
       setPortfoliosLoaded(true);
       if (p.length > 0) {
-        // Keep the current selection if it still exists, otherwise pick the first
-        const stillExists = currentSelectedId && p.some(x => x.id === currentSelectedId);
-        if (!stillExists) setSelectedPortfolioId(p[0].id);
+        // Prioritize: explicit arg > localStorage > first portfolio
+        const candidateId = currentSelectedId ?? localStorage.getItem(STORAGE_KEY) ?? "";
+        const stillExists = candidateId && p.some(x => x.id === candidateId);
+        if (!stillExists) {
+          setSelectedPortfolioId(p[0].id);
+        } else {
+          // Ensure state is in sync (e.g. after page refresh)
+          setSelectedPortfolioIdState(candidateId);
+        }
       }
     } catch {
       setPortfoliosLoaded(true);
     }
-  }, [user]);
+  }, [user, setSelectedPortfolioId]);
 
   useEffect(() => {
     fetchPortfolios();
