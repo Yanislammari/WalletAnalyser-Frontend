@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
-import { HiOutlineBriefcase } from "react-icons/hi2";
+import { HiOutlineBriefcase, HiOutlineLockClosed } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
 import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 import PortfolioService from "../services/PortfolioService";
@@ -36,7 +36,7 @@ const Skeleton: React.FC<{ className?: string }> = ({ className = "" }) => (
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, sendActivationEmail } = useAuth();
+  const { user, isPro, sendActivationEmail } = useAuth();
   const { selectedPortfolioId, portfoliosLoaded } = useSelectedPortfolio();
 
   const [showActivationModal,       setShowActivationModal]       = useState(false);
@@ -224,14 +224,34 @@ const DashboardPage: React.FC = () => {
           )
         )}
 
-        {/* Metric strip */}
+        {/* Metric strip — Pro only */}
         {portfoliosLoaded && selectedPortfolioId && (
-          loading ? (
-            <Skeleton className="h-20" />
-          ) : metrics && metrics.totalInvested > 0 && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
-              <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium mb-1">Performance metrics</p>
-              <MetricStrip metrics={metrics} />
+          isPro ? (
+            loading ? (
+              <Skeleton className="h-20" />
+            ) : metrics && metrics.totalInvested > 0 && (
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium mb-1">Performance metrics</p>
+                <MetricStrip metrics={metrics} />
+              </div>
+            )
+          ) : (
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
+                  <HiOutlineLockClosed size={16} className="text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">Performance metrics</p>
+                  <p className="text-xs text-gray-500 mt-0.5">CAGR, TWR, XIRR, Sharpe ratio, max drawdown and more — Pro only</p>
+                </div>
+              </div>
+              <a
+                href="/home/subscription"
+                className="shrink-0 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition-colors"
+              >
+                Upgrade to Pro
+              </a>
             </div>
           )
         )}
