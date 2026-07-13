@@ -273,52 +273,27 @@ const Metrics: React.FC = () => {
             </div>
           </div>
 
-          {/* ── Dividend income (always shown) ─────────────────────────────── */}
-          <div>
-            <SectionHeader title="Income" subtitle="Dividends received from your holdings" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
-              <MetricCard
-                label="Dividend Income"
-                value={fmt(metrics.totalDividends, cy, 0)}
-                subtitle={`Yield: ${metrics.dividendYield.toFixed(2)}%`}
-                description="Total dividends received, converted to your target currency. Yield = dividends ÷ total invested."
-                icon={<HiOutlineBanknotes size={18} />}
-                positive={metrics.totalDividends > 0}
-                neutral={metrics.totalDividends === 0}
-              />
-            </div>
-          </div>
-
           {/* ── Returns + Risk — only shown when there are sell transactions ── */}
           {hasSells ? (
             <>
-              {/* Warning when open positions make realized metrics misleading */}
-              {hasOpenPositions && (
-                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
-                  <HiOutlineInformationCircle className="text-blue-400 shrink-0 mt-0.5" size={16} />
-                  <p className="text-xs text-blue-700 leading-relaxed">
-                    <strong>Open positions detected.</strong> Realized P&L, CAGR, and XIRR are computed from cash flows only and exclude the current market value of your held shares — they may look misleadingly negative. The <strong>Total P&L</strong> banner above gives the full picture.
-                  </p>
-                </div>
-              )}
               <div>
                 <SectionHeader title="Returns" subtitle="How much value you created from your investments" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
                   <MetricCard
-                    label="Realized P&L"
-                    value={fmtPct(metrics.gainPercent)}
-                    subtitle={`${metrics.gain >= 0 ? "+" : ""}${fmt(metrics.gain, cy, 0)} · cash flows only`}
-                    description="Return on capital computed from realized cash flows only: (sells + dividends − buys) / buys × 100. Does NOT include the current market value of positions still held."
-                    icon={pos(metrics.gainPercent) ? <HiOutlineArrowTrendingUp size={18} /> : <HiOutlineArrowTrendingDown size={18} />}
-                    positive={pos(metrics.gainPercent)}
+                    label="Total P&L"
+                    value={fmtPct(metrics.portfolioMarketValue > 0 ? metrics.gainPercentMtm : metrics.gainPercent)}
+                    subtitle={`${(metrics.portfolioMarketValue > 0 ? metrics.gainMtm : metrics.gain) >= 0 ? "+" : ""}${fmt(metrics.portfolioMarketValue > 0 ? metrics.gainMtm : metrics.gain, cy, 0)}${metrics.portfolioMarketValue > 0 ? " · incl. unrealized" : " · cash flows only"}`}
+                    description="Total return on invested capital. When open positions exist, includes current market value of held shares (mark-to-market). Otherwise computed from realized cash flows only."
+                    icon={pos(metrics.portfolioMarketValue > 0 ? metrics.gainPercentMtm : metrics.gainPercent) ? <HiOutlineArrowTrendingUp size={18} /> : <HiOutlineArrowTrendingDown size={18} />}
+                    positive={pos(metrics.portfolioMarketValue > 0 ? metrics.gainPercentMtm : metrics.gainPercent)}
                   />
                   <MetricCard
                     label="CAGR"
-                    value={fmtPct(metrics.cagr)}
+                    value={fmtPct(metrics.portfolioMarketValue > 0 ? metrics.cagrMtm : metrics.cagr)}
                     subtitle="per year, compounded"
-                    description="Compound Annual Growth Rate — the equivalent fixed annual return that would take your invested capital to the realized return over the same period. Meaningful only with 1+ year of history."
+                    description="Compound Annual Growth Rate including current market value of open positions. The equivalent fixed annual return that would produce the same total result over the same period."
                     icon={<HiOutlineChartBar size={18} />}
-                    positive={pos(metrics.cagr)}
+                    positive={pos(metrics.portfolioMarketValue > 0 ? metrics.cagrMtm : metrics.cagr)}
                   />
                   <MetricCard
                     label="TWR"
@@ -398,32 +373,53 @@ const Metrics: React.FC = () => {
                     positive={metrics.maxDrawdown === 0}
                     neutral={metrics.maxDrawdown > 0 && metrics.maxDrawdown < 10}
                   />
+                  <MetricCard
+                    label="Dividend Income"
+                    value={fmt(metrics.totalDividends, cy, 0)}
+                    subtitle={`Yield: ${metrics.dividendYield.toFixed(2)}%`}
+                    description="Total dividends received, converted to your target currency. Yield = dividends ÷ total invested."
+                    icon={<HiOutlineBanknotes size={18} />}
+                    positive={metrics.totalDividends > 0}
+                    neutral={metrics.totalDividends === 0}
+                  />
                 </div>
               </div>
             </>
           ) : (
             /* ── No sells placeholder ──────────────────────────────────────── */
-            <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center">
-                <HiOutlineArrowTrendingUp className="text-purple-400" size={24} />
+            <>
+              <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center">
+                  <HiOutlineArrowTrendingUp className="text-purple-400" size={24} />
+                </div>
+                <div>
+                  <p className="text-gray-800 font-semibold text-sm">Sell transactions required</p>
+                  <p className="text-gray-400 text-xs mt-1 max-w-xs leading-relaxed">
+                    Realized P&L, CAGR, TWR, XIRR, Volatility, Sharpe and Sortino are computed from
+                    cash flows only. Add at least one sell transaction to unlock these metrics.
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-gray-800 font-semibold text-sm">Sell transactions required</p>
-                <p className="text-gray-400 text-xs mt-1 max-w-xs leading-relaxed">
-                  Realized P&L, CAGR, TWR, XIRR, Volatility, Sharpe and Sortino are computed from
-                  cash flows only. Add at least one sell transaction to unlock these metrics.
-                </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <MetricCard
+                  label="Dividend Income"
+                  value={fmt(metrics.totalDividends, cy, 0)}
+                  subtitle={`Yield: ${metrics.dividendYield.toFixed(2)}%`}
+                  description="Total dividends received, converted to your target currency. Yield = dividends ÷ total invested."
+                  icon={<HiOutlineBanknotes size={18} />}
+                  positive={metrics.totalDividends > 0}
+                  neutral={metrics.totalDividends === 0}
+                />
               </div>
-            </div>
+            </>
           )}
 
           {/* ── Methodology note ────────────────────────────────────────────── */}
           <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex gap-3">
             <HiOutlineInformationCircle className="text-amber-500 shrink-0 mt-0.5" size={16} />
             <p className="text-xs text-amber-700 leading-relaxed">
-              <strong>Total P&L, CAGR, and XIRR</strong> (banner above) include the current market value
-              of held positions — this is the true economic performance.
-              {hasSells && <> <strong>Realized P&L</strong> counts only cash already received (sells + dividends).</>}
+              <strong>Total P&L, CAGR, and XIRR</strong> include the current market value of held positions
+              when open positions exist — this reflects true economic performance.
               {" "}All amounts are converted to {cy}.
             </p>
           </div>

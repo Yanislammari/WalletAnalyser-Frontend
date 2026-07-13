@@ -98,6 +98,12 @@ class AuthService extends BaseService {
       body: JSON.stringify({ subject, message }),
     });
   }
+
+  public async deleteAccount(): Promise<void> {
+    await this.request("/auth/account", {
+      method: "DELETE",
+    });
+  }
 }
 
 export default AuthService;
