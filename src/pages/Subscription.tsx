@@ -26,7 +26,7 @@ const PRO_FEATURES = [
 const Subscription: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const subscriptionService = SubscriptionService.getInstance();
