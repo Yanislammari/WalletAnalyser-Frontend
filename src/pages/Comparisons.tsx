@@ -197,9 +197,18 @@ const Comparisons: React.FC = () => {
 
   useEffect(() => {
     if (!user?.id) return;
-    portfolioService.getAllPortfoliosByUserId(user.id).then((pfs) => {
-      setPortfolios(pfs);
-      if (pfs.length > 0) setSelectedPfIds([pfs[0].id]);
+    portfolioService.getAllPortfoliosByUserId(user.id).then(async (pfs) => {
+      // Filter out portfolios that have no buys and no sells
+      const counts = await Promise.allSettled(
+        pfs.map((pf) => portfolioService.getAssetCountByPortfolioId(pf.id))
+      );
+      const withTransactions = pfs.filter((_, i) => {
+        const result = counts[i];
+        if (result.status === "rejected") return true; // keep on error
+        return result.value.buys > 0 || result.value.sells > 0;
+      });
+      setPortfolios(withTransactions);
+      if (withTransactions.length > 0) setSelectedPfIds([withTransactions[0].id]);
     }).catch(() => {});
   }, [user?.id]);
 

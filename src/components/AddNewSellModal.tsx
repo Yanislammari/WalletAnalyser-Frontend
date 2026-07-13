@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { HiOutlineArrowTrendingDown, HiOutlineLockClosed, HiOutlineXMark } from "react-icons/hi2";
 import type { Currency } from "../models/Currency";
@@ -111,7 +111,7 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
   useEffect(() => {
     if (!form.assetId || !form.date || !form.currencyId) { setAvgBuyPrice(null); return; }
     let cancelled = false;
-    portfolioService.getAverageBuyPrice(props.portfolioId, form.assetId, form.date)
+    portfolioService.getAverageBuyPrice(props.portfolioId, form.assetId, form.date, form.currencyId)
       .then((avg) => { if (!cancelled) setAvgBuyPrice(avg); })
       .catch(() => { if (!cancelled) setAvgBuyPrice(null); });
     return () => { cancelled = true; };
@@ -146,12 +146,13 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
     return () => { cancelled = true; };
   }, [fetchedPrice, form.currencyId, form.assetId]);
 
-  // Auto-compute capital gain
-  useEffect(() => {
-    if (avgBuyPrice == null) return;
+  // Capital gain — computed synchronously so it updates instantly when
+  // pricePerShare, shares, or avgBuyPrice change (no effect timing issues).
+  const computedCapitalGain = useMemo(() => {
+    if (avgBuyPrice == null) return null;
     const shares = parseFloat(form.shares), price = parseFloat(form.pricePerShare);
-    if (isNaN(shares) || isNaN(price) || shares <= 0 || price <= 0) return;
-    setForm((f) => ({ ...f, capitalGain: String(parseFloat(((price - avgBuyPrice) * shares).toFixed(2))) }));
+    if (isNaN(shares) || isNaN(price) || shares <= 0 || price <= 0) return null;
+    return parseFloat(((price - avgBuyPrice) * shares).toFixed(2));
   }, [avgBuyPrice, form.shares, form.pricePerShare]);
 
   const handleSave = async () => {
@@ -178,7 +179,7 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
           sellDate:        form.date,
           assetSellAmount: parseFloat((shares * price).toFixed(2)),
           assetSellShare:  shares,
-          assetSellGain:   form.capitalGain ? parseFloat(form.capitalGain) : undefined,
+          assetSellGain:   computedCapitalGain ?? undefined,
         });
         toast.success("Sell added.");
       }
@@ -204,6 +205,8 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
   });
 
   const currencyName = props.currencies.find((c) => c.uuid === form.currencyId)?.currencyName ?? "";
+  const sharesIsZero = form.shares !== "" && parseFloat(form.shares) <= 0;
+  const sellPriceIsZero = form.pricePerShare !== "" && parseFloat(form.pricePerShare) <= 0;
   const enteredShares = parseFloat(form.shares) || 0;
   // In edit mode, add back the current sell's shares to available (they'd be freed if we change)
   const effectiveAvailable = isEditMode && availableShares !== null
@@ -215,7 +218,7 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
     const s = parseFloat(form.shares), p = parseFloat(form.pricePerShare);
     return s > 0 && p > 0 ? parseFloat((s * p).toFixed(2)) : null;
   })();
-  const isDisabled = saving || !form.date || !form.assetId || !form.currencyId || !form.shares || !form.pricePerShare || hasNoShares || sharesExceeded;
+  const isDisabled = saving || !form.date || !form.assetId || !form.currencyId || !form.shares || !form.pricePerShare || hasNoShares || sharesExceeded || sharesIsZero || sellPriceIsZero;
 
   return (
     <dialog ref={props.dialogRef} className="modal">
@@ -286,8 +289,9 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
             </div>
             <input type="number" min={0} max={effectiveAvailable ?? undefined} value={form.shares}
               onChange={(e) => setForm((f) => ({ ...f, shares: e.target.value }))}
-              placeholder="0" className={`${inputCls} ${sharesExceeded ? "border-red-400 focus:ring-red-300" : ""}`} />
+              placeholder="0" className={`${inputCls} ${sharesExceeded || sharesIsZero ? "border-red-400 focus:ring-red-300" : ""}`} />
             {sharesExceeded && <p className="text-[11px] text-red-500 mt-1">Only {effectiveAvailable} shares available at this date</p>}
+            {sharesIsZero && <p className="text-[11px] text-red-500 mt-1">Number of shares must be greater than 0</p>}
           </div>
 
           <div className="flex gap-2">
@@ -299,7 +303,8 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
               </div>
               <input type="number" min={0} value={form.pricePerShare}
                 onChange={(e) => { setAutoFilled(false); setForm((f) => ({ ...f, pricePerShare: e.target.value })); }}
-                placeholder="0.00" className={inputCls} />
+                placeholder="0.00" className={`${inputCls} ${sellPriceIsZero ? "border-red-400 focus:ring-red-300" : ""}`} />
+              {sellPriceIsZero && <p className="text-[11px] text-red-500 mt-1">Price must be greater than 0</p>}
             </div>
             <div className="w-32">
               <label className={labelCls}>Currency</label>
@@ -333,7 +338,7 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
                 ? "bg-purple-50 border-purple-100 text-purple-700 font-medium"
                 : "bg-gray-50 border-gray-100 text-gray-300 italic"
             }`}>
-              {form.capitalGain !== "" ? `${form.capitalGain} ${currencyName}` : "Will be computed automatically"}
+              {computedCapitalGain != null ? `${computedCapitalGain} ${currencyName}` : "Will be computed automatically"}
             </div>
           </div>
 

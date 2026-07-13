@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { HiOutlineXMark, HiOutlineUser, HiOutlineEnvelope } from "react-icons/hi2";
+import { HiOutlineXMark, HiOutlineUser, HiOutlineEnvelope, HiOutlineTrash, HiOutlineExclamationTriangle } from "react-icons/hi2";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../providers/AuthProvider";
 import AuthService from "../services/AuthService";
 
@@ -12,11 +13,14 @@ interface ProfileModalProps {
 const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
   const { user, updateLocalUser } = useAuth();
   const authService = AuthService.getInstance();
+  const navigate = useNavigate();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Pre-fill form whenever the modal opens (or user data changes)
   useEffect(() => {
@@ -24,8 +28,27 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
       setFirstName(user.firstName ?? "");
       setLastName(user.lastName ?? "");
       setEmail(user.email ?? "");
+      setShowDeleteConfirm(false);
     }
   }, [open, user]);
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await authService.deleteAccount();
+      // Clear all local storage manually (avoid the "session expired" toast from logout())
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("justLoggedIn");
+      sessionStorage.removeItem("showActivationBanner");
+      toast.success("Your account has been permanently deleted.");
+      navigate("/login", { replace: true });
+    } catch {
+      toast.error("Failed to delete account. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (!open) return null;
 
@@ -157,6 +180,47 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                 : "Save changes"
               }
             </button>
+          </div>
+
+          {/* Danger zone */}
+          <div className="pt-2 border-t border-gray-100 mt-1">
+            {!showDeleteConfirm ? (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-600 transition-colors cursor-pointer"
+              >
+                <HiOutlineTrash size={13} />
+                Delete my account
+              </button>
+            ) : (
+              <div className="rounded-xl border border-red-100 bg-red-50 p-4 space-y-3">
+                <div className="flex items-start gap-2">
+                  <HiOutlineExclamationTriangle size={16} className="text-red-500 mt-0.5 shrink-0" />
+                  <p className="text-xs text-red-700 leading-relaxed">
+                    <span className="font-semibold">This cannot be undone.</span> Your account, all portfolios, and all transactions will be permanently deleted.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={deleting}
+                    className="flex-1 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 text-xs font-medium hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleting}
+                    className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {deleting
+                      ? <span className="loading loading-spinner loading-xs text-white" />
+                      : "Yes, delete everything"
+                    }
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
