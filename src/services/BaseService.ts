@@ -31,12 +31,13 @@ abstract class BaseService {
     });
 
     if (!res.ok) {
-      // Read body first so we can decide which event (if any) to dispatch
       const error = await res.json().catch(() => ({ message: "Request failed" }));
       const isAuthError =
         (res.status === 401 && error?.type === "NO_AUTH") ||
-        (res.status === 400 && error?.type === "NO_AUTH");
-
+        (res.status === 400 && error?.type === "NO_AUTH")
+      const isSuvbscribeError = 
+        (res.status === 401 && error?.type === "NOT_SUBSCRIBE") ||
+        (res.status === 400 && error?.type === "NOT_SUBSCRIBE")
       if (isAuthError) {
         // Fire logout only if:
         //  1. There was a token when this request started (not a bare unauthenticated call)
@@ -47,6 +48,8 @@ abstract class BaseService {
           window.dispatchEvent(new Event("auth:logout"));
         }
         throw new Error(error.message || "Your session has expired. Please login again.");
+      } else if (isSuvbscribeError) {
+        throw new Error(error.message || "You need to subscribe to access this feature.");
       }
 
       if (res.status === 401) {
@@ -55,6 +58,7 @@ abstract class BaseService {
       }
       throw new Error(error.message || "Request failed");
     }
+    if (res.status === 204) return undefined as T
 
     return res.json() as Promise<T>;
   }
