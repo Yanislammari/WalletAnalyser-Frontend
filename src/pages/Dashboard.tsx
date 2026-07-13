@@ -16,6 +16,7 @@ import MetricStrip from "../components/MetricStrip";
 import type { DmStatUI } from "../models/UI/DmStatUI";
 import type { MetricResponse } from "../responses/MetricResponse";
 import type { PortfolioTotalResponse } from "../responses/PortfolioTotalResponse";
+import type { DashboardDataResponse } from "../responses/DashboardDataResponse";
 
 const portfolioService = PortfolioService.getInstance();
 
@@ -41,9 +42,10 @@ const DashboardPage: React.FC = () => {
 
   const [showActivationModal,       setShowActivationModal]       = useState(false);
   const [showAccountActivatedModal, setShowAccountActivatedModal] = useState(false);
-  const [metrics, setMetrics]   = useState<MetricResponse | null>(null);
-  const [total,   setTotal]     = useState<PortfolioTotalResponse | null>(null);
-  const [loading, setLoading]   = useState(false);
+  const [metrics,       setMetrics]       = useState<MetricResponse | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardDataResponse | null>(null);
+  const [total,         setTotal]         = useState<PortfolioTotalResponse | null>(null);
+  const [loading,       setLoading]       = useState(false);
 
   // ─── Modals ────────────────────────────────────────────────────────────────
 
@@ -62,22 +64,36 @@ const DashboardPage: React.FC = () => {
   // ─── Data fetch ────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!selectedPortfolioId) { setMetrics(null); setTotal(null); return; }
+    if (!selectedPortfolioId) {
+      setMetrics(null);
+      setDashboardData(null);
+      setTotal(null);
+      return;
+    }
     setLoading(true);
-    Promise.all([
-      portfolioService.getMetrics(selectedPortfolioId),
-      portfolioService.getPortfolioTotal(selectedPortfolioId).catch(() => null),
-    ])
-      .then(([m, t]) => { setMetrics(m); setTotal(t); })
+
+    const fetchTotal     = portfolioService.getPortfolioTotal(selectedPortfolioId).catch(() => null);
+    const fetchDashboard = portfolioService.getDashboardData(selectedPortfolioId).catch(() => null);
+    // Metrics are pro-only on the backend — fetch only if user is pro to avoid a 403
+    const fetchMetrics   = isPro
+      ? portfolioService.getMetrics(selectedPortfolioId).catch(() => null)
+      : Promise.resolve(null);
+
+    Promise.all([fetchMetrics, fetchTotal, fetchDashboard])
+      .then(([m, t, d]) => { setMetrics(m); setTotal(t); setDashboardData(d); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [selectedPortfolioId]);
+  }, [selectedPortfolioId, isPro]);
 
   // ─── Stat cards ────────────────────────────────────────────────────────────
 
-  const cy = metrics?.currencyName ?? total?.currencyName ?? "EUR";
+  const cy = metrics?.currencyName ?? dashboardData?.currencyName ?? total?.currencyName ?? "EUR";
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
+  // Compute basic gain from total for free users
+  const freeGain    = total ? total.portfolioMarketValue - total.totalInvested : 0;
+  const freeGainPct = total?.totalInvested ? (freeGain / total.totalInvested) * 100 : 0;
 
   const dashStats: DmStatUI[] = metrics ? [
     {
@@ -103,6 +119,20 @@ const DashboardPage: React.FC = () => {
       value: `${metrics.volatility.toFixed(1)}%`,
       delta: "annualized",
       up:    false,
+      neutral: true,
+    },
+  ] : total ? [
+    {
+      label: "Portfolio value",
+      value: fmt(total.portfolioMarketValue, cy),
+      delta: `${fmtPct(freeGainPct)} all time`,
+      up:    freeGain >= 0,
+    },
+    {
+      label: "Total invested",
+      value: fmt(total.totalInvested, cy),
+      delta: "capital deployed",
+      up:    true,
       neutral: true,
     },
   ] : [];
@@ -185,13 +215,13 @@ const DashboardPage: React.FC = () => {
               <Skeleton className="lg:col-span-2 h-52" />
               <Skeleton className="h-52" />
             </div>
-          ) : metrics && (
+          ) : dashboardData && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
-                <DmLineChart data={metrics.monthlyData} currency={cy} />
+                <DmLineChart data={dashboardData.monthlyData} currency={cy} />
               </div>
               <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
-                <SectorBreakdown holdings={metrics.topHoldings} />
+                <SectorBreakdown holdings={dashboardData.topHoldings} />
               </div>
             </div>
           )
@@ -204,19 +234,19 @@ const DashboardPage: React.FC = () => {
               <Skeleton className="h-52" />
               <Skeleton className="h-52" />
             </div>
-          ) : metrics && (metrics.sectorBreakdown.length > 0 || metrics.countryBreakdown.length > 0) && (
+          ) : dashboardData && (dashboardData.sectorBreakdown.length > 0 || dashboardData.countryBreakdown.length > 0) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
                 <AllocationBreakdown
                   title="Sector exposure"
-                  items={metrics.sectorBreakdown}
+                  items={dashboardData.sectorBreakdown}
                   currency={cy}
                 />
               </div>
               <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
                 <AllocationBreakdown
                   title="Geographic exposure"
-                  items={metrics.countryBreakdown}
+                  items={dashboardData.countryBreakdown}
                   currency={cy}
                 />
               </div>
@@ -257,7 +287,7 @@ const DashboardPage: React.FC = () => {
         )}
 
         {/* Empty state */}
-        {!loading && metrics && metrics.totalInvested === 0 && (
+        {!loading && (total ? total.totalInvested === 0 : false) && (
           <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm text-center">
             <p className="text-gray-600 font-medium">No transactions yet</p>
             <p className="text-gray-400 text-sm mt-1">Add your first buy to start tracking your portfolio.</p>
