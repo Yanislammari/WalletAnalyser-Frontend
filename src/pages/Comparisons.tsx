@@ -5,6 +5,7 @@ import PortfolioService from "../services/PortfolioService";
 import BenchmarkService, { BENCHMARKS, type BenchmarkMonthlyPoint } from "../services/BenchmarkService";
 import type { Portfolio } from "../models/Portfolio";
 import type { MetricResponse } from "../responses/MetricResponse";
+import { ProPaywall } from "../components/proPayWall/PropayWall";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const PORTFOLIO_COLORS = ["#7c3aed", "#2563eb", "#0891b2", "#db2777", "#059669", "#d97706"];
@@ -180,28 +181,8 @@ const ComparisonChart: React.FC<{ series: ChartSeries[]; months: string[] }> = (
   );
 };
 
-// ── Services ──────────────────────────────────────────────────────────────────
 const portfolioService = PortfolioService.getInstance();
 const benchmarkService = BenchmarkService.getInstance();
-
-// ── Main ──────────────────────────────────────────────────────────────────────
-const ProPaywall: React.FC<{ feature: string }> = ({ feature }) => (
-  <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
-    <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mb-5">
-      <HiOutlineChartPie size={32} className="text-purple-600" />
-    </div>
-    <h2 className="text-2xl font-bold text-gray-900 mb-2">{feature} is a Pro feature</h2>
-    <p className="text-gray-500 text-sm max-w-sm mb-6">
-      Upgrade to Pro to unlock benchmark comparisons, full historical analysis, and much more.
-    </p>
-    <a
-      href="/home/subscription"
-      className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm transition-colors"
-    >
-      Upgrade to Pro — €29.99/mo
-    </a>
-  </div>
-);
 
 const Comparisons: React.FC = () => {
   const { user, isPro } = useAuth();
@@ -216,9 +197,18 @@ const Comparisons: React.FC = () => {
 
   useEffect(() => {
     if (!user?.id) return;
-    portfolioService.getAllPortfoliosByUserId(user.id).then((pfs) => {
-      setPortfolios(pfs);
-      if (pfs.length > 0) setSelectedPfIds([pfs[0].id]);
+    portfolioService.getAllPortfoliosByUserId(user.id).then(async (pfs) => {
+      // Filter out portfolios that have no buys and no sells
+      const counts = await Promise.allSettled(
+        pfs.map((pf) => portfolioService.getAssetCountByPortfolioId(pf.id))
+      );
+      const withTransactions = pfs.filter((_, i) => {
+        const result = counts[i];
+        if (result.status === "rejected") return true; // keep on error
+        return result.value.buys > 0 || result.value.sells > 0;
+      });
+      setPortfolios(withTransactions);
+      if (withTransactions.length > 0) setSelectedPfIds([withTransactions[0].id]);
     }).catch(() => {});
   }, [user?.id]);
 

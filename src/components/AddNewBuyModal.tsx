@@ -181,8 +181,15 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props) => {
     const a = parseFloat(form.amount), p = parseFloat(form.pricePerShare);
     return isAmountMode && a > 0 && p > 0 ? parseFloat((a / p).toFixed(6)) : null;
   })();
+
+  const sharesIsZero = !isAmountMode && form.shares !== "" && parseFloat(form.shares) <= 0;
+  const amountIsZero = isAmountMode && form.amount !== "" && parseFloat(form.amount) <= 0;
+  const buyPriceIsZero = form.pricePerShare !== "" && parseFloat(form.pricePerShare) <= 0;
+
   const isDisabled = saving || !form.date || !form.currencyId
-    || (isAmountMode ? (!form.amount || !form.pricePerShare) : (!form.shares || !form.pricePerShare));
+    || (isAmountMode
+      ? (!form.amount || !form.pricePerShare || amountIsZero || buyPriceIsZero)
+      : (!form.shares || !form.pricePerShare || sharesIsZero || buyPriceIsZero));
 
   return (
     <>
@@ -240,7 +247,8 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props) => {
                     <label className={labelCls}>Total amount</label>
                     <input type="number" min={0} value={form.amount}
                       onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                      placeholder="0.00" className={inputCls} />
+                      placeholder="0.00" className={`${inputCls} ${amountIsZero ? "border-red-400 focus:ring-red-300" : ""}`} />
+                    {amountIsZero && <p className="text-[11px] text-red-500 mt-1">Amount must be greater than 0</p>}
                   </div>
                   <div className="w-32">
                     <label className={labelCls}>Currency</label>
@@ -258,7 +266,8 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props) => {
                   </div>
                   <input type="number" min={0} value={form.pricePerShare}
                     onChange={(e) => { setAutoFilled(false); setForm((f) => ({ ...f, pricePerShare: e.target.value })); }}
-                    placeholder="0.00" className={inputCls} />
+                    placeholder="0.00" className={`${inputCls} ${buyPriceIsZero ? "border-red-400 focus:ring-red-300" : ""}`} />
+                  {buyPriceIsZero && <p className="text-[11px] text-red-500 mt-1">Price must be greater than 0</p>}
                 </div>
                 {computedShares != null && (
                   <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl text-sm">
@@ -273,7 +282,8 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props) => {
                   <label className={labelCls}>Number of shares</label>
                   <input type="number" min={0} value={form.shares}
                     onChange={(e) => setForm((f) => ({ ...f, shares: e.target.value }))}
-                    placeholder="0" className={inputCls} />
+                    placeholder="0" className={`${inputCls} ${sharesIsZero ? "border-red-400 focus:ring-red-300" : ""}`} />
+                  {sharesIsZero && <p className="text-[11px] text-red-500 mt-1">Number of shares must be greater than 0</p>}
                 </div>
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -284,7 +294,8 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props) => {
                     </div>
                     <input type="number" min={0} value={form.pricePerShare}
                       onChange={(e) => { setAutoFilled(false); setForm((f) => ({ ...f, pricePerShare: e.target.value })); }}
-                      placeholder="0.00" className={inputCls} />
+                      placeholder="0.00" className={`${inputCls} ${buyPriceIsZero ? "border-red-400 focus:ring-red-300" : ""}`} />
+                    {buyPriceIsZero && <p className="text-[11px] text-red-500 mt-1">Price must be greater than 0</p>}
                   </div>
                   <div className="w-32">
                     <label className={labelCls}>Currency</label>
