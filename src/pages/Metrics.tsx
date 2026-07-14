@@ -194,7 +194,7 @@ const Metrics: React.FC = () => {
   // If the portfolio still has open positions, realized metrics are incomplete:
   // they exclude the current market value of held shares, making CAGR/XIRR appear
   // artificially negative (e.g. -86% over 6 months with half the portfolio still held).
-  const hasOpenPositions = (metrics?.portfolioMarketValue ?? 0) > 0;
+  //const hasOpenPositions = (metrics?.portfolioMarketValue ?? 0) > 0;
 
   return (
     <div className="space-y-6">
