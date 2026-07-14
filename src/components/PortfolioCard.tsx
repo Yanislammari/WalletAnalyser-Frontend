@@ -6,6 +6,7 @@ import { getPortfolioColor } from "../utils/Colors";
 import PortfolioService from "../services/PortfolioService";
 import DeletePortfolioModal from "./DeletePortfolioModal";
 import { toast } from "sonner";
+import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 
 interface PortfolioCardProps {
   portfolio: Portfolio;
@@ -14,6 +15,7 @@ interface PortfolioCardProps {
 
 const PortfolioCard: React.FC<PortfolioCardProps> = (props: PortfolioCardProps) => {
   const navigate: NavigateFunction = useNavigate();
+  const { setSelectedPortfolioId } = useSelectedPortfolio();
   const colorClass: string = getPortfolioColor(props.portfolio.id);
   const portfolioService = PortfolioService.getInstance();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -77,7 +79,7 @@ const PortfolioCard: React.FC<PortfolioCardProps> = (props: PortfolioCardProps) 
   return (
     <div>
       <div
-        onClick={() => navigate(`/home/portfolio/${props.portfolio.id}/transactions`)}
+        onClick={() => { setSelectedPortfolioId(props.portfolio.id); navigate(`/home/portfolio/${props.portfolio.id}/transactions`); }}
         className="group relative bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer min-h-[200px]"
       >
         <button

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import type { UserResponse } from "../responses/UserResponse";
 import type { User } from "../models/User";
 import AuthService from "../services/AuthService";
@@ -78,6 +78,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
   const isAuthenticated: boolean = !!token;
   const isPro: boolean = user?.subscribe ?? false;
 
+  // Always-fresh ref to the current location so logout() never reads a stale closure value
+  const locationRef = useRef(location);
+  useEffect(() => { locationRef.current = location; }, [location]);
+
   // Re-sync subscription status from server when user is authenticated
   useEffect(() => {
     if (!token) return;
@@ -107,7 +111,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
       sessionStorage.setItem("showActivationBanner", "true");
 
       if (!mappedUser.activated) {
-        await authService.sendActivationEmail(mappedUser.email);
+        // Non-fatal: if the email service is down the user is still logged in
+        try { await authService.sendActivationEmail(mappedUser.email); } catch { /* ignore */ }
       }
     }
     catch (error: any) {
@@ -129,7 +134,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
       sessionStorage.setItem("showActivationBanner", "true");
 
       if (!mappedUser.activated) {
-        await authService.sendActivationEmail(mappedUser.email);
+        // Non-fatal: if the email service is down the user is still registered
+        try { await authService.sendActivationEmail(mappedUser.email); } catch { /* ignore */ }
       }
 
       return mappedUser;
@@ -155,7 +161,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
       sessionStorage.setItem("showActivationBanner", "true");
 
       if (!mappedUser.activated) {
-        await authService.sendActivationEmail(mappedUser.email);
+        // Non-fatal: Google already verified the email, user is logged in regardless
+        try { await authService.sendActivationEmail(mappedUser.email); } catch { /* ignore */ }
       }
 
       return mappedUser;
@@ -175,27 +182,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = (props: AuthProviderPro
   }, [authService, user]);
 
   const logout = useCallback(() => {
+    // Guard: if there is no token at all there is nothing to log out from.
+    // This prevents a spurious "session expired" flow triggered by a request
+    // that went out without a token (e.g. during the registration flow before
+    // localStorage was populated).
+    if (!localStorage.getItem("token")) return;
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("justLoggedIn");
+    sessionStorage.removeItem("showActivationBanner");
     setUser(null);
     setToken(null);
     setIsAuthLoading(false);
+
     const PUBLIC_PATHS = ["/", "/main", "/login", "/register"];
-    console.log(location.pathname)
-    console.log(!PUBLIC_PATHS.includes(location.pathname))
-    if (!PUBLIC_PATHS.includes(location.pathname)) {
-      toast.info("Your session has expired please login again")
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      sessionStorage.removeItem("justLoggedIn");
-      sessionStorage.removeItem("showActivationBanner");
-      navigate("/login", { replace: true, state: { from: location } });
+    // Use locationRef.current so we always read the live pathname, not a stale closure value
+    if (!PUBLIC_PATHS.includes(locationRef.current.pathname)) {
+      toast.info("Your session has expired please login again");
+      navigate("/login", { replace: true, state: { from: locationRef.current } });
     }
-  }, []);
+  }, [navigate]); // navigate is stable; locationRef.current is always fresh via the effect above
 
   useEffect(() => {
     const handler = () => logout();
     window.addEventListener("auth:logout", handler);
     return () => window.removeEventListener("auth:logout", handler);
-  }, []);
+  }, [logout]);
 
   const updateLocalUser = useCallback((userResponse: UserResponse) => {
     const mappedUser = mapUserResponseToUser(userResponse);

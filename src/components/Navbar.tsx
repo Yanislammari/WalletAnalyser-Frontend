@@ -12,6 +12,8 @@ import AnalysisService from "../services/Analysis";
 import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 import { clusterName } from "../utils/ClusterNaming";
 import { RankingType } from "../enums/RankType";
+import SearchBar from "./SearchBar";
+import { useSearch } from "../providers/SearchProvider";
 
 const pageTitles: Record<string, string> = {
   "/home/dashboard": "Dashboard",
@@ -35,6 +37,7 @@ const Navbar: React.FC<NavbarProps> = (props) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { search, setSearch } = useSearch();
   const portfolioService = PortfolioService.getInstance();
   const analysisService = AnalysisService.getInstance();
 
@@ -89,6 +92,14 @@ const Navbar: React.FC<NavbarProps> = (props) => {
     subtitle = "Overview";
   }
 
+  const handlePortfolioChange = (id: string) => {
+    setSelectedPortfolioId(id);
+    // If we're currently on a transactions page, navigate to the same page for the new portfolio
+    if (transactionMatch) {
+      navigate(`/home/portfolio/${id}/transactions`);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/");
@@ -115,12 +126,21 @@ const Navbar: React.FC<NavbarProps> = (props) => {
           <span className="text-gray-400 text-sm hidden sm:inline truncate">{subtitle}</span>
         </div>
 
+        {analysisDetailId &&(
+          <SearchBar
+            value={search}
+            onChange={(v)=>setSearch(v)}
+            placeholder={"Search stocks ..."}
+            className="mr-6"
+          />
+        )}
+
         {/* Portfolio selector */}
         {showPortfolioSelect && (
           <PortfolioSelect
             portfolios={portfolios}
             selectedId={selectedPortfolioId}
-            onChange={setSelectedPortfolioId}
+            onChange={handlePortfolioChange}
           />
         )}
 
