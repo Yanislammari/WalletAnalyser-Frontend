@@ -33,11 +33,11 @@ const AnalysisDetail: React.FC = () => {
   const [isLoadingMoreUp, setIsLoadingMoreUp] = useState(false);
   const [isLoadingMoreDown, setIsLoadingMoreDown] = useState(false);
   
-  const offset = parseInt(searchParams.get("offset") ?? "0", 10);
+  const offset = 1570 //parseInt(searchParams.get("offset") ?? "0", 10);
   const safeOffset = isNaN(offset) ? 0 : offset;
   const offsetRef = useRef<HTMLDivElement>(null);
   const topOffsetRef = useRef(safeOffset - offsetStarter);
-  const bottomOffsetRef = useRef(safeOffset + offsetStarter)
+  const bottomOffsetRef = useRef(safeOffset < offsetStarter ? LIMIT : safeOffset + offsetStarter)
 
   useEffect(() => {
     if (safeOffset > 0 && offsetRef.current && !hasAnimatedOnceRef.current) {
