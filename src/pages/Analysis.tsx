@@ -1,7 +1,7 @@
 import { useNavigate, type NavigateFunction } from "react-router-dom";
 import CardSectorPerf, { type SectorCardDataProps } from "../components/CardSectorPerf";
 import AnalysisService from "../services/Analysis"
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import ErrorCardInApp from "../components/ErrorCardInApp";
 import { HiOutlineXCircle } from "react-icons/hi2";
 import Loading from "../components/Loading";
@@ -10,11 +10,15 @@ import { clusterName } from "../utils/ClusterNaming";
 import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
 import NoPortfolioSelected from '../components/Error/NoPortfolioSelected';
 import type { AssetRankingResponse } from "../responses/AssetAnalysisResponse";
-import { StocksDetail } from "./AnalysisDetail";
 import { RankingType } from "../enums/RankType";
+import { StocksDetail } from "../components/StockDetail/StockDetail";
 
+const LIMIT = 50;
 const Analysis: React.FC = () => {
   const analysisService = AnalysisService.getInstance();
+  const didMountRef = React.useRef(false);
+  const didMountSearchRef = React.useRef(false);
+  const loadingRef = useRef(false);
   const [clusters, setClusters] = useState<SectorCardDataProps[]>([]);
   const [sectors, setSectors] = useState<SectorCardDataProps[]>([]);
   const [countries, setCountries] = useState<SectorCardDataProps[]>([]);
@@ -25,7 +29,8 @@ const Analysis: React.FC = () => {
   const [hasError, setHasError] = useState(false)
   const [view, setView] = useState<"cluster" | "sector" | "my_stocks" | "countries">("my_stocks");
   const { selectedPortfolioId } = useSelectedPortfolio();
-  const didMountRef = React.useRef(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -35,7 +40,7 @@ const Analysis: React.FC = () => {
           analysisService.getSectorsMetaData(),
           analysisService.getClustersMetaData(),
           analysisService.getCountriesMetaData(),
-          selectedPortfolioId ? analysisService.getUserStocksMetaData(selectedPortfolioId) : Promise.resolve(null)
+          selectedPortfolioId ? analysisService.getUserStocksMetaData(selectedPortfolioId, 0, LIMIT, "") : Promise.resolve(null)
         ])
         const mappingSectors = sectorsMetaData.sectorsData.map((sector)=>{ 
           const mapped : SectorCardDataProps = {
@@ -103,7 +108,7 @@ const Analysis: React.FC = () => {
     fetchAll()
   }, []);
 
-  useEffect(() => {
+  useEffect(() => { //change portfolio
     if (!didMountRef.current) {
       didMountRef.current = true;
       return; // skip initial mount, effect #1 already handles it
@@ -111,22 +116,76 @@ const Analysis: React.FC = () => {
     if (!selectedPortfolioId) return;
     setLoading(true);
     setHasError(false);
-    analysisService.getUserStocksMetaData(selectedPortfolioId) 
+    analysisService.getUserStocksMetaData(selectedPortfolioId,0,LIMIT,"") 
       .then(setUserStocks)
       .catch(() => {})
       .finally(() => {setLoading(false)});
   }, [selectedPortfolioId]);
+
+  const fetchMore = useCallback(
+    async (currentSearch: string, offset: number, replace: boolean) => {
+      if (loadingRef.current) return;
+      if (!replace && !hasMore) return;
+      loadingRef.current = true;
+      setIsLoadingMore(true);
+
+      try {
+        const newData = await analysisService.getUserStocksMetaData(selectedPortfolioId, offset, LIMIT, currentSearch);
+        setUserStocks(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            sectorsData: replace ? newData.sectorsData : [...prev.sectorsData, ...newData.sectorsData]
+          };
+        });
+        setHasMore(newData.sectorsData.length > 0);
+      } finally {
+        loadingRef.current = false;
+        setIsLoadingMore(false);
+      }
+    },[hasMore]
+  );
+  
+  useEffect(() => {
+    if (!didMountSearchRef.current) {
+      didMountSearchRef.current = true;
+      return; // skip le premier run, le fetch initial est déjà fait dans fetchAll
+    }
+    const timeout = setTimeout(() => {
+      setHasMore(true);
+      fetchMore(search, 0, true);
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  const handleScroll = useCallback(() => {
+    if (!hasMore || loadingRef.current) return;
+
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const clientHeight = window.innerHeight;
+
+    if (scrollHeight - scrollTop - clientHeight < 250) {
+      fetchMore(search, userStocks?.sectorsData.length ?? 0, false);
+    }
+  }, [hasMore, search, userStocks?.sectorsData.length, fetchMore]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
   if ( loading ) {
     return <Loading />
   }
   else if ( hasError || sectors == null || clusters == null ) {
     return <ErrorCardInApp
-          iconBg="bg-gray-100"
-          icon={<HiOutlineXCircle className="w-8 h-8 text-gray-400" />}
-          title="Can't fetch details"
-          description="An error has occured try again later"
-        />
+      iconBg="bg-gray-100"
+      icon={<HiOutlineXCircle className="w-8 h-8 text-gray-400" />}
+      title="Can't fetch details"
+      description="An error has occured try again later"
+    />
   }
 
   return (
@@ -136,7 +195,7 @@ const Analysis: React.FC = () => {
             <h2 className="text-gray-900 text-xl font-bold tracking-tight">
               Analysis
             </h2>
-            <p className="text-gray-500 text-sm mt-0.5">See each assets ranking compared to peers in the past year.</p>
+            <p className="text-gray-LIMIT0 text-sm mt-0.5">See each assets ranking compared to peers in the past year.</p>
           </div>
           <SearchBar
             value={search}
@@ -175,11 +234,10 @@ const Analysis: React.FC = () => {
           !selectedPortfolioId || selectedPortfolioId === ""
             ? <NoPortfolioSelected />
             : (
-              <div className="mt-6 bg-white border border-zinc-200 rounded-xl">
-                {userStocks == null || (userStocks.sectorsData ?? []).filter(p => p.asset.display_name?.toLowerCase()?.includes(search.toLowerCase())).length === 0
+              <div className="mt-6 bg-white border border-zinc-200 rounded-xl" >
+                {userStocks == null || (userStocks.sectorsData ?? []).length === 0
                   ? <p className="text-sm text-zinc-400 text-center py-6">No stocks found</p>
                   : (userStocks.sectorsData ?? [])
-                      .filter(p => p.asset.display_name?.toLowerCase()?.includes(search.toLowerCase()))
                       .map(p => {
                         return (
                           <div key={p.asset.uuid}>
@@ -188,6 +246,7 @@ const Analysis: React.FC = () => {
                         );
                       })
                 }
+                {isLoadingMore && <p className="text-center py-2 text-sm text-zinc-400">Loading...</p>}
               </div>
             )
         )}
