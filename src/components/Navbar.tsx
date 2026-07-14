@@ -92,6 +92,14 @@ const Navbar: React.FC<NavbarProps> = (props) => {
     subtitle = "Overview";
   }
 
+  const handlePortfolioChange = (id: string) => {
+    setSelectedPortfolioId(id);
+    // If we're currently on a transactions page, navigate to the same page for the new portfolio
+    if (transactionMatch) {
+      navigate(`/home/portfolio/${id}/transactions`);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/");
@@ -132,7 +140,7 @@ const Navbar: React.FC<NavbarProps> = (props) => {
           <PortfolioSelect
             portfolios={portfolios}
             selectedId={selectedPortfolioId}
-            onChange={setSelectedPortfolioId}
+            onChange={handlePortfolioChange}
           />
         )}
 
