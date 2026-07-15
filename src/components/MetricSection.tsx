@@ -2,7 +2,7 @@ import type React from "react";
 import MetricBadge from "./MetricBadge";
 import MetricContainer from "./MetricContainer";
 
-const metrics: string[] = ["CAGR", "TWR", "XIRR", "Sharpe ratio", "Sortino ratio", "Volatility", "Log returns", "Drawdown", "Max drawdown", "MWRR"];
+const metrics: string[] = ["CAGR", "TWR", "XIRR", "Sharpe ratio", "Sortino ratio", "Volatility", "Log returns", "Max drawdown"];
 
 const MetricSection: React.FC = () => {
   return (

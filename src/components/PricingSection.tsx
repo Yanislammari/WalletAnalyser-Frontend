@@ -1,6 +1,7 @@
 import type React from "react";
 import type { PricingPlanUI } from "../models/UI/PricingPlanUI";
 import PricingPlanCard from "./PricingPlanCard";
+import { useNavigate, type NavigateFunction } from "react-router";
 
 const pricingPlans: PricingPlanUI[] = [
   {
@@ -8,22 +9,29 @@ const pricingPlans: PricingPlanUI[] = [
     price: "€0",
     period: "/month",
     description: "Everything you need to start tracking.",
-    features: ["1 portfolio", "Portfolio overview", "Basic metrics", "Last 12 months of data"],
+    features: ["Portfolio overview", "Basic metrics", "Last 12 months of data"],
     featured: false,
     cta: "Get started",
+    onClick: (nav : NavigateFunction) => {
+      nav("/main")
+    },
   },
   {
     name: "Pro",
     price: "€29.99",
     period: "/month",
     description: "Full depth for the serious investor.",
-    features: ["Unlimited portfolios", "CSV & Excel import", "Benchmark comparison", "All advanced metrics", "5+ years of historical data", "AI clustering"],
+    features: ["Unlimited portfolios", "CSV import", "Benchmark comparison", "All advanced metrics", "5+ years of historical data"],
     featured: true,
     cta: "Upgrade to Pro",
+    onClick: (nav : NavigateFunction) => {
+      nav("/main")
+    },
   },
 ];
 
 const PricingSection: React.FC = () => {
+  const nav = useNavigate();
   return (
     <section id="pricing" className="relative bg-[#0d0a1a] py-28 px-6 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
@@ -37,7 +45,7 @@ const PricingSection: React.FC = () => {
         </div>
         <div className="grid md:grid-cols-2 gap-5 max-w-2xl mx-auto">
           {pricingPlans.map((plan) => (
-            <PricingPlanCard key={plan.name} plan={plan} />
+            <PricingPlanCard key={plan.name} plan={plan} nav={nav}/>
           ))}
         </div>
       </div>

@@ -44,7 +44,7 @@ const GamificationSection: React.FC = () => {
             Every week, WalletAnalyser awards you badges based on portfolio milestones — diversification, consistency, volatility control. Long-term wealth building, with the satisfaction loop of a game.
           </p>
           <div className="flex items-center gap-4">
-            {[["12", "badges"], ["6", "categories"], ["∞", "motivation"]].map(([number, label], index) => (
+            {[["12", "badges"], ["4", "levels"], ["∞", "motivation"]].map(([number, label], index) => (
               <React.Fragment key={label}>
                 {index > 0 && <div className="w-px h-8 bg-gray-200" />}
                 <div className="text-center">
