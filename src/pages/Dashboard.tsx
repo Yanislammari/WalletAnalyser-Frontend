@@ -8,6 +8,7 @@ import PortfolioService from "../services/PortfolioService";
 
 import ActivationModal from "../components/ActivationModal";
 import AccountActivatedModal from "../components/AccountActivatedModal";
+import Loading from "../components/Loading";
 import DmStatCard from "../components/DmStatCard";
 import DmLineChart from "../components/DmLineChart";
 import SectorBreakdown from "../components/SectorBreakdown";
@@ -26,12 +27,6 @@ const fmt = (v: number, cy: string, decimals = 0) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: cy, maximumFractionDigits: decimals }).format(v);
 
 const fmtPct = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
-
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
-const Skeleton: React.FC<{ className?: string }> = ({ className = "" }) => (
-  <div className={`bg-gray-100 animate-pulse rounded-xl ${className}`} />
-);
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -191,75 +186,61 @@ const DashboardPage: React.FC = () => {
           </div>
         )}
 
+        {/* Loading */}
+        {portfoliosLoaded && selectedPortfolioId && loading && (
+          <div className="flex items-center justify-center py-32">
+            <Loading size={48} />
+          </div>
+        )}
+
         {/* Stat cards */}
-        {portfoliosLoaded && selectedPortfolioId && (
-          loading ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {dashStats.map(stat => (
-                <div key={stat.label} className="bg-white border border-gray-100 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <DmStatCard stat={stat} />
-                </div>
-              ))}
-            </div>
-          )
+        {portfoliosLoaded && selectedPortfolioId && !loading && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {dashStats.map(stat => (
+              <div key={stat.label} className="bg-white border border-gray-100 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-shadow">
+                <DmStatCard stat={stat} />
+              </div>
+            ))}
+          </div>
         )}
 
         {/* Chart + allocation */}
-        {portfoliosLoaded && selectedPortfolioId && (
-          loading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <Skeleton className="lg:col-span-2 h-52" />
-              <Skeleton className="h-52" />
+        {portfoliosLoaded && selectedPortfolioId && !loading && dashboardData && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
+              <DmLineChart data={dashboardData.monthlyData} currency={cy} />
             </div>
-          ) : dashboardData && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2 bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
-                <DmLineChart data={dashboardData.monthlyData} currency={cy} />
-              </div>
-              <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
-                <SectorBreakdown holdings={dashboardData.topHoldings} />
-              </div>
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
+              <SectorBreakdown holdings={dashboardData.topHoldings} />
             </div>
-          )
+          </div>
         )}
 
         {/* Sector + country breakdown */}
-        {portfoliosLoaded && selectedPortfolioId && (
-          loading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Skeleton className="h-52" />
-              <Skeleton className="h-52" />
+        {portfoliosLoaded && selectedPortfolioId && !loading && dashboardData &&
+          (dashboardData.sectorBreakdown.length > 0 || dashboardData.countryBreakdown.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
+              <AllocationBreakdown
+                title="Sector exposure"
+                items={dashboardData.sectorBreakdown}
+                currency={cy}
+              />
             </div>
-          ) : dashboardData && (dashboardData.sectorBreakdown.length > 0 || dashboardData.countryBreakdown.length > 0) && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
-                <AllocationBreakdown
-                  title="Sector exposure"
-                  items={dashboardData.sectorBreakdown}
-                  currency={cy}
-                />
-              </div>
-              <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
-                <AllocationBreakdown
-                  title="Geographic exposure"
-                  items={dashboardData.countryBreakdown}
-                  currency={cy}
-                />
-              </div>
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
+              <AllocationBreakdown
+                title="Geographic exposure"
+                items={dashboardData.countryBreakdown}
+                currency={cy}
+              />
             </div>
-          )
+          </div>
         )}
 
         {/* Metric strip — Pro only */}
-        {portfoliosLoaded && selectedPortfolioId && (
+        {portfoliosLoaded && selectedPortfolioId && !loading && (
           isPro ? (
-            loading ? (
-              <Skeleton className="h-20" />
-            ) : metrics && metrics.totalInvested > 0 && (
+            metrics && metrics.totalInvested > 0 && (
               <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
                 <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium mb-1">Performance metrics</p>
                 <MetricStrip metrics={metrics} />
