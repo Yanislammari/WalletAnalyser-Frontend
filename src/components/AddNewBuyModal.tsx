@@ -29,7 +29,7 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props) => {
   const isEditMode = !!props.editTransaction;
   const [form, setForm] = useState<BuyForm>(emptyBuy());
   const [saving, setSaving] = useState<boolean>(false);
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [priceLoading, setPriceLoading] = useState<boolean>(false);
   const [fetchedPrice, setFetchedPrice] = useState<number | null>(null);
   const [autoFilled, setAutoFilled] = useState<boolean>(false);
@@ -44,9 +44,11 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props) => {
     ? new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
     : undefined;
 
+  // When entering edit mode, fetch the asset object so currency conversion works
   useEffect(() => {
-    assetService.getAssets().then(setAssets).catch(() => setAssets([]));
-  }, []);
+    if (!props.editTransaction?.assetId) { setSelectedAsset(null); return; }
+    assetService.getAssetById(props.editTransaction.assetId).then(setSelectedAsset).catch(() => {});
+  }, [props.editTransaction?.assetId]);
 
   // Pre-fill form immediately when editTransaction prop changes (avoids "show" event timing race)
   useEffect(() => {
@@ -75,6 +77,7 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props) => {
       if (!props.editTransaction) {
         const eur = props.currencies.find((c) => c.currencyName === "EUR")?.uuid ?? props.currencies[0]?.uuid ?? "";
         setForm({ ...emptyBuy(), currencyId: eur });
+        setSelectedAsset(null);
         setFetchedPrice(null);
         setAutoFilled(false);
       }
@@ -106,7 +109,7 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props) => {
 
   useEffect(() => {
     if (fetchedPrice == null || !form.currencyId) return;
-    const sel = assets.find((a) => a.id === form.assetId);
+    const sel = selectedAsset;
     const baseCcy = props.currencies.find((c) => c.uuid === sel?.baseCurrencyId)?.currencyName;
     const tgtCcy  = props.currencies.find((c) => c.uuid === form.currencyId)?.currencyName;
     // Always fill price per share (both modes) — Yahoo returns market price, not total amount
@@ -220,9 +223,14 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props) => {
               <div>
                 <label className={labelCls}>Asset</label>
                 <AssetSearchSelect
-                  assets={assets}
-                  value={form.assetId}
-                  onChange={(assetId) => setForm((f) => ({ ...f, assetId }))}
+                  selectedAsset={selectedAsset}
+                  onSelect={(asset) => {
+                    setSelectedAsset(asset);
+                    setForm((f) => ({ ...f, assetId: asset?.id ?? "" }));
+                  }}
+                  fetchAssets={(search, offset, limit) =>
+                    assetService.getAssetsPaginated(search, offset, limit)
+                  }
                   portalTarget={props.dialogRef.current}
                   onAddCustomAsset={() => customAssetDialogRef.current?.showModal()}
                 />
@@ -331,7 +339,7 @@ const AddNewBuyModal: React.FC<AddNewBuyModalProps> = (props) => {
       <AddCustomAssetModal
         dialogRef={customAssetDialogRef}
         onAssetCreated={(newAsset) => {
-          setAssets((prev) => [...prev, newAsset]);
+          setSelectedAsset(newAsset);
           setForm((f) => ({ ...f, assetId: newAsset.id }));
         }}
       />

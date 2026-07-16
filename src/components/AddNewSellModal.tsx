@@ -28,7 +28,7 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
   const isEditMode = !!props.editTransaction;
   const [form, setForm] = useState<SellForm>(emptySell());
   const [saving, setSaving] = useState<boolean>(false);
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [priceLoading, setPriceLoading] = useState<boolean>(false);
   const [fetchedPrice, setFetchedPrice] = useState<number | null>(null);
   const [autoFilled, setAutoFilled] = useState<boolean>(false);
@@ -43,9 +43,11 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
     ? new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
     : undefined;
 
+  // Fetch selected asset object to enable currency conversion
   useEffect(() => {
-    assetService.getAssets().then(setAssets).catch(() => setAssets([]));
-  }, []);
+    if (!props.editTransaction?.assetId) { setSelectedAsset(null); return; }
+    assetService.getAssetById(props.editTransaction.assetId).then(setSelectedAsset).catch(() => {});
+  }, [props.editTransaction?.assetId]);
 
   // Pre-fill form immediately when editTransaction prop changes (avoids "show" event timing race)
   useEffect(() => {
@@ -78,6 +80,7 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
       if (!props.editTransaction) {
         const eur = props.currencies.find((c) => c.currencyName === "EUR")?.uuid ?? props.currencies[0]?.uuid ?? "";
         setForm({ ...emptySell(), currencyId: eur });
+        setSelectedAsset(null);
         setFetchedPrice(null);
         setAutoFilled(false);
         setAvailableShares(null);
@@ -132,7 +135,7 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
 
   useEffect(() => {
     if (fetchedPrice == null || !form.currencyId) return;
-    const sel = assets.find((a) => a.id === form.assetId);
+    const sel = selectedAsset;
     const baseCcy = props.currencies.find((c) => c.uuid === sel?.baseCurrencyId)?.currencyName;
     const tgtCcy  = props.currencies.find((c) => c.uuid === form.currencyId)?.currencyName;
     const apply = (price: number) => { setForm((f) => ({ ...f, pricePerShare: String(parseFloat(price.toFixed(4))) })); setAutoFilled(true); };
@@ -199,11 +202,6 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
     }
   };
 
-  const ownedAssets = assets.filter((a) => {
-    const name = a.officialName ?? a.tickerName ?? "";
-    return name !== "" && props.ownedCompanies.includes(name);
-  });
-
   const currencyName = props.currencies.find((c) => c.uuid === form.currencyId)?.currencyName ?? "";
   const sharesIsZero = form.shares !== "" && parseFloat(form.shares) <= 0;
   const sellPriceIsZero = form.pricePerShare !== "" && parseFloat(form.pricePerShare) <= 0;
@@ -248,9 +246,14 @@ const AddNewSellModal: React.FC<AddNewSellModalProps> = (props) => {
             <div>
               <label className={labelCls}>Asset</label>
               <AssetSearchSelect
-                assets={ownedAssets}
-                value={form.assetId}
-                onChange={(assetId) => setForm((f) => ({ ...f, assetId }))}
+                selectedAsset={selectedAsset}
+                onSelect={(asset) => {
+                  setSelectedAsset(asset);
+                  setForm((f) => ({ ...f, assetId: asset?.id ?? "" }));
+                }}
+                fetchAssets={(search, offset, limit) =>
+                  assetService.getAssetsPaginated(search, offset, limit)
+                }
                 portalTarget={props.dialogRef.current}
               />
               {form.assetId && form.date && (
