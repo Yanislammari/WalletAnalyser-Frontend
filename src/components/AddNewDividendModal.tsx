@@ -25,7 +25,7 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props) => {
   const isEditMode = !!props.editTransaction;
   const [form, setForm] = useState<DividendForm>(emptyDividend());
   const [saving, setSaving] = useState<boolean>(false);
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const customAssetDialogRef = useRef<HTMLDialogElement>(null);
   const portfolioService = PortfolioService.getInstance();
   const assetService = AssetService.getInstance();
@@ -34,9 +34,10 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props) => {
     ? new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
     : undefined;
 
+  // Reset selected asset when switching between add/edit
   useEffect(() => {
-    assetService.getAssets().then(setAssets).catch(() => setAssets([]));
-  }, []);
+    if (!props.editTransaction) setSelectedAsset(null);
+  }, [props.editTransaction]);
 
   useEffect(() => {
     if (props.currencies.length === 0) return;
@@ -136,9 +137,14 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props) => {
               <div>
                 <label className={labelCls}>Asset</label>
                 <AssetSearchSelect
-                  assets={assets}
-                  value={form.assetId}
-                  onChange={(assetId) => setForm((f) => ({ ...f, assetId }))}
+                  selectedAsset={selectedAsset}
+                  onSelect={(asset) => {
+                    setSelectedAsset(asset);
+                    setForm((f) => ({ ...f, assetId: asset?.id ?? "" }));
+                  }}
+                  fetchAssets={(search, offset, limit) =>
+                    assetService.getAssetsPaginated(search, offset, limit)
+                  }
                   placeholder="Search for an asset... (optional)"
                   portalTarget={props.dialogRef.current}
                   onAddCustomAsset={() => customAssetDialogRef.current?.showModal()}
@@ -179,7 +185,7 @@ const AddNewDividendModal: React.FC<AddNewDividendModalProps> = (props) => {
       <AddCustomAssetModal
         dialogRef={customAssetDialogRef}
         onAssetCreated={(newAsset) => {
-          setAssets((prev) => [...prev, newAsset]);
+          setSelectedAsset(newAsset);
           setForm((f) => ({ ...f, assetId: newAsset.id }));
         }}
       />
