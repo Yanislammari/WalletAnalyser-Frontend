@@ -1,6 +1,7 @@
 import type React from "react";
 
 const LpFooter: React.FC = () => {
+  const githubPage = "https://github.com/meizarkos/WalletAnalyser-Confidentiality/blob/main/politique-de-confidentialite.md"
   const year: number = new Date().getFullYear();
 
   return (
@@ -11,9 +12,9 @@ const LpFooter: React.FC = () => {
         </div>
         <p className="text-white/25 text-sm">© {year} WalletAnalyser. All rights reserved.</p>
         <div className="flex gap-6">
-          <a href="#" className="text-white/30 text-sm hover:text-white/60 transition-colors">Privacy</a>
-          <a href="#" className="text-white/30 text-sm hover:text-white/60 transition-colors">Terms</a>
-          <a href="#" className="text-white/30 text-sm hover:text-white/60 transition-colors">Contact</a>
+          <a href={githubPage} target="_blank" rel="noopener noreferrer" className="text-white/30 text-sm hover:text-white/60 transition-colors">Privacy</a>
+          <a href={githubPage} target="_blank" rel="noopener noreferrer" className="text-white/30 text-sm hover:text-white/60 transition-colors">Terms</a>
+          <a href="/main" className="text-white/30 text-sm hover:text-white/60 transition-colors">Contact</a>
         </div>
       </div>
     </footer>

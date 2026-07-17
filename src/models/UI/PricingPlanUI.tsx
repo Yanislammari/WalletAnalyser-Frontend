@@ -1,3 +1,5 @@
+import type { NavigateFunction } from "react-router-dom";
+
 export interface PricingPlanUI {
   name: string;
   price: string;
@@ -6,4 +8,5 @@ export interface PricingPlanUI {
   features: string[];
   featured: boolean;
   cta: string;
+  onClick : (nav : NavigateFunction) => void
 }

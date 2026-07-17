@@ -1,9 +1,11 @@
 import type React from "react";
 import type { PricingPlanUI } from "../models/UI/PricingPlanUI";
 import { useRef } from "react";
+import type { NavigateFunction } from "react-router-dom";
 
 interface PricingPlanCardProps {
   plan: PricingPlanUI;
+  nav: NavigateFunction;
 }
 
 const PricingPlanCard: React.FC<PricingPlanCardProps> = (props: PricingPlanCardProps) => {
@@ -90,6 +92,7 @@ const PricingPlanCard: React.FC<PricingPlanCardProps> = (props: PricingPlanCardP
             ? "bg-white text-purple-700 hover:bg-purple-50"
             : "bg-white/[0.08] text-white hover:bg-white/[0.12] border border-white/[0.1]"
         }`}
+        onClick={()=>props.plan.onClick(props.nav)}
       >
         {props.plan.cta}
       </button>

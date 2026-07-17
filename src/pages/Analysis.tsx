@@ -35,6 +35,7 @@ const Analysis: React.FC = () => {
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true)
+      loadingRef.current = true
       try{
         const [sectorsMetaData, clusterMetaData, countriesMetaData, userStocksMetaData] = await Promise.all([
           analysisService.getSectorsMetaData(),
@@ -103,6 +104,7 @@ const Analysis: React.FC = () => {
         setHasError(true)
       } finally {
          setLoading(false)
+         loadingRef.current = false
       }
     }
     fetchAll()
@@ -169,7 +171,7 @@ const Analysis: React.FC = () => {
     if (scrollHeight - scrollTop - clientHeight < 250) {
       fetchMore(search, userStocks?.sectorsData.length ?? 0, false);
     }
-  }, [hasMore, search, userStocks?.sectorsData.length, fetchMore]);
+  }, [hasMore, search, userStocks?.sectorsData?.length, fetchMore]);
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);

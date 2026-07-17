@@ -3,7 +3,7 @@ import excelTemplate from "../assets/excel-template.png";
 import { FiCheck } from "react-icons/fi";
 
 const features: string[] = [
-  "Upload your Excel in seconds",
+  "Upload your csv in seconds",
   "Automatic data parsing",
   "Smart categorization",
   "Instant portfolio insights",
@@ -92,15 +92,10 @@ const ExcelImportSection: React.FC = () => {
             ))}
           </div>
           <div className="flex items-center gap-6">
-            <div>
-              <div className="text-2xl font-bold text-violet-600">.xlsx</div>
+            {<div>
+              <div className="text-2xl font-bold text-violet-600">.csv</div>
               <div className="text-xs text-gray-400">supported</div>
-            </div>
-            <div className="w-px h-10 bg-gray-200" />
-            <div>
-              <div className="text-2xl font-bold text-violet-600">&lt; 5s</div>
-              <div className="text-xs text-gray-400">processing</div>
-            </div>
+            </div>}
             <div className="w-px h-10 bg-gray-200" />
             <div>
               <div className="text-2xl font-bold text-violet-600">0 effort</div>

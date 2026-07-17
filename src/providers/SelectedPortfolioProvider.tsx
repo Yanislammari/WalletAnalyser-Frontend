@@ -44,7 +44,6 @@ export const SelectedPortfolioProvider: React.FC<{ children: React.ReactNode }> 
       setPortfolios(p);
       setPortfoliosLoaded(true);
       if (p.length > 0) {
-        // Prioritize: explicit arg > localStorage > first portfolio
         const candidateId = currentSelectedId ?? localStorage.getItem(STORAGE_KEY) ?? "";
         const stillExists = candidateId && p.some(x => x.id === candidateId);
         if (!stillExists) {
@@ -53,6 +52,9 @@ export const SelectedPortfolioProvider: React.FC<{ children: React.ReactNode }> 
           // Ensure state is in sync (e.g. after page refresh)
           setSelectedPortfolioIdState(candidateId);
         }
+      } else {
+        setSelectedPortfolioId("")
+        localStorage.removeItem(STORAGE_KEY)
       }
     } catch {
       setPortfoliosLoaded(true);

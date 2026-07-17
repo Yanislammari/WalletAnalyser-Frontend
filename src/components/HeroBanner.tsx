@@ -39,9 +39,6 @@ const HeroBanner: React.FC = () => {
           <button onClick={() => navigate("/main")} className="px-7 py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-all hover:-translate-y-0.5 shadow-lg shadow-purple-200 cursor-pointer">
             Start for free
           </button>
-          <button className="px-7 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
-            See a demo
-          </button>
         </div>
         <DashboardMockup />
       </div>

@@ -6,6 +6,7 @@ import BenchmarkService, { BENCHMARKS, type BenchmarkMonthlyPoint } from "../ser
 import type { Portfolio } from "../models/Portfolio";
 import type { MetricResponse } from "../responses/MetricResponse";
 import { ProPaywall } from "../components/proPayWall/PropayWall";
+import NoPortfolioSelected from "../components/Error/NoPortfolioSelected";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const PORTFOLIO_COLORS = ["#7c3aed", "#2563eb", "#0891b2", "#db2777", "#059669", "#d97706"];
@@ -293,6 +294,10 @@ const Comparisons: React.FC = () => {
     { label: "Sortino Ratio", pf: (m) => m.sortinoRatio, bm: (s) => s.sharpe,      fmt: fmtNum,              good: (v) => v > 1,   higherIsBetter: true,  pfOnly: true },
     { label: "XIRR",          pf: (m) => m.xirrMtm,      bm: (s) => s.cagr,        fmt: fmtPct,              good: (v) => v >= 0,  higherIsBetter: true,  pfOnly: true },
   ];
+
+  if(portfolios.length == 0){
+    return <NoPortfolioSelected />
+  }
 
   return (
     <div className="space-y-4">

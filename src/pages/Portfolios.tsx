@@ -140,12 +140,13 @@ const Portfolios: React.FC = () => {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     const newTotal: number = total - 1;
     const newTotalPages: number = Math.max(Math.ceil((isSearching ? newTotal : newTotal + 1) / PAGE_SIZE), 1);
     setPage((p) => Math.min(p, newTotalPages));
     setTotal(newTotal);
     setReloadTrigger((prev) => prev + 1);
+    await refreshPortfolios();
   };
 
   const handlePageChange = (newPage: number) => {

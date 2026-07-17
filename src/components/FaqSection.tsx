@@ -5,7 +5,7 @@ import FaqItem from "./FaqItem";
 const faqs: FaqUI[] = [
   {
     question: "What brokers and file formats are supported?",
-    awnser: "WalletAnalyser accepts any CSV or Excel file. We provide a pre-formatted template and a visual example to guide column mapping. If your broker uses a custom export format, you can remap columns manually before importing.",
+    awnser: "WalletAnalyser accepts any CSV. We provide a pre-formatted template and a visual example to guide column mapping. If your broker uses a custom export format, you can remap columns manually before importing.",
   },
   {
     question: "What is TWR and why does it matter?",
@@ -13,7 +13,7 @@ const faqs: FaqUI[] = [
   },
   {
     question: "Can I add a stock that isn't in your database?",
-    awnser: "Yes. You can create a custom stock and assign it a sector, country, and concentration. Our team reviews and validates new entries, which then become available to all users.",
+    awnser: "Yes. You can create a custom stock. Our team reviews and validates new entries, which then become available to all users.",
   },
   {
     question: "Is my financial data secure?",
@@ -21,7 +21,17 @@ const faqs: FaqUI[] = [
   },
   {
     question: "Is there a mobile app?",
-    awnser: "The full analytics experience is optimised for web. A mobile app is in development for key metrics and overview — the complete toolkit will remain on web.",
+    awnser: (
+      <>
+        The full analytics experience is optimised for web. A mobile app is in
+        development for key metrics and overview — the complete toolkit will
+        remain on web.{" "}
+        <a href="https://play.google.com/store/apps/details?id=com.walletanalysermobile" className="text-blue-600 underline"
+            target="_blank" rel="noopener noreferrer" >
+          See the mobile app
+        </a>
+      </>
+    )
   },
 ];
 
