@@ -39,7 +39,10 @@ class ImportService extends BaseService {
   }
 
   public async downloadTemplate(format: Format): Promise<void> {
-    const res: Response = await fetch(`${this.baseUrl}/import/template/${format}`);
+    const token = localStorage.getItem("token") ?? "";
+    const res: Response = await fetch(`${this.baseUrl}/import/template/${format}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
     if (!res.ok) {
       throw new Error(`Failed to download template: ${res.statusText}`);
