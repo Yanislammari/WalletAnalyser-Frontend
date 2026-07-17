@@ -49,7 +49,6 @@ export const SelectedPortfolioProvider: React.FC<{ children: React.ReactNode }> 
         if (!stillExists) {
           setSelectedPortfolioId(p[0].id);
         } else {
-          // Ensure state is in sync (e.g. after page refresh)
           setSelectedPortfolioIdState(candidateId);
         }
       } else {

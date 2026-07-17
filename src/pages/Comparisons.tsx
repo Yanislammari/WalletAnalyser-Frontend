@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { HiOutlineChartPie } from "react-icons/hi2";
+import { HiOutlineChartPie, HiOutlineXCircle } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
 import PortfolioService from "../services/PortfolioService";
 import BenchmarkService, { BENCHMARKS, type BenchmarkMonthlyPoint } from "../services/BenchmarkService";
@@ -7,6 +7,8 @@ import type { Portfolio } from "../models/Portfolio";
 import type { MetricResponse } from "../responses/MetricResponse";
 import { ProPaywall } from "../components/proPayWall/PropayWall";
 import NoPortfolioSelected from "../components/Error/NoPortfolioSelected";
+import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
+import ErrorCardInApp from "../components/ErrorCardInApp";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const PORTFOLIO_COLORS = ["#7c3aed", "#2563eb", "#0891b2", "#db2777", "#059669", "#d97706"];
@@ -188,16 +190,19 @@ const benchmarkService = BenchmarkService.getInstance();
 const Comparisons: React.FC = () => {
   const { user, isPro } = useAuth();
   if (!isPro) return <ProPaywall feature="Comparisons" />;
-  const [portfolios,    setPortfolios]    = useState<Portfolio[]>([]);
+  const {portfolios} = useSelectedPortfolio()
+  const [portfoliosTransaction,    setPortfolios]    = useState<Portfolio[]>([]);
   const [selectedPfIds, setSelectedPfIds] = useState<string[]>([]);
   const [selectedBmIds, setSelectedBmIds] = useState<string[]>(["^GSPC"]);
   const [metricsMap,    setMetricsMap]    = useState<Map<string, MetricResponse>>(new Map());
   const [benchmarkMap,  setBenchmarkMap]  = useState<Map<string, BenchmarkMonthlyPoint[]>>(new Map());
   const [loadingPf,     setLoadingPf]     = useState<Set<string>>(new Set());
   const [loadingBm,     setLoadingBm]     = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!user?.id) return;
+    setLoading(true)
     portfolioService.getAllPortfoliosByUserId(user.id).then(async (pfs) => {
       // Filter out portfolios that have no buys and no sells
       const counts = await Promise.allSettled(
@@ -210,7 +215,7 @@ const Comparisons: React.FC = () => {
       });
       setPortfolios(withTransactions);
       if (withTransactions.length > 0) setSelectedPfIds([withTransactions[0].id]);
-    }).catch(() => {});
+    }).catch(() => {}).finally(()=>{setLoading(false)});
   }, [user?.id]);
 
   const fetchMetrics = useCallback(async (pfId: string) => {
@@ -249,7 +254,7 @@ const Comparisons: React.FC = () => {
       if (!m?.monthlyTwr.length) return;
       const data = rebasePortfolio(m.monthlyTwr, commonStart);
       if (!data.length) return;
-      all.push({ id, label: portfolios.find((p) => p.id === id)?.name ?? "Portfolio", color: PORTFOLIO_COLORS[idx % PORTFOLIO_COLORS.length], data, dashed: false });
+      all.push({ id, label: portfoliosTransaction.find((p) => p.id === id)?.name ?? "Portfolio", color: PORTFOLIO_COLORS[idx % PORTFOLIO_COLORS.length], data, dashed: false });
     });
     selectedBmIds.forEach((ticker) => {
       const prices = benchmarkMap.get(ticker);
@@ -262,7 +267,7 @@ const Comparisons: React.FC = () => {
     const monthSet = new Set<string>();
     all.forEach((s) => s.data.forEach((p) => monthSet.add(p.month)));
     return { chartSeries: all, months: Array.from(monthSet).sort() };
-  }, [selectedPfIds, selectedBmIds, metricsMap, benchmarkMap, commonStart, portfolios]);
+  }, [selectedPfIds, selectedBmIds, metricsMap, benchmarkMap, commonStart, portfoliosTransaction]);
 
   const togglePf = (id: string) => setSelectedPfIds((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
   const toggleBm = (id: string) => setSelectedBmIds((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
@@ -295,8 +300,15 @@ const Comparisons: React.FC = () => {
     { label: "XIRR",          pf: (m) => m.xirrMtm,      bm: (s) => s.cagr,        fmt: fmtPct,              good: (v) => v >= 0,  higherIsBetter: true,  pfOnly: true },
   ];
 
-  if(portfolios.length == 0){
+  if ( portfolios.length == 0) {
     return <NoPortfolioSelected />
+  } else if(portfoliosTransaction.length == 0 && !loading || (!months.length || !chartSeries.length)) {
+    return <ErrorCardInApp
+      iconBg="bg-gray-100"
+      icon={<HiOutlineXCircle className="w-8 h-8 text-gray-400" />}
+      title="You don't have any transaction or not a long enough history for us to display this screen"
+      description="Go to your portfolio and add some transactions dating at least one month"
+    />
   }
 
   return (
@@ -312,7 +324,7 @@ const Comparisons: React.FC = () => {
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest shrink-0">Portfolios</span>
         <div className="flex flex-wrap gap-1.5">
-          {portfolios.map((pf, idx) => {
+          {portfoliosTransaction.map((pf, idx) => {
             const active = selectedPfIds.includes(pf.id);
             const color  = PORTFOLIO_COLORS[selectedPfIds.indexOf(pf.id) % PORTFOLIO_COLORS.length] || PORTFOLIO_COLORS[idx % PORTFOLIO_COLORS.length];
             return (
@@ -374,7 +386,7 @@ const Comparisons: React.FC = () => {
                   {/* Sticky metric-name column */}
                   <th className="sticky left-0 bg-white z-10 px-5 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-widest w-36 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-gray-100" />
                   {pfColumns.map((id) => {
-                    const pf    = portfolios.find((p) => p.id === id);
+                    const pf    = portfoliosTransaction.find((p) => p.id === id);
                     const color = PORTFOLIO_COLORS[selectedPfIds.indexOf(id) % PORTFOLIO_COLORS.length];
                     return (
                       <th key={id} className="px-6 py-4 text-left min-w-[140px]">
