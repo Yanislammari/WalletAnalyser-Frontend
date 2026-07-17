@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { HiOutlineChartPie, HiOutlineXCircle } from "react-icons/hi2";
+import { HiOutlineChartPie } from "react-icons/hi2";
 import { useAuth } from "../providers/AuthProvider";
 import PortfolioService from "../services/PortfolioService";
 import BenchmarkService, { BENCHMARKS, type BenchmarkMonthlyPoint } from "../services/BenchmarkService";
@@ -8,7 +8,6 @@ import type { MetricResponse } from "../responses/MetricResponse";
 import { ProPaywall } from "../components/proPayWall/PropayWall";
 import NoPortfolioSelected from "../components/Error/NoPortfolioSelected";
 import { useSelectedPortfolio } from "../providers/SelectedPortfolioProvider";
-import ErrorCardInApp from "../components/ErrorCardInApp";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const PORTFOLIO_COLORS = ["#7c3aed", "#2563eb", "#0891b2", "#db2777", "#059669", "#d97706"];
