@@ -198,11 +198,9 @@ const Comparisons: React.FC = () => {
   const [benchmarkMap,  setBenchmarkMap]  = useState<Map<string, BenchmarkMonthlyPoint[]>>(new Map());
   const [loadingPf,     setLoadingPf]     = useState<Set<string>>(new Set());
   const [loadingBm,     setLoadingBm]     = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!user?.id) return;
-    setLoading(true)
     portfolioService.getAllPortfoliosByUserId(user.id).then(async (pfs) => {
       // Filter out portfolios that have no buys and no sells
       const counts = await Promise.allSettled(
@@ -215,7 +213,7 @@ const Comparisons: React.FC = () => {
       });
       setPortfolios(withTransactions);
       if (withTransactions.length > 0) setSelectedPfIds([withTransactions[0].id]);
-    }).catch(() => {}).finally(()=>{setLoading(false)});
+    }).catch(() => {});
   }, [user?.id]);
 
   const fetchMetrics = useCallback(async (pfId: string) => {
@@ -302,13 +300,6 @@ const Comparisons: React.FC = () => {
 
   if ( portfolios.length == 0) {
     return <NoPortfolioSelected />
-  } else if(portfoliosTransaction.length == 0 && !loading || (!months.length || !chartSeries.length)) {
-    return <ErrorCardInApp
-      iconBg="bg-gray-100"
-      icon={<HiOutlineXCircle className="w-8 h-8 text-gray-400" />}
-      title="You don't have any transaction or not a long enough history for us to display this screen"
-      description="Go to your portfolio and add some transactions dating at least one month"
-    />
   }
 
   return (
